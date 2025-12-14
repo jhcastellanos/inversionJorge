@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
-import { Customer, Purchase } from '../../lib/models';
+import { Customer, Order } from '../../lib/models';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,20 +29,23 @@ export default async function SuccessPage({
       const name = session.customer_details?.name || '';
 
       if (courseId && email) {
-        // Register the customer and purchase
-        const customer = await Customer.upsert({ email, full_name: name });
+        // Register the customer
+        await Customer.upsert({ email, full_name: name });
         
-        // Check if purchase already exists to avoid duplicates
-        const existingPurchase = await Purchase.findByCode(sessionId);
+        // Check if order already exists to avoid duplicates
+        const existingOrder = await Order.findBySessionId(sessionId);
         
-        if (!existingPurchase) {
-          await Purchase.create({
-            customer_id: customer.id,
+        if (!existingOrder) {
+          await Order.create({
+            user_id: email,
             course_id: Number(courseId),
-            purchase_code: sessionId,
-            amount_paid: session.amount_total! / 100,
-            payment_method: 'stripe',
-            payment_status: 'completed'
+            amount: session.amount_total! / 100,
+            stripe_session_id: sessionId,
+            stripe_payment_intent_id: session.payment_intent as string || null,
+            payment_status: 'completed',
+            payment_provider: 'stripe',
+            customer_email: email,
+            customer_name: name
           });
         }
       }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { Customer, Purchase } from '../../../../lib/models';
+import { Customer, Order } from '../../../../lib/models';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -23,15 +23,18 @@ export async function POST(req: NextRequest) {
     const name = session.customer_details?.name || '';
     if (!courseId || !email) return NextResponse.json({ error: 'Missing data' }, { status: 400 });
 
-    const customer = await Customer.upsert({ email, full_name: name });
+    await Customer.upsert({ email, full_name: name });
 
-    await Purchase.create({
-      customer_id: customer.id,
+    await Order.create({
+      user_id: email,
       course_id: Number(courseId),
-      purchase_code: session.id,
-      amount_paid: session.amount_total! / 100,
-      payment_method: 'stripe',
-      payment_status: session.payment_status || 'completed'
+      amount: session.amount_total! / 100,
+      stripe_session_id: session.id,
+      stripe_payment_intent_id: session.payment_intent as string || null,
+      payment_status: 'completed',
+      payment_provider: 'stripe',
+      customer_email: email,
+      customer_name: name
     });
   }
 

@@ -1,11 +1,11 @@
-import { Course, Purchase } from '../../../../../lib/models';
+import { Course, Order } from '../../../../../lib/models';
 import { notFound } from 'next/navigation';
 
 export default async function CoursePurchasesPage({ params }: { params: { id: string } }) {
   try {
     const course = await Course.findById(parseInt(params.id));
     if (!course) return notFound();
-    const purchases = await Purchase.findByCourseId(parseInt(params.id));
+    const purchases = await Order.findByCourseId(parseInt(params.id));
     return (
       <main className="max-w-2xl mx-auto p-8">
         <h1 className="text-2xl font-bold mb-6">Purchases for {course.Title}</h1>
@@ -21,12 +21,12 @@ export default async function CoursePurchasesPage({ params }: { params: { id: st
           </thead>
           <tbody>
             {purchases.map((p: any) => (
-              <tr key={p.id} className="border-t">
-                <td className="p-2">{p.full_name || '-'}</td>
-                <td className="p-2">{p.email}</td>
-                <td className="p-2">{new Date(p.purchased_at).toLocaleString()}</td>
-                <td className="p-2">${'{'}parseFloat(p.amount_paid).toFixed(2){'}'}</td>
-                <td className="p-2">{p.payment_status}</td>
+              <tr key={p.Id} className="border-t">
+                <td className="p-2">{p.CustomerName || '-'}</td>
+                <td className="p-2">{p.CustomerEmail}</td>
+                <td className="p-2">{new Date(p.CreatedAt).toLocaleString()}</td>
+                <td className="p-2">${'{'}parseFloat(p.Amount).toFixed(2){'}'}</td>
+                <td className="p-2">{p.PaymentStatus}</td>
               </tr>
             ))}
           </tbody>

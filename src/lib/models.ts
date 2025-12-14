@@ -110,13 +110,13 @@ export const Customer = {
   }
 };
 
-// Purchase Model
-export const Purchase = {
+// Order Model (Uses Orders table)
+export const Order = {
   async findByCourseId(courseId: number) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT p.*, c.email, c.full_name FROM purchases p JOIN customers c ON p.customer_id = c.id WHERE p.course_id = $1 ORDER BY p.purchased_at DESC',
+        'SELECT * FROM "Orders" WHERE "CourseId" = $1 ORDER BY "CreatedAt" DESC',
         [courseId]
       );
       return result.rows;
@@ -125,12 +125,12 @@ export const Purchase = {
     }
   },
 
-  async findByCode(purchaseCode: string) {
+  async findBySessionId(sessionId: string) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM purchases WHERE purchase_code = $1',
-        [purchaseCode]
+        'SELECT * FROM "Orders" WHERE "StripeSessionId" = $1',
+        [sessionId]
       );
       return result.rows[0];
     } finally {
@@ -138,12 +138,12 @@ export const Purchase = {
     }
   },
 
-  async create(data: { customer_id: number; course_id: number; purchase_code: string; amount_paid: number; payment_method: string; payment_status: string }) {
+  async create(data: { user_id: string; course_id: number; amount: number; stripe_session_id: string; stripe_payment_intent_id: string | null; payment_status: string; payment_provider: string; customer_email: string; customer_name: string }) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'INSERT INTO purchases (customer_id, course_id, purchase_code, amount_paid, payment_method, payment_status, purchased_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *',
-        [data.customer_id, data.course_id, data.purchase_code, data.amount_paid, data.payment_method, data.payment_status]
+        'INSERT INTO "Orders" ("UserId", "CourseId", "Amount", "StripeSessionId", "StripePaymentIntentId", "PaymentStatus", "PaymentProvider", "CustomerEmail", "CustomerName", "CreatedAt", "CompletedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *',
+        [data.user_id, data.course_id, data.amount, data.stripe_session_id, data.stripe_payment_intent_id, data.payment_status, data.payment_provider, data.customer_email, data.customer_name]
       );
       return result.rows[0];
     } finally {
@@ -151,6 +151,9 @@ export const Purchase = {
     }
   }
 };
+
+// Keep Purchase for backward compatibility (references Orders)
+export const Purchase = Order;
 
 // Admin User Model
 export const AdminUser = {
