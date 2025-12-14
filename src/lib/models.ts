@@ -34,12 +34,12 @@ export const Course = {
     }
   },
 
-  async create(data: { title: string; description: string; image_url: string; final_price: number; is_active: boolean }) {
+  async create(data: { title: string; description: string; image_url: string; final_price: number; is_active: boolean; start_date?: string; end_date?: string }) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'INSERT INTO "Courses" ("Title", "Description", "ImageUrl", "Price", "IsActive", "CreatedAt") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *',
-        [data.title, data.description, data.image_url, data.final_price, data.is_active]
+        'INSERT INTO "Courses" ("Title", "Description", "ImageUrl", "Price", "IsActive", "StartDate", "EndDate", "CreatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *',
+        [data.title, data.description, data.image_url, data.final_price, data.is_active, data.start_date || null, data.end_date || null]
       );
       return result.rows[0];
     } finally {
@@ -47,12 +47,12 @@ export const Course = {
     }
   },
 
-  async update(id: number, data: { title: string; description: string; image_url: string; final_price: number; is_active: boolean }) {
+  async update(id: number, data: { title: string; description: string; image_url: string; final_price: number; is_active: boolean; start_date?: string; end_date?: string }) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'UPDATE "Courses" SET "Title"=$1, "Description"=$2, "ImageUrl"=$3, "Price"=$4, "IsActive"=$5 WHERE "Id"=$6 RETURNING *',
-        [data.title, data.description, data.image_url, data.final_price, data.is_active, id]
+        'UPDATE "Courses" SET "Title"=$1, "Description"=$2, "ImageUrl"=$3, "Price"=$4, "IsActive"=$5, "StartDate"=$6, "EndDate"=$7 WHERE "Id"=$8 RETURNING *',
+        [data.title, data.description, data.image_url, data.final_price, data.is_active, data.start_date || null, data.end_date || null, id]
       );
       return result.rows[0];
     } finally {

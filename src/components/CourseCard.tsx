@@ -7,6 +7,8 @@ interface CourseCardProps {
     Description: string;
     ImageUrl: string;
     Price: number;
+    StartDate?: string;
+    EndDate?: string;
   };
 }
 
@@ -29,6 +31,18 @@ export default function CourseCard({ course }: CourseCardProps) {
       alert('Error al procesar el checkout');
     }
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const hasDateInfo = course.StartDate || course.EndDate;
 
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
@@ -55,6 +69,25 @@ export default function CourseCard({ course }: CourseCardProps) {
           {course.Title}
         </h3>
         <p className="text-gray-600 mb-4 line-clamp-2">{course.Description}</p>
+        
+        {hasDateInfo && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div className="flex-1">
+                {course.StartDate && (
+                  <div><span className="font-medium">Inicio:</span> {formatDate(course.StartDate)}</div>
+                )}
+                {course.EndDate && (
+                  <div><span className="font-medium">Fin:</span> {formatDate(course.EndDate)}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="flex items-center justify-between mb-4">
           <span className="text-3xl font-bold text-gray-900">
             ${parseFloat(course.Price.toString()).toFixed(2)}

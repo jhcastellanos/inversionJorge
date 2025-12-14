@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 // Crear un curso (POST)
 export async function POST(req: NextRequest) {
-  const { title, description, imageUrl, finalPrice, isActive } = await req.json();
+  const { title, description, imageUrl, finalPrice, isActive, startDate, endDate } = await req.json();
   if (!title || !description || !imageUrl || !finalPrice) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
       description,
       image_url: imageUrl,
       final_price: finalPrice,
-      is_active: isActive ?? true
+      is_active: isActive ?? true,
+      start_date: startDate,
+      end_date: endDate
     });
     return NextResponse.json(course);
   } catch (err) {

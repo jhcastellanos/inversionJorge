@@ -11,13 +11,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { title, description, imageUrl, finalPrice, isActive } = await req.json();
+  const { title, description, imageUrl, finalPrice, isActive, startDate, endDate } = await req.json();
   const course = await Course.update(parseInt(params.id), {
     title,
     description,
     image_url: imageUrl,
     final_price: finalPrice,
-    is_active: isActive
+    is_active: isActive,
+    start_date: startDate,
+    end_date: endDate
   });
   if (!course) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(course);
