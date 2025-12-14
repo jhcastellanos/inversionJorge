@@ -8,7 +8,10 @@ import Link from 'next/link';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export default async function CoursePurchasesPage({ params }: { params: { id: string } }) {
+export default async function CoursePurchasesPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params first
+  const { id } = await params;
+  
   // Validate JWT
   const cookieStore = await cookies();
   const token = cookieStore.get('admin_token')?.value;
@@ -18,9 +21,9 @@ export default async function CoursePurchasesPage({ params }: { params: { id: st
   }
 
   try {
-    const course = await Course.findById(parseInt(params.id));
+    const course = await Course.findById(parseInt(id));
     if (!course) return notFound();
-    const purchases = await Order.findByCourseId(parseInt(params.id));
+    const purchases = await Order.findByCourseId(parseInt(id));
     
     return (
       <div className="min-h-screen bg-gray-50">
