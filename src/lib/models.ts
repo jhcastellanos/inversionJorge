@@ -125,6 +125,19 @@ export const Purchase = {
     }
   },
 
+  async findByCode(purchaseCode: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM purchases WHERE purchase_code = $1',
+        [purchaseCode]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
   async create(data: { customer_id: number; course_id: number; purchase_code: string; amount_paid: number; payment_method: string; payment_status: string }) {
     const client = await pool.connect();
     try {
