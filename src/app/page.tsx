@@ -2,6 +2,9 @@ import { Course } from '../lib/models';
 import Link from 'next/link';
 import CourseCard from '../components/CourseCard';
 
+// Force dynamic rendering to access DATABASE_URL at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const courses = await Course.findActive();
 
