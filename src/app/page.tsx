@@ -8,6 +8,27 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const courses = await Course.findActive();
 
+  // Orden personalizado: ID 3, luego 9, luego 8, resto por fecha de creación
+  const customOrder = [3, 9, 8];
+  const sortedCourses = courses.sort((a: any, b: any) => {
+    const indexA = customOrder.indexOf(a.Id);
+    const indexB = customOrder.indexOf(b.Id);
+    
+    // Si ambos están en el orden personalizado, ordenar según ese orden
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    
+    // Si solo A está en el orden personalizado, va primero
+    if (indexA !== -1) return -1;
+    
+    // Si solo B está en el orden personalizado, va primero
+    if (indexB !== -1) return 1;
+    
+    // Si ninguno está en el orden personalizado, mantener orden original
+    return 0;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Navigation */}
@@ -31,7 +52,7 @@ export default async function HomePage() {
       {/* Courses Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {courses.map((course: any) => (
+          {sortedCourses.map((course: any) => (
             <CourseCard key={course.Id} course={course} />
           ))}
         </div>
