@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface CourseCardProps {
   course: {
     Id: number;
@@ -13,6 +15,9 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+  const [showFullTitle, setShowFullTitle] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
   const handleCheckout = async () => {
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -65,10 +70,35 @@ export default function CourseCard({ course }: CourseCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
       <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-          {course.Title}
-        </h3>
-        <p className="text-gray-600 mb-4 line-clamp-2">{course.Description}</p>
+        {/* Título con 2 líneas máximo */}
+        <div className="mb-2">
+          <h3 className={`text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors ${!showFullTitle ? 'line-clamp-2' : ''}`}>
+            {course.Title}
+          </h3>
+          {course.Title.length > 60 && (
+            <button
+              onClick={() => setShowFullTitle(!showFullTitle)}
+              className="text-sm text-blue-600 hover:text-blue-700 mt-1 font-medium"
+            >
+              {showFullTitle ? 'Ver menos' : 'Ver más'}
+            </button>
+          )}
+        </div>
+
+        {/* Descripción con 3 líneas máximo */}
+        <div className="mb-4">
+          <p className={`text-gray-600 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+            {course.Description}
+          </p>
+          {course.Description.length > 120 && (
+            <button
+              onClick={() => setShowFullDescription(!showFullDescription)}
+              className="text-sm text-blue-600 hover:text-blue-700 mt-1 font-medium"
+            >
+              {showFullDescription ? 'Ver menos' : 'Ver más'}
+            </button>
+          )}
+        </div>
         
         {hasDateInfo && (
           <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
