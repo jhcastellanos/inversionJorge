@@ -21,12 +21,33 @@ export default async function AdminDashboard() {
   const courses = await Course.findAll();
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <div className="flex gap-4 items-center">
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">View Site</Link>
-            <Link href="/admin/logout" className="text-sm text-red-600 hover:text-red-700">Logout</Link>
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-8">
+              <h1 className="text-xl font-bold text-gray-900">Panel de Administración</h1>
+              <div className="flex gap-4">
+                <Link href="/admin/dashboard" className="text-indigo-600 font-semibold">
+                  Cursos
+                </Link>
+                <Link href="/admin/memberships" className="text-gray-600 hover:text-gray-900">
+                  Membresías
+                </Link>
+                <Link href="/admin/subscriptions" className="text-gray-600 hover:text-gray-900">
+                  Suscripciones
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+                Ver sitio
+              </Link>
+              <form action="/api/auth/logout" method="POST">
+                <button type="submit" className="text-sm text-red-600 hover:text-red-700">
+                  Cerrar sesión
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </nav>

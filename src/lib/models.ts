@@ -167,3 +167,239 @@ export const AdminUser = {
     }
   }
 };
+
+// Membership Model
+export const Membership = {
+  async findAll() {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT * FROM "Memberships" ORDER BY "CreatedAt" DESC');
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async findActive() {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT * FROM "Memberships" WHERE "IsActive" = true ORDER BY "CreatedAt" DESC');
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async findById(id: number) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT * FROM "Memberships" WHERE "Id" = $1', [id]);
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async create(data: { name: string; description: string; monthly_price: number; benefits: string; is_active: boolean; image_url?: string | null; start_date?: Date | null }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'INSERT INTO "Memberships" ("Name", "Description", "MonthlyPrice", "Benefits", "IsActive", "ImageUrl", "StartDate", "CreatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *',
+        [data.name, data.description, data.monthly_price, data.benefits, data.is_active, data.image_url || null, data.start_date || null]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async update(id: number, data: { name: string; description: string; monthly_price: number; benefits: string; is_active: boolean; image_url?: string | null; start_date?: Date | null }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE "Memberships" SET "Name"=$1, "Description"=$2, "MonthlyPrice"=$3, "Benefits"=$4, "IsActive"=$5, "ImageUrl"=$6, "StartDate"=$7 WHERE "Id"=$8 RETURNING *',
+        [data.name, data.description, data.monthly_price, data.benefits, data.is_active, data.image_url || null, data.start_date || null, id]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async delete(id: number) {
+    const client = await pool.connect();
+    try {
+      // Check if there are any subscriptions using this membership
+      const subscriptionCheck = await client.query(
+        'SELECT COUNT(*) as count FROM "Subscriptions" WHERE "MembershipId" = $1',
+        [id]
+      );
+      
+      const subscriptionCount = parseInt(subscriptionCheck.rows[0].count);
+      
+      if (subscriptionCount > 0) {
+        throw new Error(`No se puede eliminar la membresía porque tiene ${subscriptionCount} suscripción(es) activa(s). Primero debe cancelar todas las suscripciones asociadas.`);
+      }
+      
+      await client.query('DELETE FROM "Memberships" WHERE "Id" = $1', [id]);
+      return true;
+    } finally {
+      client.release();
+    }
+  }
+};
+
+// Subscription Model
+export const Subscription = {
+  async findAll() {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT s.*, 
+                m."Name" as "MembershipName", 
+                m."MonthlyPrice",
+                dc."DiscordUsername"
+         FROM "Subscriptions" s 
+         JOIN "Memberships" m ON s."MembershipId" = m."Id"
+         LEFT JOIN "DiscordConnections" dc ON s."CustomerEmail" = dc."CustomerEmail"
+         ORDER BY s."CreatedAt" DESC`
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async findByEmail(email: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT s.*, m."Name" as "MembershipName", m."MonthlyPrice" FROM "Subscriptions" s JOIN "Memberships" m ON s."MembershipId" = m."Id" WHERE s."CustomerEmail" = $1 AND s."Status" = \'active\' ORDER BY s."CreatedAt" DESC',
+        [email]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async findByStripeId(stripeSubscriptionId: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT s.*, m."Name" as "MembershipName" 
+         FROM "Subscriptions" s
+         LEFT JOIN "Memberships" m ON s."MembershipId" = m."Id"
+         WHERE s."StripeSubscriptionId" = $1`,
+        [stripeSubscriptionId]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async create(data: { membership_id: number; customer_email: string; customer_name: string; stripe_subscription_id: string; stripe_customer_id: string; current_period_start: Date; current_period_end: Date }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'INSERT INTO "Subscriptions" ("MembershipId", "CustomerEmail", "CustomerName", "StripeSubscriptionId", "StripeCustomerId", "Status", "CurrentPeriodStart", "CurrentPeriodEnd", "CreatedAt") VALUES ($1, $2, $3, $4, $5, \'active\', $6, $7, NOW()) RETURNING *',
+        [data.membership_id, data.customer_email, data.customer_name, data.stripe_subscription_id, data.stripe_customer_id, data.current_period_start, data.current_period_end]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async updateStatus(stripeSubscriptionId: string, status: string, cancelAtPeriodEnd: boolean = false) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE "Subscriptions" SET "Status"=$1, "CancelAtPeriodEnd"=$2, "CanceledAt"=$3 WHERE "StripeSubscriptionId"=$4 RETURNING *',
+        [status, cancelAtPeriodEnd, status === 'canceled' ? new Date() : null, stripeSubscriptionId]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async updateDiscordUserId(stripeSubscriptionId: string, discordUserId: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE "Subscriptions" SET "DiscordUserId"=$1 WHERE "StripeSubscriptionId"=$2 RETURNING *',
+        [discordUserId, stripeSubscriptionId]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+};
+
+// Discord Connection Model
+export const DiscordConnection = {
+  async findByEmail(email: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM "DiscordConnections" WHERE "CustomerEmail" = $1',
+        [email]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async findByDiscordUserId(discordUserId: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM "DiscordConnections" WHERE "DiscordUserId" = $1',
+        [discordUserId]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async create(data: { customer_email: string; discord_user_id: string; discord_username: string; discord_access_token?: string; discord_refresh_token?: string }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'INSERT INTO "DiscordConnections" ("CustomerEmail", "DiscordUserId", "DiscordUsername", "DiscordAccessToken", "DiscordRefreshToken", "CreatedAt", "UpdatedAt") VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *',
+        [data.customer_email, data.discord_user_id, data.discord_username, data.discord_access_token || null, data.discord_refresh_token || null]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async update(email: string, data: { discord_user_id: string; discord_username: string; discord_access_token?: string; discord_refresh_token?: string }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE "DiscordConnections" SET "DiscordUserId"=$1, "DiscordUsername"=$2, "DiscordAccessToken"=$3, "DiscordRefreshToken"=$4, "UpdatedAt"=NOW() WHERE "CustomerEmail"=$5 RETURNING *',
+        [data.discord_user_id, data.discord_username, data.discord_access_token || null, data.discord_refresh_token || null, email]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async delete(email: string) {
+    const client = await pool.connect();
+    try {
+      await client.query('DELETE FROM "DiscordConnections" WHERE "CustomerEmail" = $1', [email]);
+      return true;
+    } finally {
+      client.release();
+    }
+  }
+};

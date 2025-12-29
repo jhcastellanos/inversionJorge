@@ -12,8 +12,11 @@ export const config = {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // Allow login and logout pages
-  if (pathname === '/admin/login' || pathname === '/admin/logout' || pathname === '/admin') {
+  // Allow login, logout pages and API routes
+  if (pathname === '/admin/login' || 
+      pathname === '/admin/logout' || 
+      pathname === '/admin' ||
+      pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
   
@@ -23,13 +26,11 @@ export function middleware(req: NextRequest) {
     const token = req.cookies.get('admin_token')?.value;
     
     if (!token) {
-      console.log('No token, redirect to login');
+      console.log('No token, redirect to login from:', pathname);
       return NextResponse.redirect(new URL('/admin/login', req.url));
     }
     
     console.log('Token exists, allow (validation in page)');
-    
-    console.log('Token valid, allowing access to:', pathname);
   }
   
   return NextResponse.next();
