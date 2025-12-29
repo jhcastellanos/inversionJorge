@@ -1,13 +1,5 @@
 {
   "buildCommand": "next build",
   "outputDirectory": ".next",
-  "framework": "nextjs",
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "STRIPE_SECRET_KEY": "@stripe-secret-key",
-    "STRIPE_PUBLISHABLE_KEY": "@stripe-publishable-key",
-    "STRIPE_WEBHOOK_SECRET": "@stripe-webhook-secret",
-    "JWT_SECRET": "@jwt-secret",
-    "NEXT_PUBLIC_BASE_URL": "@next-public-base-url"
-  }
+  "framework": "nextjs"
 }
