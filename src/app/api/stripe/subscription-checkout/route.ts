@@ -42,6 +42,14 @@ export async function POST(req: NextRequest) {
       console.log('   Precio: $' + monthlyPrice);
     }
 
+    // Validate price
+    if (monthlyPrice <= 0) {
+      return NextResponse.json({ 
+        error: 'Invalid membership price',
+        details: `Price must be greater than 0, got: ${monthlyPrice}`
+      }, { status: 400 });
+    }
+
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -70,6 +78,7 @@ export async function POST(req: NextRequest) {
         ...(trialEnd ? { trial_end: trialEnd } : {}),
         metadata: {
           membershipId: membership.Id.toString(),
+          type: 'membership',
           ...(membershipStartDate ? { membershipStartDate: membershipStartDate.toISOString() } : {}),
         },
       },
@@ -77,12 +86,27 @@ export async function POST(req: NextRequest) {
       cancel_url: `${baseUrl}/`,
     });
 
+    if (!session.url) {
+      throw new Error('Failed to generate checkout session URL');
+    }
+
+    console.log('✅ Checkout session created:', {
+      sessionId: session.id,
+      membershipId: membership.Id,
+      price: monthlyPrice,
+      hasTrialEnd: !!trialEnd
+    });
+
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('❌ Subscription checkout error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Stripe.errors.StripeError ? error.code : undefined;
+    
     return NextResponse.json({ 
       error: 'Error al procesar la suscripción',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMessage,
+      code: errorDetails
     }, { status: 500 });
   }
 }

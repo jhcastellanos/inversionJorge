@@ -26,14 +26,19 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         body: JSON.stringify({ membershipId: membership.Id })
       });
       const data = await res.json();
+      
       if (data.url) {
         window.location.href = data.url;
       } else if (data.error) {
-        alert('Error: ' + data.error);
+        const errorMessage = data.details ? `${data.error}: ${data.details}` : data.error;
+        console.error('Subscription error details:', data);
+        alert(errorMessage);
+      } else {
+        alert('Error desconocido al procesar la suscripción');
       }
     } catch (error) {
       console.error('Subscription error:', error);
-      alert('Error al procesar la suscripción');
+      alert('Error al procesar la suscripción: No se pudo conectar con el servidor');
     }
   };
 

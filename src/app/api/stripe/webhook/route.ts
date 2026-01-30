@@ -50,6 +50,48 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Handle invoice payment succeeded (creates subscription in database when first payment is processed)
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object as Stripe.Invoice;
+    
+    // Only process if this is a subscription invoice with metadata
+    if (invoice.subscription && invoice.metadata?.membershipId) {
+      try {
+        const membershipId = parseInt(invoice.metadata.membershipId);
+        const customerId = invoice.customer as string;
+        const email = invoice.customer_email || '';
+        const name = invoice.customer_name || '';
+        
+        if (!email) {
+          console.error('❌ Missing customer email in invoice');
+          return NextResponse.json({ received: true });
+        }
+
+        // Check if subscription already exists in database
+        const existingSubscription = await Subscription.findByStripeId(invoice.subscription as string);
+        
+        if (!existingSubscription) {
+          // Create new subscription in database
+          await Subscription.create({
+            membership_id: membershipId,
+            customer_email: email,
+            customer_name: name,
+            stripe_subscription_id: invoice.subscription as string,
+            stripe_customer_id: customerId,
+            current_period_start: new Date(invoice.period_start * 1000),
+            current_period_end: new Date(invoice.period_end * 1000)
+          });
+          
+          console.log(`✅ Subscription created in DB: ${invoice.subscription}`);
+        } else {
+          console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
+        }
+      } catch (error) {
+        console.error('❌ Error creating subscription from invoice:', error);
+      }
+    }
+  }
+
   // Handle subscription updates (status changes)
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object as Stripe.Subscription;
