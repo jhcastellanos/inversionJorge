@@ -30,13 +30,28 @@ export async function POST(req: NextRequest) {
     let trialEnd: number | undefined;
     
     if (membershipStartDate && now < membershipStartDate) {
-      // Compra ANTES de la fecha de inicio: usar trial hasta esa fecha
-      trialEnd = Math.floor(membershipStartDate.getTime() / 1000);
-      console.log('🎯 Compra antes del inicio de membresía');
-      console.log('   Fecha actual:', now.toISOString());
-      console.log('   Inicio membresía:', membershipStartDate.toISOString());
-      console.log('   Trial hasta:', new Date(trialEnd * 1000).toISOString());
-      console.log('   Precio cuando termine trial: $' + monthlyPrice);
+      // Calcular días hasta la fecha de inicio
+      const daysUntilStart = (membershipStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // Stripe requiere al menos 2 días para trial_end
+      // Si faltan menos de 2 días, cobramos inmediatamente (bypass)
+      if (daysUntilStart >= 2) {
+        // Compra ANTES de la fecha de inicio: usar trial hasta esa fecha
+        trialEnd = Math.floor(membershipStartDate.getTime() / 1000);
+        console.log('🎯 Compra antes del inicio de membresía (con trial)');
+        console.log('   Fecha actual:', now.toISOString());
+        console.log('   Inicio membresía:', membershipStartDate.toISOString());
+        console.log('   Días hasta inicio:', daysUntilStart.toFixed(2));
+        console.log('   Trial hasta:', new Date(trialEnd * 1000).toISOString());
+        console.log('   Precio cuando termine trial: $' + monthlyPrice);
+      } else {
+        // Fecha de inicio muy próxima: hacer bypass y cobrar inmediatamente
+        console.log('🎯 Compra antes del inicio PERO fecha muy próxima (< 2 días, bypass)');
+        console.log('   Fecha actual:', now.toISOString());
+        console.log('   Inicio membresía:', membershipStartDate.toISOString());
+        console.log('   Días hasta inicio:', daysUntilStart.toFixed(2));
+        console.log('   Cobrando inmediatamente: $' + monthlyPrice);
+      }
     } else {
       console.log('🎯 Compra después/sin fecha de inicio, cobra inmediatamente');
       console.log('   Precio: $' + monthlyPrice);
