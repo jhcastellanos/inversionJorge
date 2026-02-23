@@ -67,8 +67,19 @@ export async function POST(req: NextRequest) {
       try {
         const membershipId = parseInt(invoice.metadata.membershipId);
         const customerId = invoice.customer as string;
-        const email = invoice.customer_email || '';
-        const name = invoice.customer_name || invoice.metadata?.customerName || '';
+        
+        // Use invoice customer_email and customer_name as primary source
+        // These are set by Stripe during checkout
+        let email = invoice.customer_email || '';
+        let name = invoice.customer_name || '';
+        
+        // Fallback to metadata if invoice doesn't have customer info
+        if (!email && invoice.metadata?.customerEmail) {
+          email = invoice.metadata.customerEmail;
+        }
+        if (!name && invoice.metadata?.customerName) {
+          name = invoice.metadata.customerName;
+        }
         
         if (!email) {
           console.error('❌ Missing customer email in invoice');
