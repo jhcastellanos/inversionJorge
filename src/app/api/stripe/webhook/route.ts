@@ -83,6 +83,32 @@ export async function POST(req: NextRequest) {
           });
           
           console.log(`✅ Subscription created in DB: ${invoice.subscription}`);
+          
+          // GENERATE AND SEND TERMS PDF AFTER PAYMENT
+          // Only send after first successful payment
+          try {
+            const termsResponse = await fetch(
+              `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/memberships/terms`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customerName: name,
+                  customerEmail: email,
+                  stripeSubscriptionId: invoice.subscription,
+                }),
+              }
+            );
+
+            if (termsResponse.ok) {
+              console.log(`✅ Terms PDF generated and sent for ${name} (${email})`);
+            } else {
+              const errorData = await termsResponse.json();
+              console.error(`❌ Failed to generate terms PDF: ${errorData.error}`);
+            }
+          } catch (termsError) {
+            console.error('❌ Error generating/sending terms PDF:', termsError);
+          }
         } else {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
         }

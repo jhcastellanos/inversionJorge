@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10
 
 export async function POST(req: NextRequest) {
   try {
-    const { membershipId } = await req.json();
+    const { membershipId, customerName, customerEmail } = await req.json();
     if (!membershipId) return NextResponse.json({ error: 'Missing membershipId' }, { status: 400 });
 
     const membership = await Membership.findById(parseInt(membershipId));
@@ -87,13 +87,17 @@ export async function POST(req: NextRequest) {
       mode: 'subscription',
       metadata: { 
         membershipId: membership.Id.toString(),
-        type: 'membership'
+        type: 'membership',
+        customerName: customerName || '',
+        customerEmail: customerEmail || '',
       },
       subscription_data: {
         ...(trialEnd ? { trial_end: trialEnd } : {}),
         metadata: {
           membershipId: membership.Id.toString(),
           type: 'membership',
+          customerName: customerName || '',
+          customerEmail: customerEmail || '',
           ...(membershipStartDate ? { membershipStartDate: membershipStartDate.toISOString() } : {}),
         },
       },
@@ -109,7 +113,9 @@ export async function POST(req: NextRequest) {
       sessionId: session.id,
       membershipId: membership.Id,
       price: monthlyPrice,
-      hasTrialEnd: !!trialEnd
+      hasTrialEnd: !!trialEnd,
+      customerName,
+      customerEmail,
     });
 
     return NextResponse.json({ url: session.url });

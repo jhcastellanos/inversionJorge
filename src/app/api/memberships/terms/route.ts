@@ -120,55 +120,70 @@ async function generateTermsPDF(
 ): Promise<Buffer> {
   const doc = new jsPDF();
   let yPosition = 10;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 10;
+  const maxWidth = pageWidth - 2 * margin;
 
   // Title
   doc.setFontSize(16);
-  doc.text('TERMINOS Y CONDICIONES', 105, yPosition, { align: 'center' });
-  yPosition += 10;
+  doc.text('TERMINOS Y CONDICIONES', pageWidth / 2, yPosition, { align: 'center' });
+  yPosition += 8;
 
   doc.setFontSize(12);
-  doc.text('Trading en Vivo con Jorge y Guille', 105, yPosition, { align: 'center' });
-  yPosition += 8;
+  doc.text('Trading en Vivo con Jorge y Guille', pageWidth / 2, yPosition, { align: 'center' });
+  yPosition += 10;
 
   // Subscriber info
   doc.setFontSize(10);
-  doc.text(`Fecha: ${acceptanceDate.toLocaleDateString('es-ES')}`, 10, yPosition);
+  doc.text(`Fecha: ${acceptanceDate.toLocaleDateString('es-ES')}`, margin, yPosition);
   yPosition += 10;
 
   doc.setFontSize(11);
-  doc.text('INFORMACION DEL SUSCRIPTOR:', 10, yPosition);
+  doc.text('INFORMACION DEL SUSCRIPTOR:', margin, yPosition);
   yPosition += 6;
 
   doc.setFontSize(10);
-  doc.text(`Nombre: ${customerName}`, 10, yPosition);
+  doc.text(`Nombre: ${customerName}`, margin, yPosition);
   yPosition += 6;
   
-  doc.text(`Email: ${customerEmail}`, 10, yPosition);
+  doc.text(`Email: ${customerEmail}`, margin, yPosition);
   yPosition += 12;
 
-  // Terms
+  // Full Terms
   doc.setFontSize(10);
-  doc.text('TERMINOS Y CONDICIONES RESUMIDOS:', 10, yPosition);
+  doc.text('TERMINOS Y CONDICIONES COMPLETOS:', margin, yPosition);
   yPosition += 8;
 
   doc.setFontSize(9);
-  const termsText = `El usuario acepta que:
-- Este servicio es informativo y demostrativo
-- El trading conlleva alto riesgo de perdida total
-- Las decisiones son responsabilidad exclusiva del usuario
-- No hay garantia de ganancias
-- Puede cancelar en cualquier momento
-- El acceso se mantiene hasta el final del periodo pagado
-- Los hosts no son asesores financieros
-- El usuario declara ser mayor de edad y estar informado
+  const lines = doc.splitTextToSize(TERMS_TEXT, maxWidth);
+  
+  // Add terms with page breaks
+  for (let i = 0; i < lines.length; i++) {
+    if (yPosition > pageHeight - margin - 10) {
+      doc.addPage();
+      yPosition = margin;
+    }
+    doc.text(lines[i], margin, yPosition);
+    yPosition += 4;
+  }
 
-Fecha de aceptacion: ${acceptanceDate.toLocaleString('es-ES')}
+  // Add acceptance info at the end
+  if (yPosition > pageHeight - margin - 20) {
+    doc.addPage();
+    yPosition = margin;
+  }
 
-Este documento fue generado automaticamente y tiene validez legal 
-como contrato electronico firmado digitalmente.`;
-
-  const lines = doc.splitTextToSize(termsText, 190);
-  doc.text(lines, 10, yPosition);
+  doc.setFontSize(9);
+  yPosition += 5;
+  doc.text(`Fecha de aceptacion: ${acceptanceDate.toLocaleString('es-ES')}`, margin, yPosition);
+  yPosition += 6;
+  doc.text(
+    'Este documento fue generado automaticamente y tiene validez legal como contrato electronico firmado digitalmente.',
+    margin,
+    yPosition,
+    { maxWidth: maxWidth }
+  );
 
   // Convert to buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
@@ -215,7 +230,7 @@ async function sendEmail(
 
 export async function POST(req: NextRequest) {
   try {
-    const { customerName, customerEmail, membershipName } = await req.json();
+    const { customerName, customerEmail, membershipName, stripeSubscriptionId } = await req.json();
 
     if (!customerName || !customerEmail) {
       return NextResponse.json(
@@ -224,23 +239,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate PDF
-    const pdfBuffer = await generateTermsPDF(customerName, customerEmail, new Date());
+    // If stripeSubscriptionId is provided, this is being called AFTER payment
+    // Generate PDF and send email
+    if (stripeSubscriptionId) {
+      const pdfBuffer = await generateTermsPDF(customerName, customerEmail, new Date());
 
-    // Send email
-    await sendEmail(
-      process.env.OWNER_EMAIL || 'inversionrealconjorge@gmail.com',
-      customerName,
-      customerEmail,
-      pdfBuffer
-    );
+      await sendEmail(
+        'jhcastellanosvilla@gmail.com',
+        customerName,
+        customerEmail,
+        pdfBuffer
+      );
 
+      return NextResponse.json({
+        success: true,
+        message: 'PDF generated and email sent after payment',
+      });
+    }
+
+    // If no stripeSubscriptionId, this is being called BEFORE payment
+    // Just validate the terms acceptance
     return NextResponse.json({
       success: true,
-      message: 'Terms accepted and email sent',
+      message: 'Terms accepted, proceed to payment',
     });
   } catch (error) {
-    console.error('Error generating or sending terms PDF:', error);
+    console.error('Error processing terms:', error);
     return NextResponse.json(
       {
         error: 'Error processing terms',

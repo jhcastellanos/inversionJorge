@@ -57,7 +57,7 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
     try {
       setIsLoading(true);
       
-      // Generar PDF y enviar email
+      // Validate terms acceptance (no PDF generation yet)
       const termsResponse = await fetch('/api/memberships/terms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,6 +65,7 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
           customerName,
           customerEmail,
           membershipName: membership.Name,
+          // No stripeSubscriptionId = pre-payment validation only
         }),
       });
 
@@ -72,11 +73,16 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         throw new Error('Error al procesar los términos');
       }
 
-      // Proceder con el pago en Stripe
+      // Proceed to Stripe checkout (PDF will be generated after payment)
       const res = await fetch('/api/stripe/subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ membershipId: membership.Id }),
+        body: JSON.stringify({ 
+          membershipId: membership.Id,
+          // Pass customer info so it's available in metadata for webhook
+          customerName,
+          customerEmail,
+        }),
       });
       
       const data = await res.json();
