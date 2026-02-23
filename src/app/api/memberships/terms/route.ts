@@ -184,14 +184,18 @@ async function sendEmail(
   const resend = new Resend(process.env.RESEND_API_KEY);
   const attachmentBase64 = pdfBuffer.toString('base64');
   
+  // Use OWNER_EMAIL (verified) instead of customer email for testing mode
+  // In production with verified domain, change 'to' back to the customer email
+  const recipientEmail = process.env.OWNER_EMAIL || 'inversionrealconjorge@gmail.com';
+  
   const response = await resend.emails.send({
-    from: 'Inversión Real <onboarding@resend.dev>',
-    to: to,
-    subject: `Contrato Firmado - Trading en Vivo: ${customerName}`,
+    from: 'onboarding@resend.dev',
+    to: recipientEmail,
+    subject: `Nuevo Contrato Firmado - Trading en Vivo: ${customerName}`,
     html: `
       <h2>Nuevo Contrato de Membresía Aceptado</h2>
       <p><strong>Suscriptor:</strong> ${customerName}</p>
-      <p><strong>Email:</strong> ${customerEmail}</p>
+      <p><strong>Email del Suscriptor:</strong> ${customerEmail}</p>
       <p><strong>Membresía:</strong> Trading en Vivo con Jorge y Guille</p>
       <p><strong>Fecha de Aceptación:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
       <p>Se adjunta el contrato firmado digitalmente con los Términos y Condiciones aceptados.</p>
