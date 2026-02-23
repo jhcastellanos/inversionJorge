@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import { Resend } from 'resend';
+import { Subscription, Contract } from '../../../../lib/models';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -228,6 +229,38 @@ async function sendEmail(
   }
 }
 
+async function saveContractToDatabase(
+  stripeSubscriptionId: string,
+  customerName: string,
+  customerEmail: string,
+  pdfBuffer: Buffer,
+  acceptanceDate: Date
+): Promise<void> {
+  try {
+    // Get subscription from DB to get the ID
+    const subscription = await Subscription.findByStripeId(stripeSubscriptionId);
+    
+    if (!subscription) {
+      console.warn(`⚠️ Subscription not found for stripe ID: ${stripeSubscriptionId}`);
+      return;
+    }
+
+    // Save contract to database
+    const contract = await Contract.create({
+      subscription_id: subscription.Id,
+      customer_email: customerEmail,
+      customer_name: customerName,
+      pdf_content: pdfBuffer,
+      acceptance_date: acceptanceDate,
+    });
+
+    console.log(`✅ Contract saved to database with ID: ${contract.Id}`);
+  } catch (error) {
+    console.error('❌ Error saving contract to database:', error);
+    // Don't throw - we don't want to fail the whole flow if DB save fails
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { customerName, customerEmail, membershipName, stripeSubscriptionId } = await req.json();
@@ -253,9 +286,11 @@ export async function POST(req: NextRequest) {
     if (stripeSubscriptionId) {
       console.log('🎯 Post-payment flow: Generating PDF and sending email');
       
-      const pdfBuffer = await generateTermsPDF(customerName, customerEmail, new Date());
+      const acceptanceDate = new Date();
+      const pdfBuffer = await generateTermsPDF(customerName, customerEmail, acceptanceDate);
       console.log(`✅ PDF generated, size: ${pdfBuffer.length} bytes`);
 
+      // Send email
       await sendEmail(
         'jhcastellanosvilla@gmail.com',
         customerName,
@@ -264,9 +299,18 @@ export async function POST(req: NextRequest) {
       );
       console.log(`✅ Email sent to jhcastellanosvilla@gmail.com`);
 
+      // Save contract to database
+      await saveContractToDatabase(
+        stripeSubscriptionId,
+        customerName,
+        customerEmail,
+        pdfBuffer,
+        acceptanceDate
+      );
+
       return NextResponse.json({
         success: true,
-        message: 'PDF generated and email sent after payment',
+        message: 'PDF generated, email sent, and contract saved after payment',
       });
     }
 

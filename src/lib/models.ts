@@ -403,3 +403,58 @@ export const DiscordConnection = {
     }
   }
 };
+
+// Contract Model - Store PDF documents
+export const Contract = {
+  async findBySubscriptionId(subscriptionId: number) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM "Contracts" WHERE "SubscriptionId" = $1',
+        [subscriptionId]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async findByEmail(email: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM "Contracts" WHERE "CustomerEmail" = $1 ORDER BY "CreatedAt" DESC',
+        [email]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async create(data: { subscription_id: number; customer_email: string; customer_name: string; pdf_content: Buffer; acceptance_date: Date }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'INSERT INTO "Contracts" ("SubscriptionId", "CustomerEmail", "CustomerName", "PdfContent", "AcceptanceDate", "CreatedAt") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING "Id", "SubscriptionId", "CustomerEmail", "CustomerName", "AcceptanceDate", "CreatedAt"',
+        [data.subscription_id, data.customer_email, data.customer_name, data.pdf_content, data.acceptance_date]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async getPdfContent(contractId: number) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT "PdfContent" FROM "Contracts" WHERE "Id" = $1',
+        [contractId]
+      );
+      return result.rows[0]?.PdfContent;
+    } finally {
+      client.release();
+    }
+  }
+};

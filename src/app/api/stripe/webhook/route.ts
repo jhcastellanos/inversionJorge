@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { Customer, Order, Subscription, DiscordConnection } from '../../../../lib/models';
+import { Customer, Order, Subscription, DiscordConnection, Contract } from '../../../../lib/models';
 import { addRoleToMember, removeRoleFromMember, isGuildMember, sendDirectMessage } from '../../../../lib/discord';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
