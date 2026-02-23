@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import PDFDocument from 'pdfkit';
+import { jsPDF } from 'jspdf';
 import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Force rebuild - using built-in Courier fonts for Vercel compatibility
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
 Trading en Vivo con Jorge y Guille
@@ -119,56 +118,61 @@ async function generateTermsPDF(
   customerEmail: string,
   acceptanceDate: Date
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    try {
-      const chunks: Buffer[] = [];
-      
-      const doc = new PDFDocument({
-        bufferPages: false,
-        margin: 30,
-        size: 'A4',
-      });
+  const doc = new jsPDF();
+  let yPosition = 10;
 
-      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-      doc.on('end', () => {
-        resolve(Buffer.concat(chunks));
-      });
-      doc.on('error', reject);
+  // Title
+  doc.setFontSize(16);
+  doc.text('TERMINOS Y CONDICIONES', 105, yPosition, { align: 'center' });
+  yPosition += 10;
 
-      // Simple PDF with basic text
-      doc.fontSize(16).text('TERMINOS Y CONDICIONES', { align: 'center' });
-      doc.fontSize(12).text('Trading en Vivo con Jorge y Guille', { align: 'center' });
-      doc.moveDown(0.5);
-      doc.fontSize(10).text(`Fecha: ${acceptanceDate.toLocaleDateString('es-ES')}`);
-      
-      doc.moveDown(0.5);
-      doc.fontSize(11).text('INFORMACION DEL SUSCRIPTOR:');
-      doc.fontSize(10).text(`Nombre: ${customerName}`);
-      doc.fontSize(10).text(`Email: ${customerEmail}`);
-      
-      doc.moveDown(1);
-      doc.fontSize(10).text('TERMINOS Y CONDICIONES RESUMIDOS:', { underline: true });
-      
-      // Add simplified terms
-      doc.fontSize(9);
-      const shortTerms = `El usuario acepta que:
+  doc.setFontSize(12);
+  doc.text('Trading en Vivo con Jorge y Guille', 105, yPosition, { align: 'center' });
+  yPosition += 8;
+
+  // Subscriber info
+  doc.setFontSize(10);
+  doc.text(`Fecha: ${acceptanceDate.toLocaleDateString('es-ES')}`, 10, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(11);
+  doc.text('INFORMACION DEL SUSCRIPTOR:', 10, yPosition);
+  yPosition += 6;
+
+  doc.setFontSize(10);
+  doc.text(`Nombre: ${customerName}`, 10, yPosition);
+  yPosition += 6;
+  
+  doc.text(`Email: ${customerEmail}`, 10, yPosition);
+  yPosition += 12;
+
+  // Terms
+  doc.setFontSize(10);
+  doc.text('TERMINOS Y CONDICIONES RESUMIDOS:', 10, yPosition);
+  yPosition += 8;
+
+  doc.setFontSize(9);
+  const termsText = `El usuario acepta que:
 - Este servicio es informativo y demostrativo
-- El trading conlleva alto riesgo de perdida
-- Las decisiones son responsabilidad del usuario
+- El trading conlleva alto riesgo de perdida total
+- Las decisiones son responsabilidad exclusiva del usuario
 - No hay garantia de ganancias
 - Puede cancelar en cualquier momento
-- El acceso se mantiene hasta fin del periodo pagado
+- El acceso se mantiene hasta el final del periodo pagado
+- Los hosts no son asesores financieros
+- El usuario declara ser mayor de edad y estar informado
 
 Fecha de aceptacion: ${acceptanceDate.toLocaleString('es-ES')}
 
-Este documento fue generado automaticamente y tiene validez legal como contrato electronico.`;
-      doc.text(shortTerms);
-      
-      doc.end();
-    } catch (error) {
-      reject(error);
-    }
-  });
+Este documento fue generado automaticamente y tiene validez legal 
+como contrato electronico firmado digitalmente.`;
+
+  const lines = doc.splitTextToSize(termsText, 190);
+  doc.text(lines, 10, yPosition);
+
+  // Convert to buffer
+  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+  return pdfBuffer;
 }
 
 async function sendEmail(
