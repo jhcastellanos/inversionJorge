@@ -184,9 +184,9 @@ async function sendEmail(
   const resend = new Resend(process.env.RESEND_API_KEY);
   const attachmentBase64 = pdfBuffer.toString('base64');
   
-  // Use OWNER_EMAIL (verified) instead of customer email for testing mode
-  // In production with verified domain, change 'to' back to the customer email
-  const recipientEmail = process.env.OWNER_EMAIL || 'inversionrealconjorge@gmail.com';
+  // Use verified owner email (test mode restriction in Resend)
+  // Customer email is only for the PDF contract, not for sending
+  const recipientEmail = 'jhcastellanosvilla@gmail.com';
   
   const response = await resend.emails.send({
     from: 'onboarding@resend.dev',
