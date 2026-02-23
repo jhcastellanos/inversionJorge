@@ -57,7 +57,7 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
     try {
       setIsLoading(true);
       
-      // Just validate terms acceptance, don't generate PDF yet
+      // Generate PDF and send email BEFORE Stripe checkout
       const termsResponse = await fetch('/api/memberships/terms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,7 +72,7 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         throw new Error('Error al procesar los términos');
       }
 
-      // Proceed to Stripe checkout (PDF will be generated after payment)
+      // Proceed to Stripe checkout
       const res = await fetch('/api/stripe/subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

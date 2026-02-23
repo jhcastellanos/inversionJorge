@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { generateTermsPDF, sendTermsEmail } from '@/lib/terms';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,13 +22,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Just validate terms acceptance
-    // PDF generation happens in the webhook after payment
-    console.log('✅ Terms accepted, ready for Stripe checkout');
+    // Generate PDF with terms
+    console.log('📄 Generating PDF...');
+    const pdfBuffer = await generateTermsPDF(
+      customerName,
+      customerEmail,
+      new Date()
+    );
+
+    // Send email with PDF attachment
+    console.log('📧 Sending email with PDF...');
+    await sendTermsEmail(
+      customerName,
+      customerEmail,
+      pdfBuffer
+    );
+
+    console.log('✅ Terms processed successfully, PDF generated and email sent');
     
     return NextResponse.json({
       success: true,
-      message: 'Terms accepted, proceed to payment',
+      message: 'Terms accepted and PDF sent to email. Proceed to payment.',
     });
   } catch (error) {
     console.error('Error processing terms:', error);
