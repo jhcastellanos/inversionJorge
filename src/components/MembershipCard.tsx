@@ -18,17 +18,23 @@ interface MembershipCardProps {
 
 export default function MembershipCard({ membership }: MembershipCardProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [showContactForm, setShowContactForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribeClick = () => {
-    setShowContactForm(true);
+    setShowPaymentForm(true);
   };
 
-  const handleContactFormSubmit = () => {
+  const handlePaymentClose = () => {
+    setShowPaymentForm(false);
+    setCustomerName('');
+    setCustomerEmail('');
+  };
+
+  const handleBuyClick = () => {
     if (!customerName.trim()) {
       alert('Por favor ingresa tu nombre');
       return;
@@ -42,15 +48,9 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
       return;
     }
     
-    // Cerrar formulario de contacto y mostrar términos
-    setShowContactForm(false);
+    // Mostrar modal de términos
+    setShowPaymentForm(false);
     setShowTermsModal(true);
-  };
-
-  const handleContactFormCancel = () => {
-    setShowContactForm(false);
-    setCustomerName('');
-    setCustomerEmail('');
   };
 
   const handleTermsAccept = async () => {
@@ -102,8 +102,8 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
 
   const handleTermsCancel = () => {
     setShowTermsModal(false);
-    // Mantener los datos para que el usuario pueda reintentar
-    setShowContactForm(true);
+    // Volver a mostrar el formulario de pago
+    setShowPaymentForm(true);
   };
 
   const benefits = membership.Benefits?.split('\n').filter(b => b.trim()) || [];
@@ -246,43 +246,32 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         </div>
       </div>
 
-      {/* Terms Modal */}
-      {showTermsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
-              <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
-              <p className="text-gray-600 mt-1">Trading en Vivo con Jorge y Guille</p>
-            </div>
-
-            {/* Terms Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <TermsAndConditionsModal
-                isOpen={true}
-                membershipName={membership.Name}
-                email={customerEmail}
-                onAccept={handleTermsAccept}
-                onCancel={handleTermsCancel}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Contact Form Modal */}
-      {showContactForm && !showTermsModal && (
+      {/* Payment Form Modal */}
+      {showPaymentForm && !showTermsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
             {/* Header */}
             <div className="border-b p-6">
-              <h2 className="text-2xl font-bold text-gray-900">Tu Información</h2>
-              <p className="text-gray-600 mt-1">Completa tus datos para continuar</p>
+              <h2 className="text-2xl font-bold text-gray-900">Completar Compra</h2>
+              <p className="text-gray-600 mt-1">{membership.Name}</p>
             </div>
 
             {/* Form */}
             <div className="p-6">
+              {/* Resumen del Plan */}
+              <div className="bg-indigo-50 rounded-lg p-4 mb-6 border border-indigo-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 font-medium">Precio:</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    ${membership.DiscountPrice 
+                      ? parseFloat(membership.DiscountPrice.toString()).toFixed(2)
+                      : parseFloat(membership.MonthlyPrice.toString()).toFixed(2)
+                    }/mes
+                  </span>
+                </div>
+              </div>
+
+              {/* Información del Cliente */}
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Nombre Completo</label>
@@ -309,18 +298,47 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
               {/* Buttons */}
               <div className="flex gap-3">
                 <button
-                  onClick={handleContactFormCancel}
+                  onClick={handlePaymentClose}
                   className="flex-1 bg-gray-200 text-gray-900 py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={handleContactFormSubmit}
+                  onClick={handleBuyClick}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
                 >
-                  Registrar
+                  Comprar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terms Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
+              <p className="text-gray-600 mt-1">Trading en Vivo con Jorge y Guille</p>
+              <div className="mt-3 pt-3 border-t space-y-1">
+                <p className="text-sm text-gray-600"><strong>Nombre:</strong> {customerName}</p>
+                <p className="text-sm text-gray-600"><strong>Email:</strong> {customerEmail}</p>
+              </div>
+            </div>
+
+            {/* Terms Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <TermsAndConditionsModal
+                isOpen={true}
+                membershipName={membership.Name}
+                email={customerEmail}
+                onAccept={handleTermsAccept}
+                onCancel={handleTermsCancel}
+                isLoading={isLoading}
+              />
             </div>
           </div>
         </div>

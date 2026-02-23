@@ -188,13 +188,22 @@ export default function TermsAndConditionsModal({
           </label>
         </div>
 
-        <button
-          onClick={handleAccept}
-          disabled={!accepted || isSubmitting || isLoading}
-          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting || isLoading ? 'Procesando...' : 'Aceptar y Pagar'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isSubmitting || isLoading}
+            className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Volver
+          </button>
+          <button
+            onClick={handleAccept}
+            disabled={!accepted || isSubmitting || isLoading}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting || isLoading ? 'Procesando...' : 'Aceptar y Pagar'}
+          </button>
+        </div>
       </div>
     </>
   );
