@@ -120,72 +120,54 @@ async function generateTermsPDF(
   acceptanceDate: Date
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    
-    const doc = new PDFDocument({
-      bufferPages: true,
-      margin: 50,
-    });
+    try {
+      const chunks: Buffer[] = [];
+      
+      const doc = new PDFDocument({
+        bufferPages: false,
+        margin: 30,
+        size: 'A4',
+      });
 
-    doc.on('data', (chunk) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+      doc.on('error', reject);
 
-    // Title - use bold style instead of font selection
-    doc.fontSize(20).text('TÉRMINOS Y CONDICIONES', { align: 'center' });
-    doc.fontSize(14).text('Trading en Vivo con Jorge y Guille', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(10).text(`Última actualización: 1ro de Febrero de 2026`, { align: 'center' });
-    doc.moveDown(1);
+      // Simple PDF with basic text
+      doc.fontSize(16).text('TERMINOS Y CONDICIONES', { align: 'center' });
+      doc.fontSize(12).text('Trading en Vivo con Jorge y Guille', { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(10).text(`Fecha: ${acceptanceDate.toLocaleDateString('es-ES')}`);
+      
+      doc.moveDown(0.5);
+      doc.fontSize(11).text('INFORMACION DEL SUSCRIPTOR:');
+      doc.fontSize(10).text(`Nombre: ${customerName}`);
+      doc.fontSize(10).text(`Email: ${customerEmail}`);
+      
+      doc.moveDown(1);
+      doc.fontSize(10).text('TERMINOS Y CONDICIONES RESUMIDOS:', { underline: true });
+      
+      // Add simplified terms
+      doc.fontSize(9);
+      const shortTerms = `El usuario acepta que:
+- Este servicio es informativo y demostrativo
+- El trading conlleva alto riesgo de perdida
+- Las decisiones son responsabilidad del usuario
+- No hay garantia de ganancias
+- Puede cancelar en cualquier momento
+- El acceso se mantiene hasta fin del periodo pagado
 
-    // Signatario info
-    doc.fontSize(11).text('INFORMACIÓN DEL SUSCRIPTOR:', { underline: true });
-    doc.fontSize(10).text(`Nombre: ${customerName}`);
-    doc.text(`Email: ${customerEmail}`);
-    doc.text(`Fecha de Aceptación: ${acceptanceDate.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })}`);
-    doc.moveDown(1);
+Fecha de aceptacion: ${acceptanceDate.toLocaleString('es-ES')}
 
-    // Terms content
-    const lines = TERMS_TEXT.split('\n');
-    
-    lines.forEach((line) => {
-      if (!line.trim()) {
-        doc.moveDown(0.3);
-        return;
-      }
-
-      if (line.match(/^\d+\./)) {
-        // Section headers
-        doc.fontSize(10).text(line);
-        doc.moveDown(0.2);
-      } else if (line.startsWith('-')) {
-        // Bullet points
-        doc.fontSize(9).text(line, { indent: 20 });
-        doc.moveDown(0.1);
-      } else {
-        // Regular text
-        doc.fontSize(9).text(line, { align: 'left' });
-        doc.moveDown(0.15);
-      }
-    });
-
-    doc.moveDown(1);
-    doc.fontSize(10).text('FIRMA DIGITAL', { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(9).text(`Por este medio, ${customerName} (${customerEmail}) acepta expresamente todos los Términos y Condiciones mencionados anteriormente.`);
-    doc.moveDown(0.3);
-    doc.text('Se ha generado un contrato digital a través de aceptación electrónica en fecha y hora indicadas anteriormente.');
-    doc.moveDown(1);
-    
-    doc.fontSize(8).fillColor('#666666').text('Documento generado automáticamente. Tiene validez legal como contrato electrónico firmado digitalmente.', { align: 'center' });
-
-    doc.end();
+Este documento fue generado automaticamente y tiene validez legal como contrato electronico.`;
+      doc.text(shortTerms);
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
