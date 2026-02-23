@@ -57,7 +57,7 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
     try {
       setIsLoading(true);
       
-      // Validate terms acceptance (no PDF generation yet)
+      // Just validate terms acceptance, don't generate PDF yet
       const termsResponse = await fetch('/api/memberships/terms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,7 +65,6 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
           customerName,
           customerEmail,
           membershipName: membership.Name,
-          // No stripeSubscriptionId = pre-payment validation only
         }),
       });
 
@@ -79,7 +78,6 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           membershipId: membership.Id,
-          // Pass customer info so it's available in metadata for webhook
           customerName,
           customerEmail,
         }),

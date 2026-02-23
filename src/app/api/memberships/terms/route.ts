@@ -5,14 +5,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { customerName, customerEmail, membershipName, stripeSubscriptionId } = await req.json();
+    const { customerName, customerEmail, membershipName } = await req.json();
 
-    console.log('📨 Terms endpoint called:', {
+    console.log('📨 Terms validation endpoint called:', {
       customerName,
       customerEmail,
       membershipName,
-      stripeSubscriptionId,
-      hasStripeId: !!stripeSubscriptionId,
     });
 
     if (!customerName || !customerEmail) {
@@ -23,10 +21,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // This endpoint is only for pre-payment validation (before Stripe)
-    // Post-payment PDF generation is handled by the webhook via lib/terms.ts
+    // Just validate terms acceptance
+    // PDF generation happens in the webhook after payment
+    console.log('✅ Terms accepted, ready for Stripe checkout');
     
-    console.log('🎯 Pre-payment flow: Validating terms acceptance');
     return NextResponse.json({
       success: true,
       message: 'Terms accepted, proceed to payment',
