@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import PDFDocument from 'pdfkit';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
 Trading en Vivo con Jorge y Guille
@@ -194,17 +196,10 @@ async function sendEmail(
   customerEmail: string,
   pdfBuffer: Buffer
 ): Promise<void> {
-  // Configurar transporter de nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
+  const attachmentBase64 = pdfBuffer.toString('base64');
+  
+  const response = await resend.emails.send({
+    from: 'Inversión Real <onboarding@resend.dev>',
     to: to,
     subject: `Contrato Firmado - Trading en Vivo: ${customerName}`,
     html: `
@@ -218,13 +213,14 @@ async function sendEmail(
     attachments: [
       {
         filename: `Contrato_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
+        content: attachmentBase64,
       },
     ],
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (response.error) {
+    throw new Error(`Resend error: ${response.error.message}`);
+  }
 }
 
 export async function POST(req: NextRequest) {
