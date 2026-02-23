@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Force rebuild - using built-in Courier fonts for Vercel compatibility
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
 Trading en Vivo con Jorge y Guille
