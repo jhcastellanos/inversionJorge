@@ -232,7 +232,16 @@ export async function POST(req: NextRequest) {
   try {
     const { customerName, customerEmail, membershipName, stripeSubscriptionId } = await req.json();
 
+    console.log('📨 Terms endpoint called:', {
+      customerName,
+      customerEmail,
+      membershipName,
+      stripeSubscriptionId,
+      hasStripeId: !!stripeSubscriptionId,
+    });
+
     if (!customerName || !customerEmail) {
+      console.error('❌ Missing required fields:', { customerName, customerEmail });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -242,7 +251,10 @@ export async function POST(req: NextRequest) {
     // If stripeSubscriptionId is provided, this is being called AFTER payment
     // Generate PDF and send email
     if (stripeSubscriptionId) {
+      console.log('🎯 Post-payment flow: Generating PDF and sending email');
+      
       const pdfBuffer = await generateTermsPDF(customerName, customerEmail, new Date());
+      console.log(`✅ PDF generated, size: ${pdfBuffer.length} bytes`);
 
       await sendEmail(
         'jhcastellanosvilla@gmail.com',
@@ -250,6 +262,7 @@ export async function POST(req: NextRequest) {
         customerEmail,
         pdfBuffer
       );
+      console.log(`✅ Email sent to jhcastellanosvilla@gmail.com`);
 
       return NextResponse.json({
         success: true,
@@ -259,6 +272,7 @@ export async function POST(req: NextRequest) {
 
     // If no stripeSubscriptionId, this is being called BEFORE payment
     // Just validate the terms acceptance
+    console.log('🎯 Pre-payment flow: Validating terms acceptance');
     return NextResponse.json({
       success: true,
       message: 'Terms accepted, proceed to payment',

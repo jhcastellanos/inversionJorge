@@ -54,18 +54,28 @@ export async function POST(req: NextRequest) {
   if (event.type === 'invoice.payment_succeeded') {
     const invoice = event.data.object as Stripe.Invoice;
     
+    console.log('📋 Invoice received:', {
+      invoiceId: invoice.id,
+      subscription: invoice.subscription,
+      metadata: invoice.metadata,
+      customerName: invoice.customer_name,
+      customerEmail: invoice.customer_email,
+    });
+    
     // Only process if this is a subscription invoice with metadata
     if (invoice.subscription && invoice.metadata?.membershipId) {
       try {
         const membershipId = parseInt(invoice.metadata.membershipId);
         const customerId = invoice.customer as string;
         const email = invoice.customer_email || '';
-        const name = invoice.customer_name || '';
+        const name = invoice.customer_name || invoice.metadata?.customerName || '';
         
         if (!email) {
           console.error('❌ Missing customer email in invoice');
           return NextResponse.json({ received: true });
         }
+
+        console.log(`📝 Processing invoice for: ${name} (${email})`);
 
         // Check if subscription already exists in database
         const existingSubscription = await Subscription.findByStripeId(invoice.subscription as string);
@@ -86,28 +96,39 @@ export async function POST(req: NextRequest) {
           
           // GENERATE AND SEND TERMS PDF AFTER PAYMENT
           // Only send after first successful payment
-          try {
-            const termsResponse = await fetch(
-              `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/memberships/terms`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  customerName: name,
-                  customerEmail: email,
-                  stripeSubscriptionId: invoice.subscription,
-                }),
-              }
-            );
+          if (name && email) {
+            try {
+              const baseUrl = process.env.VERCEL_URL 
+                ? `https://${process.env.VERCEL_URL}`
+                : 'http://localhost:3000';
+              
+              console.log(`🔗 Calling terms endpoint at: ${baseUrl}/api/memberships/terms`);
+              
+              const termsResponse = await fetch(
+                `${baseUrl}/api/memberships/terms`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customerName: name,
+                    customerEmail: email,
+                    stripeSubscriptionId: invoice.subscription,
+                  }),
+                }
+              );
 
-            if (termsResponse.ok) {
-              console.log(`✅ Terms PDF generated and sent for ${name} (${email})`);
-            } else {
-              const errorData = await termsResponse.json();
-              console.error(`❌ Failed to generate terms PDF: ${errorData.error}`);
+              const termsData = await termsResponse.json();
+              
+              if (termsResponse.ok) {
+                console.log(`✅ Terms PDF generated and sent for ${name} (${email})`, termsData);
+              } else {
+                console.error(`❌ Failed to generate terms PDF:`, termsData);
+              }
+            } catch (termsError) {
+              console.error('❌ Error generating/sending terms PDF:', termsError);
             }
-          } catch (termsError) {
-            console.error('❌ Error generating/sending terms PDF:', termsError);
+          } else {
+            console.warn(`⚠️ Missing name or email for terms PDF. Name: ${name}, Email: ${email}`);
           }
         } else {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
@@ -115,6 +136,8 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         console.error('❌ Error creating subscription from invoice:', error);
       }
+    } else {
+      console.log('ℹ️ Not a membership subscription, skipping invoice processing');
     }
   }
 
