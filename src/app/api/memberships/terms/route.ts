@@ -5,8 +5,6 @@ import { Resend } from 'resend';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
 Trading en Vivo con Jorge y Guille
 
@@ -184,7 +182,7 @@ async function generateTermsPDF(
     doc.text('Se ha generado un contrato digital a través de aceptación electrónica en fecha y hora indicadas anteriormente.');
     doc.moveDown(1);
     
-    doc.fontSize(8).font('Helvetica').text('Documento generado automáticamente. Tiene validez legal como contrato electrónico firmado digitalmente.', { align: 'center', color: '#666666' });
+    doc.fontSize(8).font('Helvetica').fillColor('#666666').text('Documento generado automáticamente. Tiene validez legal como contrato electrónico firmado digitalmente.', { align: 'center' });
 
     doc.end();
   });
@@ -196,6 +194,7 @@ async function sendEmail(
   customerEmail: string,
   pdfBuffer: Buffer
 ): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const attachmentBase64 = pdfBuffer.toString('base64');
   
   const response = await resend.emails.send({
