@@ -131,16 +131,16 @@ async function generateTermsPDF(
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    // Title
-    doc.fontSize(20).font('Courier-Bold').text('TÉRMINOS Y CONDICIONES', { align: 'center' });
-    doc.fontSize(14).font('Courier-Bold').text('Trading en Vivo con Jorge y Guille', { align: 'center' });
+    // Title - use bold style instead of font selection
+    doc.fontSize(20).text('TÉRMINOS Y CONDICIONES', { align: 'center' });
+    doc.fontSize(14).text('Trading en Vivo con Jorge y Guille', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(10).font('Courier').text(`Última actualización: 1ro de Febrero de 2026`, { align: 'center' });
+    doc.fontSize(10).text(`Última actualización: 1ro de Febrero de 2026`, { align: 'center' });
     doc.moveDown(1);
 
     // Signatario info
-    doc.fontSize(11).font('Courier-Bold').text('INFORMACIÓN DEL SUSCRIPTOR:', { underline: true });
-    doc.fontSize(10).font('Courier').text(`Nombre: ${customerName}`);
+    doc.fontSize(11).text('INFORMACIÓN DEL SUSCRIPTOR:', { underline: true });
+    doc.fontSize(10).text(`Nombre: ${customerName}`);
     doc.text(`Email: ${customerEmail}`);
     doc.text(`Fecha de Aceptación: ${acceptanceDate.toLocaleDateString('es-ES', { 
       year: 'numeric', 
@@ -162,28 +162,28 @@ async function generateTermsPDF(
 
       if (line.match(/^\d+\./)) {
         // Section headers
-        doc.fontSize(10).font('Courier-Bold').text(line);
+        doc.fontSize(10).text(line);
         doc.moveDown(0.2);
       } else if (line.startsWith('-')) {
         // Bullet points
-        doc.fontSize(9).font('Courier').text(line, { indent: 20 });
+        doc.fontSize(9).text(line, { indent: 20 });
         doc.moveDown(0.1);
       } else {
         // Regular text
-        doc.fontSize(9).font('Courier').text(line, { align: 'left' });
+        doc.fontSize(9).text(line, { align: 'left' });
         doc.moveDown(0.15);
       }
     });
 
     doc.moveDown(1);
-    doc.fontSize(10).font('Courier-Bold').text('FIRMA DIGITAL', { underline: true });
+    doc.fontSize(10).text('FIRMA DIGITAL', { underline: true });
     doc.moveDown(0.5);
-    doc.fontSize(9).font('Courier').text(`Por este medio, ${customerName} (${customerEmail}) acepta expresamente todos los Términos y Condiciones mencionados anteriormente.`);
+    doc.fontSize(9).text(`Por este medio, ${customerName} (${customerEmail}) acepta expresamente todos los Términos y Condiciones mencionados anteriormente.`);
     doc.moveDown(0.3);
     doc.text('Se ha generado un contrato digital a través de aceptación electrónica en fecha y hora indicadas anteriormente.');
     doc.moveDown(1);
     
-    doc.fontSize(8).font('Courier').fillColor('#666666').text('Documento generado automáticamente. Tiene validez legal como contrato electrónico firmado digitalmente.', { align: 'center' });
+    doc.fontSize(8).fillColor('#666666').text('Documento generado automáticamente. Tiene validez legal como contrato electrónico firmado digitalmente.', { align: 'center' });
 
     doc.end();
   });
