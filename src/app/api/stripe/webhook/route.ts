@@ -8,13 +8,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: NextRequest) {
+  console.log('🔔 WEBHOOK RECEIVED');
+  console.log('🔔 Signature header:', req.headers.get('stripe-signature') ? 'Present' : 'Missing');
+  
   const sig = req.headers.get('stripe-signature');
   const buf = await req.arrayBuffer();
   let event: Stripe.Event;
 
   try {
+    console.log('🔔 Verifying webhook signature...');
     event = stripe.webhooks.constructEvent(Buffer.from(buf), sig!, endpointSecret);
+    console.log('🔔 Webhook signature verified, event type:', event.type);
   } catch (err) {
+    console.error('❌ Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
   }
 
