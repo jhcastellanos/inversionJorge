@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Customer, Order, Subscription, DiscordConnection, Contract } from '../../../../lib/models';
 import { addRoleToMember, removeRoleFromMember, isGuildMember, sendDirectMessage } from '../../../../lib/discord';
+import { processTermsAfterPayment } from '../../../../lib/terms';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -106,40 +107,18 @@ export async function POST(req: NextRequest) {
           console.log(`✅ Subscription created in DB: ${invoice.subscription}`);
           
           // GENERATE AND SEND TERMS PDF AFTER PAYMENT
-          // Only send after first successful payment
+          // Only process if we have customer info
           if (name && email) {
             try {
-              const baseUrl = process.env.VERCEL_URL 
-                ? `https://${process.env.VERCEL_URL}`
-                : 'http://localhost:3000';
-              
-              console.log(`🔗 Calling terms endpoint at: ${baseUrl}/api/memberships/terms`);
-              
-              const termsResponse = await fetch(
-                `${baseUrl}/api/memberships/terms`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    customerName: name,
-                    customerEmail: email,
-                    stripeSubscriptionId: invoice.subscription,
-                  }),
-                }
-              );
-
-              const termsData = await termsResponse.json();
-              
-              if (termsResponse.ok) {
-                console.log(`✅ Terms PDF generated and sent for ${name} (${email})`, termsData);
-              } else {
-                console.error(`❌ Failed to generate terms PDF:`, termsData);
-              }
+              console.log(`📨 Starting terms processing for: ${name} (${email})`);
+              await processTermsAfterPayment(invoice.subscription as string, name, email);
+              console.log(`✅ Terms processing completed successfully`);
             } catch (termsError) {
-              console.error('❌ Error generating/sending terms PDF:', termsError);
+              console.error('❌ Error processing terms:', termsError);
+              // Don't fail the webhook on terms error
             }
           } else {
-            console.warn(`⚠️ Missing name or email for terms PDF. Name: ${name}, Email: ${email}`);
+            console.warn(`⚠️ Missing name or email for terms processing. Name: ${name}, Email: ${email}`);
           }
         } else {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
