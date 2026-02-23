@@ -8,6 +8,7 @@ interface TermsAndConditionsModalProps {
   email: string;
   onAccept: () => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
@@ -124,6 +125,7 @@ export default function TermsAndConditionsModal({
   email,
   onAccept,
   onCancel,
+  isLoading = false,
 }: TermsAndConditionsModalProps) {
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,77 +142,60 @@ export default function TermsAndConditionsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
-          <p className="text-gray-600 mt-1">Trading en Vivo con Jorge y Guille</p>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="prose prose-sm max-w-none">
-            {TERMS_TEXT.split('\n').map((line, idx) => {
-              if (!line.trim()) {
-                return <div key={idx} className="h-2" />;
-              }
-              if (line.match(/^\d+\./)) {
-                return (
-                  <h3 key={idx} className="font-bold text-gray-900 mt-4 mb-2">
-                    {line}
-                  </h3>
-                );
-              }
-              if (line.startsWith('-')) {
-                return (
-                  <li key={idx} className="text-gray-700 ml-4 list-disc">
-                    {line.replace(/^-\s*/, '')}
-                  </li>
-                );
-              }
+    <>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto mb-6">
+        <div className="prose prose-sm max-w-none">
+          {TERMS_TEXT.split('\n').map((line, idx) => {
+            if (!line.trim()) {
+              return <div key={idx} className="h-2" />;
+            }
+            if (line.match(/^\d+\./)) {
               return (
-                <p key={idx} className="text-gray-700 mb-2 text-sm leading-relaxed">
+                <h3 key={idx} className="font-bold text-gray-900 mt-4 mb-2">
                   {line}
-                </p>
+                </h3>
               );
-            })}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t p-6 sticky bottom-0 bg-white rounded-b-2xl">
-          <div className="flex items-start gap-3 mb-4">
-            <input
-              type="checkbox"
-              id="terms-accepted"
-              checked={accepted}
-              onChange={(e) => setAccepted(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300 text-indigo-600 mt-1 cursor-pointer"
-            />
-            <label htmlFor="terms-accepted" className="text-sm text-gray-700 cursor-pointer">
-              Acepto todos los Términos y Condiciones y entiendo los riesgos de operar en mercados financieros. Confirmo que he leído y comprendido completamente este contrato.
-            </label>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleAccept}
-              disabled={!accepted || isSubmitting}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Procesando...' : 'Aceptar y Continuar'}
-            </button>
-          </div>
+            }
+            if (line.startsWith('-')) {
+              return (
+                <li key={idx} className="text-gray-700 ml-4 list-disc">
+                  {line.replace(/^-\s*/, '')}
+                </li>
+              );
+            }
+            return (
+              <p key={idx} className="text-gray-700 mb-2 text-sm leading-relaxed">
+                {line}
+              </p>
+            );
+          })}
         </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className="border-t pt-6">
+        <div className="flex items-start gap-3 mb-4">
+          <input
+            type="checkbox"
+            id="terms-accepted"
+            checked={accepted}
+            onChange={(e) => setAccepted(e.target.checked)}
+            className="w-5 h-5 rounded border-gray-300 text-indigo-600 mt-1 cursor-pointer"
+          />
+          <label htmlFor="terms-accepted" className="text-sm text-gray-700 cursor-pointer">
+            Acepto todos los Términos y Condiciones y entiendo los riesgos de operar en mercados financieros. Confirmo que he leído y comprendido completamente este contrato.
+          </label>
+        </div>
+
+        <button
+          onClick={handleAccept}
+          disabled={!accepted || isSubmitting || isLoading}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting || isLoading ? 'Procesando...' : 'Aceptar y Pagar'}
+        </button>
+      </div>
+    </>
   );
 }

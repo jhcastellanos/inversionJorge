@@ -18,16 +18,45 @@ interface MembershipCardProps {
 
 export default function MembershipCard({ membership }: MembershipCardProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribeClick = () => {
+    setShowContactForm(true);
+  };
+
+  const handleContactFormSubmit = () => {
+    if (!customerName.trim()) {
+      alert('Por favor ingresa tu nombre');
+      return;
+    }
+    if (!customerEmail.trim()) {
+      alert('Por favor ingresa tu email');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      alert('Por favor ingresa un email válido');
+      return;
+    }
+    
+    // Cerrar formulario de contacto y mostrar términos
+    setShowContactForm(false);
     setShowTermsModal(true);
+  };
+
+  const handleContactFormCancel = () => {
+    setShowContactForm(false);
+    setCustomerName('');
+    setCustomerEmail('');
   };
 
   const handleTermsAccept = async () => {
     try {
+      setIsLoading(true);
+      
       // Generar PDF y enviar email
       const termsResponse = await fetch('/api/memberships/terms', {
         method: 'POST',
@@ -66,13 +95,15 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
     } catch (error) {
       console.error('Error:', error);
       alert('Error al procesar la suscripción');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleTermsCancel = () => {
     setShowTermsModal(false);
-    setCustomerName('');
-    setCustomerEmail('');
+    // Mantener los datos para que el usuario pueda reintentar
+    setShowContactForm(true);
   };
 
   const benefits = membership.Benefits?.split('\n').filter(b => b.trim()) || [];
@@ -223,11 +254,35 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
             <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
               <p className="text-gray-600 mt-1">Trading en Vivo con Jorge y Guille</p>
-              <p className="text-sm text-gray-500 mt-2">Por favor completa tus datos y acepta los términos para continuar</p>
+            </div>
+
+            {/* Terms Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <TermsAndConditionsModal
+                isOpen={true}
+                membershipName={membership.Name}
+                email={customerEmail}
+                onAccept={handleTermsAccept}
+                onCancel={handleTermsCancel}
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Form Modal */}
+      {showContactForm && !showTermsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Header */}
+            <div className="border-b p-6">
+              <h2 className="text-2xl font-bold text-gray-900">Tu Información</h2>
+              <p className="text-gray-600 mt-1">Completa tus datos para continuar</p>
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="p-6">
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Nombre Completo</label>
@@ -251,13 +306,21 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
                 </div>
               </div>
 
-              <TermsAndConditionsModal
-                isOpen={true}
-                membershipName={membership.Name}
-                email={customerEmail}
-                onAccept={handleTermsAccept}
-                onCancel={handleTermsCancel}
-              />
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleContactFormCancel}
+                  className="flex-1 bg-gray-200 text-gray-900 py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleContactFormSubmit}
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                >
+                  Registrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
