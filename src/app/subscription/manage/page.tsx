@@ -13,13 +13,6 @@ interface SubscriptionData {
   CancelAtPeriodEnd: boolean;
   StripeSubscriptionId: string;
   StripeCustomerId: string;
-  DiscordUserId?: string;
-}
-
-interface DiscordConnectionData {
-  connected: boolean;
-  discordUsername?: string;
-  discordUserId?: string;
 }
 
 function ManageSubscriptionContent() {
@@ -31,46 +24,15 @@ function ManageSubscriptionContent() {
   const [loading, setLoading] = useState(false);
   const [canceling, setCanceling] = useState<number | null>(null);
   const [redirectingPortal, setRedirectingPortal] = useState<number | null>(null);
-  const [discordConnection, setDiscordConnection] = useState<DiscordConnectionData | null>(null);
-  const [loadingDiscord, setLoadingDiscord] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('discord_connected') === 'true') {
-      alert('¡Discord conectado exitosamente! Se te ha asignado el rol de miembro.');
-    }
-    if (params.get('error') === 'discord_auth_failed') {
-      alert('Error al conectar con Discord. Por favor intenta de nuevo.');
-    }
-  }, []);
 
   useEffect(() => {
     if (emailFromUrl) {
       setEmail(emailFromUrl);
       setShowEmailInput(false);
       fetchSubscriptions(emailFromUrl);
-      fetchDiscordConnection(emailFromUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailFromUrl]);
-
-  const fetchDiscordConnection = async (emailToFetch?: string) => {
-    const targetEmail = emailToFetch || email;
-    if (!targetEmail) return;
-    
-    setLoadingDiscord(true);
-    try {
-      const res = await fetch(`/api/discord/status?email=${encodeURIComponent(targetEmail)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDiscordConnection(data);
-      }
-    } catch (error) {
-      console.error('Error fetching Discord connection:', error);
-    } finally {
-      setLoadingDiscord(false);
-    }
-  };
 
   const fetchSubscriptions = async (emailToFetch?: string) => {
     const targetEmail = emailToFetch || email;
@@ -93,7 +55,6 @@ function ManageSubscriptionContent() {
     if (email.trim()) {
       setShowEmailInput(false);
       fetchSubscriptions(email);
-      fetchDiscordConnection(email);
     }
   };
 
@@ -256,50 +217,6 @@ function ManageSubscriptionContent() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Discord Connection Section */}
-            {subscriptions.some(sub => sub.Status === 'active') && (
-              <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <svg className="w-8 h-8 text-indigo-600 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-                  </svg>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-indigo-900 mb-2">Conexión Discord</h3>
-                    {loadingDiscord ? (
-                      <p className="text-indigo-700">Cargando...</p>
-                    ) : discordConnection?.connected ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                            ✓ Conectado
-                          </span>
-                          <span className="text-indigo-900 font-medium">{discordConnection.discordUsername}</span>
-                        </div>
-                        <p className="text-sm text-indigo-700 mb-3">
-                          Tu cuenta de Discord está vinculada. Tienes acceso automático al servidor de miembros con tu rol especial.
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-indigo-700 mb-3">
-                          Conecta tu cuenta de Discord para obtener acceso automático al servidor exclusivo de miembros.
-                        </p>
-                        <Link 
-                          href={`/api/discord/auth?email=${encodeURIComponent(email)}`}
-                          className="inline-flex items-center gap-2 bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-all"
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-                          </svg>
-                          Conectar Discord
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {subscriptions.map((sub) => (
               <div key={sub.Id} className="bg-white rounded-2xl shadow-lg p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

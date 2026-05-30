@@ -34,15 +34,6 @@ NEXT_PUBLIC_BASE_URL=https://tu-dominio.vercel.app
 JWT_SECRET=genera_un_nuevo_secreto_seguro_aleatorio
 ```
 
-### Discord (Opcional)
-```
-DISCORD_CLIENT_ID=1452118832423374869
-DISCORD_CLIENT_SECRET=2PtMszHjjmVSZLXh8otRXvMP-cc-UYhd
-DISCORD_BOT_TOKEN=1452118832423374869
-DISCORD_GUILD_ID=1435062376339734631
-DISCORD_MEMBER_ROLE_ID=1444872574122201099
-```
-
 ## 3. Configurar Webhook de Stripe
 
 1. Ir a: https://dashboard.stripe.com/webhooks

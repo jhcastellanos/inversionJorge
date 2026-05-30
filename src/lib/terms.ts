@@ -193,55 +193,70 @@ export async function sendTermsEmail(
   pdfBuffer: Buffer
 ): Promise<void> {
   try {
-    console.log('📧 Starting email send process...');
-    console.log('📧 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
-    console.log('📧 API Key length:', process.env.RESEND_API_KEY?.length);
-    
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured');
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     const attachmentBase64 = pdfBuffer.toString('base64');
-    
-    console.log('📧 PDF converted to base64, length:', attachmentBase64.length);
-    
-    // Use verified owner email (test mode restriction in Resend)
-    const recipientEmail = 'jhcastellanosvilla@gmail.com';
-    
-    const emailPayload = {
-      from: 'onboarding@resend.dev',
-      to: recipientEmail,
+
+    // Configurable sender. Defaults to Resend's shared test domain, which can
+    // ONLY deliver to the account owner's verified email. To deliver to real
+    // customers, set EMAIL_FROM to an address on a domain verified in Resend.
+    const fromAddress = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+    const ownerEmail = process.env.OWNER_EMAIL || 'jhcastellanosvilla@gmail.com';
+
+    const acceptanceLabel = new Date().toLocaleDateString('es-ES');
+    const attachments = [
+      {
+        filename: `Contrato_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`,
+        content: attachmentBase64,
+      },
+    ];
+
+    // 1) Owner notification (must succeed)
+    const ownerResponse = await resend.emails.send({
+      from: fromAddress,
+      to: ownerEmail,
       subject: `Nuevo Contrato Firmado - Trading en Vivo: ${customerName}`,
       html: `
         <h2>Nuevo Contrato de Membresía Aceptado</h2>
         <p><strong>Suscriptor:</strong> ${customerName}</p>
         <p><strong>Email del Suscriptor:</strong> ${customerEmail}</p>
         <p><strong>Membresía:</strong> Trading en Vivo con Jorge y Guille</p>
-        <p><strong>Fecha de Aceptación:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
+        <p><strong>Fecha de Aceptación:</strong> ${acceptanceLabel}</p>
         <p>Se adjunta el contrato firmado digitalmente con los Términos y Condiciones aceptados.</p>
       `,
-      attachments: [
-        {
-          filename: `Contrato_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`,
-          content: attachmentBase64,
-        },
-      ],
-    };
+      attachments,
+    } as any);
 
-    console.log('📧 Sending email with Resend...');
-    console.log('📧 Email to:', recipientEmail);
-    console.log('📧 Subject:', emailPayload.subject);
-    
-    const response = await resend.emails.send(emailPayload as any);
-
-    console.log('📧 Resend response:', response);
-
-    if (response.error) {
-      console.error('❌ Resend error object:', response.error);
-      throw new Error(`Resend error: ${JSON.stringify(response.error)}`);
+    if (ownerResponse.error) {
+      throw new Error(`Resend error (owner): ${JSON.stringify(ownerResponse.error)}`);
     }
+    console.log('✅ Owner contract notification sent (id:', ownerResponse.data?.id, ')');
 
-    if (response.data?.id) {
-      console.log('✅ Email sent successfully with ID:', response.data.id);
-    } else {
-      console.warn('⚠️ Email sent, response:', response);
+    // 2) Customer copy (best-effort: fails in Resend test mode without a verified domain)
+    try {
+      const customerResponse = await resend.emails.send({
+        from: fromAddress,
+        to: customerEmail,
+        subject: 'Tu contrato - Trading en Vivo con Jorge y Guille',
+        html: `
+          <h2>¡Gracias por suscribirte, ${customerName}!</h2>
+          <p>Adjuntamos el contrato con los Términos y Condiciones que aceptaste para la membresía <strong>Trading en Vivo con Jorge y Guille</strong>.</p>
+          <p><strong>Fecha de aceptación:</strong> ${acceptanceLabel}</p>
+          <p>Conserva este documento para tus registros.</p>
+        `,
+        attachments,
+      } as any);
+
+      if (customerResponse.error) {
+        console.warn('⚠️ Could not send contract copy to customer (verify a domain in Resend and set EMAIL_FROM):', JSON.stringify(customerResponse.error));
+      } else {
+        console.log('✅ Customer contract copy sent (id:', customerResponse.data?.id, ')');
+      }
+    } catch (customerError) {
+      console.warn('⚠️ Customer contract email failed (non-blocking):', customerError);
     }
   } catch (error) {
     console.error('❌ Error in sendTermsEmail:', error);
@@ -287,23 +302,28 @@ export async function processTermsAfterPayment(
   customerEmail: string
 ): Promise<void> {
   try {
-    console.log(`📨 [processTermsAfterPayment] Starting for: ${customerName} (${customerEmail})`);
-    console.log(`📨 [processTermsAfterPayment] Stripe subscription ID: ${stripeSubscriptionId}`);
-    
+    console.log(`📨 [processTermsAfterPayment] Starting for subscription ${stripeSubscriptionId}`);
+
+    // Idempotency guard: only process the contract once per subscription.
+    // This handler can be reached from multiple sources (webhook, success page),
+    // so we skip if a contract already exists to avoid duplicate emails/records.
+    const subscription = await Subscription.findByStripeId(stripeSubscriptionId);
+    if (!subscription) {
+      console.warn(`⚠️ [processTermsAfterPayment] Subscription not found yet: ${stripeSubscriptionId}`);
+      return;
+    }
+
+    const existingContract = await Contract.findBySubscriptionId(subscription.Id);
+    if (existingContract) {
+      console.log(`ℹ️ [processTermsAfterPayment] Contract already processed for subscription ${stripeSubscriptionId}, skipping`);
+      return;
+    }
+
     const acceptanceDate = new Date();
-    console.log(`📨 [processTermsAfterPayment] Acceptance date: ${acceptanceDate.toISOString()}`);
-    
-    console.log(`📨 [processTermsAfterPayment] Generating PDF...`);
     const pdfBuffer = await generateTermsPDF(customerName, customerEmail, acceptanceDate);
-    console.log(`✅ [processTermsAfterPayment] PDF generated, size: ${pdfBuffer.length} bytes`);
 
-    // Send email
-    console.log(`📨 [processTermsAfterPayment] Sending email...`);
     await sendTermsEmail(customerName, customerEmail, pdfBuffer);
-    console.log(`✅ [processTermsAfterPayment] Email sent successfully`);
 
-    // Save contract to database
-    console.log(`📨 [processTermsAfterPayment] Saving contract to database...`);
     await saveContractToDatabase(
       stripeSubscriptionId,
       customerName,
@@ -311,9 +331,8 @@ export async function processTermsAfterPayment(
       pdfBuffer,
       acceptanceDate
     );
-    console.log(`✅ [processTermsAfterPayment] Contract saved successfully`);
 
-    console.log(`✅ [processTermsAfterPayment] All operations completed for ${customerName}`);
+    console.log(`✅ [processTermsAfterPayment] Completed for subscription ${stripeSubscriptionId}`);
   } catch (error) {
     console.error('❌ [processTermsAfterPayment] Error:', error);
     throw error;

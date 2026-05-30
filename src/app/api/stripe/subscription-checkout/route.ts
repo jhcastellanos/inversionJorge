@@ -114,8 +114,6 @@ export async function POST(req: NextRequest) {
       membershipId: membership.Id,
       price: monthlyPrice,
       hasTrialEnd: !!trialEnd,
-      customerName,
-      customerEmail,
     });
 
     return NextResponse.json({ url: session.url });

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { Customer, Order, Subscription, DiscordConnection, Contract } from '../../../../lib/models';
-import { addRoleToMember, removeRoleFromMember, isGuildMember, sendDirectMessage } from '../../../../lib/discord';
+import { Customer, Order, Subscription, Contract } from '../../../../lib/models';
 import { processTermsAfterPayment } from '../../../../lib/terms';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
@@ -64,9 +63,7 @@ export async function POST(req: NextRequest) {
     console.log('📋 Invoice received:', {
       invoiceId: invoice.id,
       subscription: invoice.subscription,
-      metadata: invoice.metadata,
-      customerName: invoice.customer_name,
-      customerEmail: invoice.customer_email,
+      hasMembershipId: !!invoice.metadata?.membershipId,
     });
     
     // Only process if this is a subscription invoice with metadata
@@ -93,13 +90,11 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ received: true });
         }
 
-        console.log(`📝 Processing invoice for: ${name} (${email})`);
-
-        // Check if subscription already exists in database
+        // Ensure the subscription exists in the database (it may have been
+        // created already by the success page; create it here otherwise).
         const existingSubscription = await Subscription.findByStripeId(invoice.subscription as string);
-        
+
         if (!existingSubscription) {
-          // Create new subscription in database
           await Subscription.create({
             membership_id: membershipId,
             customer_email: email,
@@ -109,25 +104,23 @@ export async function POST(req: NextRequest) {
             current_period_start: new Date(invoice.period_start * 1000),
             current_period_end: new Date(invoice.period_end * 1000)
           });
-          
           console.log(`✅ Subscription created in DB: ${invoice.subscription}`);
-          
-          // GENERATE AND SEND TERMS PDF AFTER PAYMENT
-          // Only process if we have customer info
-          if (name && email) {
-            try {
-              console.log(`📨 Starting terms processing for: ${name} (${email})`);
-              await processTermsAfterPayment(invoice.subscription as string, name, email);
-              console.log(`✅ Terms processing completed successfully`);
-            } catch (termsError) {
-              console.error('❌ Error processing terms:', termsError);
-              // Don't fail the webhook on terms error
-            }
-          } else {
-            console.warn(`⚠️ Missing name or email for terms processing. Name: ${name}, Email: ${email}`);
-          }
         } else {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
+        }
+
+        // Generate, email and store the contract AFTER payment.
+        // processTermsAfterPayment is idempotent, so this runs exactly once
+        // per subscription regardless of how many times the webhook fires.
+        if (name && email) {
+          try {
+            await processTermsAfterPayment(invoice.subscription as string, name, email);
+          } catch (termsError) {
+            console.error('❌ Error processing terms:', termsError);
+            // Don't fail the webhook on terms error
+          }
+        } else {
+          console.warn(`⚠️ Missing name or email for terms processing on subscription ${invoice.subscription}`);
         }
       } catch (error) {
         console.error('❌ Error creating subscription from invoice:', error);
@@ -146,62 +139,6 @@ export async function POST(req: NextRequest) {
       await Subscription.updateStatus(subscription.id, subscription.status);
       
       console.log(`✅ Subscription ${subscription.id} status updated to: ${subscription.status}`);
-
-      // Get subscription from database to get customer email
-      const dbSubscription = await Subscription.findByStripeId(subscription.id);
-      
-      if (dbSubscription && dbSubscription.CustomerEmail) {
-        // Check if user has Discord connected
-        const discordConnection = await DiscordConnection.findByEmail(dbSubscription.CustomerEmail);
-        
-        if (discordConnection) {
-          const guildId = process.env.DISCORD_GUILD_ID;
-          const roleId = process.env.DISCORD_MEMBER_ROLE_ID;
-          
-          if (guildId && roleId) {
-            // Check if user is in the server
-            const isMember = await isGuildMember(guildId, discordConnection.DiscordUserId);
-            
-            if (isMember) {
-              // Handle active subscription - add role
-              if (subscription.status === 'active') {
-                const roleAdded = await addRoleToMember(guildId, discordConnection.DiscordUserId, roleId);
-                
-                if (roleAdded) {
-                  console.log(`✅ Discord role added for ${discordConnection.DiscordUsername}`);
-                  
-                  // Send welcome DM
-                  await sendDirectMessage(
-                    discordConnection.DiscordUserId,
-                    `¡Bienvenido! Tu suscripción a ${dbSubscription.MembershipName} está activa. Ya tienes acceso al servidor de miembros.`
-                  );
-                } else {
-                  console.error(`❌ Failed to add Discord role for ${discordConnection.DiscordUsername}`);
-                }
-              }
-              
-              // Handle cancelled/expired subscription - remove role
-              if (subscription.status === 'canceled' || subscription.status === 'unpaid' || subscription.status === 'past_due') {
-                const roleRemoved = await removeRoleFromMember(guildId, discordConnection.DiscordUserId, roleId);
-                
-                if (roleRemoved) {
-                  console.log(`✅ Discord role removed for ${discordConnection.DiscordUsername}`);
-                  
-                  // Send cancellation DM
-                  await sendDirectMessage(
-                    discordConnection.DiscordUserId,
-                    `Tu suscripción a ${dbSubscription.MembershipName} ha finalizado. Tu rol de miembro ha sido removido. Si deseas renovar, visita nuestro sitio web.`
-                  );
-                } else {
-                  console.error(`❌ Failed to remove Discord role for ${discordConnection.DiscordUsername}`);
-                }
-              }
-            } else {
-              console.log(`⚠️ User ${discordConnection.DiscordUserId} is not a member of the guild`);
-            }
-          }
-        }
-      }
     } catch (error) {
       console.error('Error handling subscription update:', error);
     }

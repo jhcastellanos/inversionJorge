@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import TermsAndConditionsModal from './TermsAndConditionsModal';
+import { getMembershipPresentation } from '../lib/membershipPlans';
 
 interface MembershipCardProps {
   membership: {
@@ -14,15 +15,25 @@ interface MembershipCardProps {
     DiscountPrice?: number | null;
     DiscountMonths?: number | null;
   };
+  monthlyBasePrice: number;
 }
 
-export default function MembershipCard({ membership }: MembershipCardProps) {
+const formatMoney = (value: number) => {
+  if (!Number.isFinite(value)) return '0';
+  const hasDecimals = Math.round(value) !== value;
+  return value.toFixed(hasDecimals ? 2 : 0);
+};
+
+export default function MembershipCard({ membership, monthlyBasePrice }: MembershipCardProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const planPresentation = getMembershipPresentation(membership, monthlyBasePrice);
+  const showSavings = planPresentation.discountPercent > 0 || planPresentation.savingsTotal > 0;
 
   const handleSubscribeClick = () => {
     setShowPaymentForm(true);
@@ -56,23 +67,9 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
   const handleTermsAccept = async () => {
     try {
       setIsLoading(true);
-      
-      // Generate PDF and send email BEFORE Stripe checkout
-      const termsResponse = await fetch('/api/memberships/terms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName,
-          customerEmail,
-          membershipName: membership.Name,
-        }),
-      });
 
-      if (!termsResponse.ok) {
-        throw new Error('Error al procesar los términos');
-      }
-
-      // Proceed to Stripe checkout
+      // The contract PDF + emails are generated only AFTER payment succeeds
+      // (handled idempotently by the Stripe webhook), so we go straight to checkout.
       const res = await fetch('/api/stripe/subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +111,13 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
 
   return (
     <>
-      <div className="group bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-indigo-200">
+      <div
+        className={`group rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-gradient-to-br from-indigo-50 to-purple-50 ${
+          planPresentation.recommended
+            ? 'border-indigo-500 ring-2 ring-indigo-300 scale-[1.01]'
+            : 'border-indigo-200'
+        }`}
+      >
         {/* Imagen de la Membresía */}
         {membership.ImageUrl && (
           <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100">
@@ -127,13 +130,18 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
         )}
         
         {/* Badge de Membresía */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 text-center">
+        <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 text-center">
           <div className="flex items-center justify-center gap-2">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
             </svg>
-            <span className="font-bold uppercase text-sm tracking-wide">Membresía</span>
+            <span className="font-bold uppercase text-sm tracking-wide">{planPresentation.badge}</span>
           </div>
+          {planPresentation.recommended && (
+            <div className="absolute -top-3 right-4 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-full shadow-md">
+              Más recomendado
+            </div>
+          )}
         </div>
 
         <div className="p-6">
@@ -157,45 +165,82 @@ export default function MembershipCard({ membership }: MembershipCardProps) {
             )}
           </div>
 
-          {/* Precio con indicador de recurrencia */}
-          <div className="bg-white rounded-xl p-4 mb-4 border-2 border-indigo-100">
-            <div className="text-center">
-              {membership.DiscountPrice && membership.DiscountMonths ? (
-                <>
-                  {/* Precio con descuento */}
-                  <div className="mb-2">
-                    <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                      ¡OFERTA! Primeros {membership.DiscountMonths} meses
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <span className="text-2xl font-bold text-gray-400 line-through">
-                      ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
-                    </span>
-                    <span className="text-4xl font-bold text-green-600">
-                      ${parseFloat(membership.DiscountPrice.toString()).toFixed(2)}
-                    </span>
-                    <span className="text-gray-600 text-lg">/mes</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-2">Los primeros {membership.DiscountMonths} meses</p>
-                  <p className="text-xs text-gray-400">
-                    Luego ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}/mes
-                  </p>
-                </>
-              ) : (
-                <>
-                  {/* Precio normal */}
+          {planPresentation.isKnownPlan ? (
+            <>
+              {/* Precio */}
+              <div className="bg-white rounded-xl p-4 mb-4 border-2 border-indigo-100">
+                <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <span className="text-4xl font-bold text-gray-900">
-                      ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
+                      ${formatMoney(planPresentation.totalPrice)}
                     </span>
-                    <span className="text-gray-600 text-lg">/mes</span>
+                    <span className="text-gray-600 text-lg">total</span>
                   </div>
-                  <p className="text-sm text-gray-500">Pago recurrente mensual</p>
-                </>
-              )}
-            </div>
-          </div>
+                  <p className="text-sm text-gray-500">
+                    ${formatMoney(planPresentation.monthlyEquivalent)}/mes · {planPresentation.durationMonths} meses
+                  </p>
+                </div>
+              </div>
+
+              {/* Descuento y ahorro */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+                  <p className="text-xs text-emerald-700 font-semibold">Descuento</p>
+                  <p className="text-lg font-bold text-emerald-700">
+                    {planPresentation.discountPercent > 0 ? `Ahorra ${planPresentation.discountPercent}%` : 'Sin ahorro'}
+                  </p>
+                </div>
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-center">
+                  <p className="text-xs text-indigo-700 font-semibold">Ahorro total</p>
+                  <p className="text-lg font-bold text-indigo-700">
+                    {showSavings ? `Ahorras $${formatMoney(planPresentation.savingsTotal)}` : 'Ahorras $0'}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Precio con indicador de recurrencia */}
+              <div className="bg-white rounded-xl p-4 mb-4 border-2 border-indigo-100">
+                <div className="text-center">
+                  {membership.DiscountPrice && membership.DiscountMonths ? (
+                    <>
+                      {/* Precio con descuento */}
+                      <div className="mb-2">
+                        <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
+                          ¡OFERTA! Primeros {membership.DiscountMonths} meses
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <span className="text-2xl font-bold text-gray-400 line-through">
+                          ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
+                        </span>
+                        <span className="text-4xl font-bold text-green-600">
+                          ${parseFloat(membership.DiscountPrice.toString()).toFixed(2)}
+                        </span>
+                        <span className="text-gray-600 text-lg">/mes</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">Los primeros {membership.DiscountMonths} meses</p>
+                      <p className="text-xs text-gray-400">
+                        Luego ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}/mes
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {/* Precio normal */}
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <span className="text-4xl font-bold text-gray-900">
+                          ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
+                        </span>
+                        <span className="text-gray-600 text-lg">/mes</span>
+                      </div>
+                      <p className="text-sm text-gray-500">Pago recurrente mensual</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Beneficios */}
           {benefits.length > 0 && (

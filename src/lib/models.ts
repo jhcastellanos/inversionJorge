@@ -257,11 +257,9 @@ export const Subscription = {
       const result = await client.query(
         `SELECT s.*, 
                 m."Name" as "MembershipName", 
-                m."MonthlyPrice",
-                dc."DiscordUsername"
+                m."MonthlyPrice"
          FROM "Subscriptions" s 
          JOIN "Memberships" m ON s."MembershipId" = m."Id"
-         LEFT JOIN "DiscordConnections" dc ON s."CustomerEmail" = dc."CustomerEmail"
          ORDER BY s."CreatedAt" DESC`
       );
       return result.rows;
@@ -320,84 +318,6 @@ export const Subscription = {
         [status, cancelAtPeriodEnd, status === 'canceled' ? new Date() : null, stripeSubscriptionId]
       );
       return result.rows[0];
-    } finally {
-      client.release();
-    }
-  },
-
-  async updateDiscordUserId(stripeSubscriptionId: string, discordUserId: string) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'UPDATE "Subscriptions" SET "DiscordUserId"=$1 WHERE "StripeSubscriptionId"=$2 RETURNING *',
-        [discordUserId, stripeSubscriptionId]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  }
-};
-
-// Discord Connection Model
-export const DiscordConnection = {
-  async findByEmail(email: string) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM "DiscordConnections" WHERE "CustomerEmail" = $1',
-        [email]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  },
-
-  async findByDiscordUserId(discordUserId: string) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM "DiscordConnections" WHERE "DiscordUserId" = $1',
-        [discordUserId]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  },
-
-  async create(data: { customer_email: string; discord_user_id: string; discord_username: string; discord_access_token?: string; discord_refresh_token?: string }) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'INSERT INTO "DiscordConnections" ("CustomerEmail", "DiscordUserId", "DiscordUsername", "DiscordAccessToken", "DiscordRefreshToken", "CreatedAt", "UpdatedAt") VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *',
-        [data.customer_email, data.discord_user_id, data.discord_username, data.discord_access_token || null, data.discord_refresh_token || null]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  },
-
-  async update(email: string, data: { discord_user_id: string; discord_username: string; discord_access_token?: string; discord_refresh_token?: string }) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'UPDATE "DiscordConnections" SET "DiscordUserId"=$1, "DiscordUsername"=$2, "DiscordAccessToken"=$3, "DiscordRefreshToken"=$4, "UpdatedAt"=NOW() WHERE "CustomerEmail"=$5 RETURNING *',
-        [data.discord_user_id, data.discord_username, data.discord_access_token || null, data.discord_refresh_token || null, email]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  },
-
-  async delete(email: string) {
-    const client = await pool.connect();
-    try {
-      await client.query('DELETE FROM "DiscordConnections" WHERE "CustomerEmail" = $1', [email]);
-      return true;
     } finally {
       client.release();
     }

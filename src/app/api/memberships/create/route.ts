@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Membership } from '../../../../lib/models';
+import { isAdminRequest } from '../../../../lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  if (!isAdminRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const formData = await request.formData();
     

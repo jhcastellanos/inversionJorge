@@ -2,15 +2,17 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Membership } from '../../../lib/models';
+import { verifyJwt } from '../../../lib/auth';
 import DeleteMembershipButton from '../../../components/DeleteMembershipButton';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMembershipsPage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token');
+  const token = cookieStore.get('admin_token')?.value;
 
-  if (!token) {
+  if (!token || !verifyJwt(token)) {
     redirect('/admin/login');
   }
 

@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import CourseCard from './CourseCard';
 import MembershipCard from './MembershipCard';
+import { getMonthlyBasePrice, sortMembershipsByPlanOrder } from '../lib/membershipPlans';
 
 export default function ResponsiveLanding({ courses, memberships }: { courses: any[]; memberships: any[] }) {
   const [activeTab, setActiveTab] = useState<'memberships' | 'courses'>('memberships');
+  const monthlyBasePrice = getMonthlyBasePrice(memberships);
+  const orderedMemberships = sortMembershipsByPlanOrder(memberships);
 
   return (
     <>
@@ -76,13 +79,17 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
               </p>
             </div>
             <div className="space-y-6">
-              {memberships.length === 0 ? (
+              {orderedMemberships.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                   <p className="text-gray-500">No hay membresías disponibles</p>
                 </div>
               ) : (
-                memberships.map((membership: any) => (
-                  <MembershipCard key={membership.Id} membership={membership} />
+                orderedMemberships.map((membership: any) => (
+                  <MembershipCard
+                    key={membership.Id}
+                    membership={membership}
+                    monthlyBasePrice={monthlyBasePrice}
+                  />
                 ))
               )}
             </div>
@@ -130,13 +137,17 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
                 <p className="text-indigo-100 text-sm">Acceso mensual recurrente a beneficios exclusivos</p>
               </div>
 
-              {memberships.length === 0 ? (
+              {orderedMemberships.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                   <p className="text-gray-500">No hay membresías disponibles</p>
                 </div>
               ) : (
-                memberships.map((membership: any) => (
-                  <MembershipCard key={membership.Id} membership={membership} />
+                orderedMemberships.map((membership: any) => (
+                  <MembershipCard
+                    key={membership.Id}
+                    membership={membership}
+                    monthlyBasePrice={monthlyBasePrice}
+                  />
                 ))
               )}
             </div>
