@@ -6,6 +6,8 @@ interface TermsAndConditionsModalProps {
   isOpen: boolean;
   membershipName: string;
   email: string;
+  includedFeatures?: string[];
+  priceLabel?: string;
   onAccept: () => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -123,6 +125,8 @@ export default function TermsAndConditionsModal({
   isOpen,
   membershipName,
   email,
+  includedFeatures = [],
+  priceLabel,
   onAccept,
   onCancel,
   isLoading = false,
@@ -143,6 +147,28 @@ export default function TermsAndConditionsModal({
 
   return (
     <>
+      {/* Resumen del plan seleccionado */}
+      <div className="mb-5 rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4">
+        <h3 className="font-bold text-indigo-900 mb-1">Plan seleccionado: {membershipName}</h3>
+        {priceLabel && (
+          <p className="text-sm text-indigo-800 mb-2"><strong>Precio:</strong> {priceLabel}</p>
+        )}
+        {includedFeatures.length > 0 && (
+          <>
+            <p className="text-sm font-semibold text-indigo-900 mb-1">Este plan incluye:</p>
+            <ul className="list-disc list-inside space-y-1 mb-2">
+              {includedFeatures.map((feature, idx) => (
+                <li key={idx} className="text-sm text-indigo-800">{feature}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        <p className="text-sm font-semibold text-red-700">
+          Ningún pago es reembolsable. Al continuar confirmas que has elegido este plan de forma
+          consciente y aceptas que no habrá reembolsos por ningún motivo.
+        </p>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto mb-6">
         <div className="prose prose-sm max-w-none">
@@ -184,7 +210,7 @@ export default function TermsAndConditionsModal({
             className="w-5 h-5 rounded border-gray-300 text-indigo-600 mt-1 cursor-pointer"
           />
           <label htmlFor="terms-accepted" className="text-sm text-gray-700 cursor-pointer">
-            Acepto todos los Términos y Condiciones y entiendo los riesgos de operar en mercados financieros. Confirmo que he leído y comprendido completamente este contrato.
+            Acepto los Términos y Condiciones del plan <strong>{membershipName}</strong>, entiendo los riesgos de operar en mercados financieros y confirmo que <strong>ningún pago es reembolsable</strong>. He leído y comprendido completamente este contrato.
           </label>
         </div>
 

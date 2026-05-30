@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Membership } from '../../../../lib/models';
+import { getPlanDurationMonths } from '../../../../lib/membershipPlans';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,12 @@ export async function POST(req: NextRequest) {
     const baseUrl = `${protocol}://${host}`;
 
     const monthlyPrice = parseFloat(membership.MonthlyPrice.toString());
+    // Billing period in months for this plan (1 monthly, 3 quarterly, 6 semestral).
+    // The customer is charged the full period total recurring on that interval.
+    const durationMonths = getPlanDurationMonths(membership.Name);
+    const totalAmount = Math.round(monthlyPrice * durationMonths * 100) / 100;
+    const intervalLabel =
+      durationMonths === 1 ? 'mensual' : `cada ${durationMonths} meses`;
     const membershipStartDate = membership.StartDate ? new Date(membership.StartDate) : null;
     const now = new Date();
     
@@ -74,11 +81,12 @@ export async function POST(req: NextRequest) {
             currency: 'usd',
             product_data: {
               name: membership.Name,
-              description: `Membresía mensual - ${membership.Description}`,
+              description: `Membresía ${intervalLabel} - ${membership.Description}`,
             },
-            unit_amount: Math.round(monthlyPrice * 100),
+            unit_amount: Math.round(totalAmount * 100),
             recurring: {
               interval: 'month',
+              interval_count: durationMonths,
             },
           },
           quantity: 1,

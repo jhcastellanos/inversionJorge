@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { Subscription, Membership } from '../../../lib/models';
+import { processTermsAfterPayment } from '../../../lib/terms';
 import Link from 'next/link';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function SubscriptionSuccessPage({
@@ -59,6 +61,10 @@ export default async function SubscriptionSuccessPage({
     const membership = await Membership.findById(membershipId);
     console.log('✅ Membership found:', membership?.Name);
 
+    // Resolve customer identity (form values in metadata take precedence)
+    const customerEmail = session.metadata?.customerEmail || session.customer_details?.email || '';
+    const customerName = session.metadata?.customerName || session.customer_details?.name || '';
+
     // Check if subscription already exists
     const existing = await Subscription.findByStripeId(stripeSubscription.id);
     
@@ -66,8 +72,8 @@ export default async function SubscriptionSuccessPage({
       console.log('💾 Creating new subscription in database...');
       const newSub = await Subscription.create({
         membership_id: membershipId,
-        customer_email: session.customer_details?.email || '',
-        customer_name: session.customer_details?.name || '',
+        customer_email: customerEmail,
+        customer_name: customerName,
         stripe_subscription_id: stripeSubscription.id,
         stripe_customer_id: stripeSubscription.customer as string,
         current_period_start: new Date(stripeSubscription.current_period_start * 1000),
@@ -76,6 +82,17 @@ export default async function SubscriptionSuccessPage({
       console.log('✅ Subscription created in DB (id:', newSub?.Id, ')');
     } else {
       console.log('ℹ️ Subscription already exists:', existing.Id);
+    }
+
+    // Generate, email and store the contract after payment. This is idempotent
+    // (skips if a contract already exists), so it works whether or not a Stripe
+    // webhook is configured, and never duplicates if both paths run.
+    if (customerName && customerEmail) {
+      try {
+        await processTermsAfterPayment(stripeSubscription.id, customerName, customerEmail);
+      } catch (termsError) {
+        console.error('❌ Error processing terms on success page:', termsError);
+      }
     }
 
     const periodEnd = new Date(stripeSubscription.current_period_end * 1000);

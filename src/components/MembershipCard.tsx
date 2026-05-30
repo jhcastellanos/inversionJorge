@@ -12,8 +12,6 @@ interface MembershipCardProps {
     MonthlyPrice: number;
     Benefits: string;
     ImageUrl?: string | null;
-    DiscountPrice?: number | null;
-    DiscountMonths?: number | null;
   };
   monthlyBasePrice: number;
 }
@@ -32,8 +30,10 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
   const [customerEmail, setCustomerEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const planPresentation = getMembershipPresentation(membership, monthlyBasePrice);
-  const showSavings = planPresentation.discountPercent > 0 || planPresentation.savingsTotal > 0;
+  const plan = getMembershipPresentation(membership, monthlyBasePrice);
+  const includedFeatures = plan.features.filter(f => f.included).map(f => f.label);
+  const isRecurringPeriod = plan.durationMonths > 1;
+  const intervalLabel = plan.durationMonths === 1 ? '/mes' : `cada ${plan.durationMonths} meses`;
 
   const handleSubscribeClick = () => {
     setShowPaymentForm(true);
@@ -58,8 +58,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
       alert('Por favor ingresa un email válido');
       return;
     }
-    
-    // Mostrar modal de términos
+
     setShowPaymentForm(false);
     setShowTermsModal(true);
   };
@@ -68,20 +67,20 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
     try {
       setIsLoading(true);
 
-      // The contract PDF + emails are generated only AFTER payment succeeds
-      // (handled idempotently by the Stripe webhook), so we go straight to checkout.
+      // The contract PDF + emails are generated only AFTER payment succeeds, so
+      // we go straight to checkout.
       const res = await fetch('/api/stripe/subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           membershipId: membership.Id,
           customerName,
           customerEmail,
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.url) {
         window.location.href = data.url;
       } else if (data.error) {
@@ -103,193 +102,121 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
 
   const handleTermsCancel = () => {
     setShowTermsModal(false);
-    // Volver a mostrar el formulario de pago
     setShowPaymentForm(true);
   };
-
-  const benefits = membership.Benefits?.split('\n').filter(b => b.trim()) || [];
 
   return (
     <>
       <div
-        className={`group rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-gradient-to-br from-indigo-50 to-purple-50 ${
-          planPresentation.recommended
-            ? 'border-indigo-500 ring-2 ring-indigo-300 scale-[1.01]'
-            : 'border-indigo-200'
+        className={`group relative flex flex-col h-full rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-white ${
+          plan.recommended
+            ? 'border-indigo-500 ring-2 ring-indigo-300 lg:scale-[1.03] z-10'
+            : 'border-gray-200'
         }`}
       >
-        {/* Imagen de la Membresía */}
-        {membership.ImageUrl && (
-          <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100">
-            <img 
-              src={membership.ImageUrl} 
-              alt={membership.Name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-            />
-          </div>
-        )}
-        
-        {/* Badge de Membresía */}
-        <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-            </svg>
-            <span className="font-bold uppercase text-sm tracking-wide">{planPresentation.badge}</span>
-          </div>
-          {planPresentation.recommended && (
-            <div className="absolute -top-3 right-4 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-              Más recomendado
-            </div>
-          )}
+        {/* Badge superior */}
+        <div
+          className={`py-3 px-6 text-center ${
+            plan.recommended
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+              : 'bg-gray-50 text-gray-700'
+          }`}
+        >
+          <span className="font-bold uppercase text-sm tracking-wide">{plan.badge}</span>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 flex flex-col flex-1">
           {/* Nombre */}
-          <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center group-hover:text-indigo-600 transition-colors">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">
             {membership.Name}
           </h3>
 
           {/* Descripción */}
-          <div className="mb-4">
-            <p className={`text-gray-600 text-center ${!showFullDescription ? 'line-clamp-3' : ''}`}>
-              {membership.Description}
-            </p>
-            {membership.Description && membership.Description.length > 120 && (
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 font-medium"
-              >
-                {showFullDescription ? 'Ver menos' : 'Ver más'}
-              </button>
+          {membership.Description && (
+            <div className="mb-4 text-center">
+              <p className={`text-gray-600 text-sm ${!showFullDescription ? 'line-clamp-2' : ''}`}>
+                {membership.Description}
+              </p>
+              {membership.Description.length > 100 && (
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 font-medium"
+                >
+                  {showFullDescription ? 'Ver menos' : 'Ver más'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Precio */}
+          <div className="text-center mb-4">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-2xl font-semibold text-gray-500">$</span>
+              <span className="text-5xl font-extrabold text-gray-900">
+                {formatMoney(plan.totalPrice)}
+              </span>
+            </div>
+            <p className="text-gray-500 text-sm mt-1">{intervalLabel}</p>
+
+            {isRecurringPeriod && (
+              <p className="text-sm text-gray-600 mt-2">
+                Equivale a{' '}
+                <span className="font-semibold text-gray-900">
+                  ${formatMoney(plan.monthlyEquivalent)}/mes
+                </span>
+              </p>
+            )}
+
+            {plan.monthlySavings > 0 && (
+              <div className="inline-flex items-center gap-1 mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-3 py-1 rounded-full">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                Ahorras ${formatMoney(plan.monthlySavings)}/mes
+              </div>
             )}
           </div>
 
-          {planPresentation.isKnownPlan ? (
-            <>
-              {/* Precio */}
-              <div className="bg-white rounded-xl p-4 mb-4 border-2 border-indigo-100">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <span className="text-4xl font-bold text-gray-900">
-                      ${formatMoney(planPresentation.totalPrice)}
-                    </span>
-                    <span className="text-gray-600 text-lg">total</span>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    ${formatMoney(planPresentation.monthlyEquivalent)}/mes · {planPresentation.durationMonths} meses
-                  </p>
-                </div>
-              </div>
+          {/* Beneficios con checks/cruces */}
+          <ul className="space-y-3 mb-6 flex-1">
+            {plan.features.map((feature, index) => (
+              <li
+                key={index}
+                className={`flex items-start gap-2 text-sm ${
+                  feature.included ? 'text-gray-700' : 'text-gray-400'
+                }`}
+              >
+                {feature.included ? (
+                  <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
+                <span>{feature.label}</span>
+              </li>
+            ))}
+          </ul>
 
-              {/* Descuento y ahorro */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
-                  <p className="text-xs text-emerald-700 font-semibold">Descuento</p>
-                  <p className="text-lg font-bold text-emerald-700">
-                    {planPresentation.discountPercent > 0 ? `Ahorra ${planPresentation.discountPercent}%` : 'Sin ahorro'}
-                  </p>
-                </div>
-                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-center">
-                  <p className="text-xs text-indigo-700 font-semibold">Ahorro total</p>
-                  <p className="text-lg font-bold text-indigo-700">
-                    {showSavings ? `Ahorras $${formatMoney(planPresentation.savingsTotal)}` : 'Ahorras $0'}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Precio con indicador de recurrencia */}
-              <div className="bg-white rounded-xl p-4 mb-4 border-2 border-indigo-100">
-                <div className="text-center">
-                  {membership.DiscountPrice && membership.DiscountMonths ? (
-                    <>
-                      {/* Precio con descuento */}
-                      <div className="mb-2">
-                        <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                          ¡OFERTA! Primeros {membership.DiscountMonths} meses
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-center gap-3 mb-2">
-                        <span className="text-2xl font-bold text-gray-400 line-through">
-                          ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
-                        </span>
-                        <span className="text-4xl font-bold text-green-600">
-                          ${parseFloat(membership.DiscountPrice.toString()).toFixed(2)}
-                        </span>
-                        <span className="text-gray-600 text-lg">/mes</span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2">Los primeros {membership.DiscountMonths} meses</p>
-                      <p className="text-xs text-gray-400">
-                        Luego ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}/mes
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      {/* Precio normal */}
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <span className="text-4xl font-bold text-gray-900">
-                          ${parseFloat(membership.MonthlyPrice.toString()).toFixed(2)}
-                        </span>
-                        <span className="text-gray-600 text-lg">/mes</span>
-                      </div>
-                      <p className="text-sm text-gray-500">Pago recurrente mensual</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Beneficios */}
-          {benefits.length > 0 && (
-            <div className="mb-4 bg-white rounded-xl p-4 border border-indigo-100">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Beneficios incluidos
-              </h4>
-              <ul className="space-y-2">
-                {benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Información importante */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <div className="flex gap-2">
-              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <div className="text-xs text-blue-800">
-                <p className="font-semibold mb-1">Información importante:</p>
-                <ul className="space-y-1">
-                  <li>• Puedes cancelar en cualquier momento desde tu panel</li>
-                  <li>• Acceso inmediato a todo el contenido tras la suscripción</li>
-                  <li>• Mantienes acceso hasta el final del período pagado</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Botón de suscripción */}
-          <button 
+          {/* Botón */}
+          <button
             onClick={handleSubscribeClick}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg"
+            className={`w-full py-3 px-6 rounded-xl font-semibold transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg ${
+              plan.recommended
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
+                : 'bg-gray-900 text-white hover:bg-gray-800'
+            }`}
           >
-            Suscribirme Ahora
+            Suscribirme
           </button>
-          
+
+          {/* Nota de no reembolso */}
           <p className="text-xs text-center text-gray-500 mt-3">
+            Pago no reembolsable. Elige bien tu plan antes de suscribirte.
+          </p>
+          <p className="text-xs text-center text-gray-400 mt-1">
             Procesado de forma segura por Stripe
           </p>
         </div>
@@ -299,28 +226,26 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
       {showPaymentForm && !showTermsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            {/* Header */}
             <div className="border-b p-6">
-              <h2 className="text-2xl font-bold text-gray-900">Completar Compra</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Completar Suscripción</h2>
               <p className="text-gray-600 mt-1">{membership.Name}</p>
             </div>
 
-            {/* Form */}
             <div className="p-6">
-              {/* Resumen del Plan */}
               <div className="bg-indigo-50 rounded-lg p-4 mb-6 border border-indigo-200">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">Precio:</span>
+                  <span className="text-gray-700 font-medium">Total:</span>
                   <span className="text-2xl font-bold text-green-600">
-                    ${membership.DiscountPrice 
-                      ? parseFloat(membership.DiscountPrice.toString()).toFixed(2)
-                      : parseFloat(membership.MonthlyPrice.toString()).toFixed(2)
-                    }/mes
+                    ${formatMoney(plan.totalPrice)} {intervalLabel}
                   </span>
                 </div>
+                {isRecurringPeriod && (
+                  <p className="text-xs text-gray-500 text-right mt-1">
+                    Equivale a ${formatMoney(plan.monthlyEquivalent)}/mes
+                  </p>
+                )}
               </div>
 
-              {/* Información del Cliente */}
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Nombre Completo</label>
@@ -344,7 +269,6 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
                 </div>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={handlePaymentClose}
@@ -356,7 +280,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
                   onClick={handleBuyClick}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
                 >
-                  Comprar
+                  Continuar
                 </button>
               </div>
             </div>
@@ -368,22 +292,22 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
       {showTermsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            {/* Header */}
             <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
               <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
-              <p className="text-gray-600 mt-1">Trading en Vivo con Jorge y Guille</p>
+              <p className="text-gray-600 mt-1">{membership.Name}</p>
               <div className="mt-3 pt-3 border-t space-y-1">
                 <p className="text-sm text-gray-600"><strong>Nombre:</strong> {customerName}</p>
                 <p className="text-sm text-gray-600"><strong>Email:</strong> {customerEmail}</p>
               </div>
             </div>
 
-            {/* Terms Content */}
             <div className="flex-1 overflow-y-auto p-6">
               <TermsAndConditionsModal
                 isOpen={true}
                 membershipName={membership.Name}
                 email={customerEmail}
+                includedFeatures={includedFeatures}
+                priceLabel={`$${formatMoney(plan.totalPrice)} ${intervalLabel}`}
                 onAccept={handleTermsAccept}
                 onCancel={handleTermsCancel}
                 isLoading={isLoading}
@@ -395,4 +319,3 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
     </>
   );
 }
-

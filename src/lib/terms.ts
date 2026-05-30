@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { Resend } from 'resend';
-import { Subscription, Contract } from './models';
+import { Subscription, Contract, Membership } from './models';
+import { getIncludedFeatures } from './membershipPlans';
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
 Trading en Vivo con Jorge y Guille
@@ -113,7 +114,9 @@ NOTA IMPORTANTE: Aunque se use el nombre de otra persona en la compra, es quien 
 export async function generateTermsPDF(
   customerName: string,
   customerEmail: string,
-  acceptanceDate: Date
+  acceptanceDate: Date,
+  planName?: string,
+  includedFeatures?: string[]
 ): Promise<Buffer> {
   const doc = new jsPDF();
   let yPosition = 10;
@@ -121,6 +124,13 @@ export async function generateTermsPDF(
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
   const maxWidth = pageWidth - 2 * margin;
+
+  const ensureSpace = (needed: number) => {
+    if (yPosition > pageHeight - margin - needed) {
+      doc.addPage();
+      yPosition = margin;
+    }
+  };
 
   // Title
   doc.setFontSize(16);
@@ -147,7 +157,46 @@ export async function generateTermsPDF(
   doc.text(`Email: ${customerEmail}`, margin, yPosition);
   yPosition += 12;
 
+  // Selected plan + non-refundable acknowledgement
+  if (planName) {
+    doc.setFontSize(11);
+    doc.text('PLAN CONTRATADO:', margin, yPosition);
+    yPosition += 6;
+
+    doc.setFontSize(10);
+    doc.text(`Plan: ${planName}`, margin, yPosition);
+    yPosition += 6;
+
+    if (includedFeatures && includedFeatures.length > 0) {
+      doc.text('Incluye:', margin, yPosition);
+      yPosition += 6;
+      doc.setFontSize(9);
+      for (const feature of includedFeatures) {
+        const featureLines = doc.splitTextToSize(`- ${feature}`, maxWidth - 4);
+        for (const line of featureLines) {
+          ensureSpace(10);
+          doc.text(line, margin + 2, yPosition);
+          yPosition += 4;
+        }
+      }
+      yPosition += 2;
+    }
+
+    doc.setFontSize(9);
+    const nonRefundableLines = doc.splitTextToSize(
+      'IMPORTANTE: Ningun pago es reembolsable. El suscriptor declara que ha elegido este plan de forma consciente y acepta que no habra reembolsos por ningun motivo, incluyendo dias no utilizados.',
+      maxWidth
+    );
+    for (const line of nonRefundableLines) {
+      ensureSpace(10);
+      doc.text(line, margin, yPosition);
+      yPosition += 4;
+    }
+    yPosition += 8;
+  }
+
   // Full Terms
+  ensureSpace(16);
   doc.setFontSize(10);
   doc.text('TERMINOS Y CONDICIONES COMPLETOS:', margin, yPosition);
   yPosition += 8;
@@ -313,14 +362,44 @@ export async function processTermsAfterPayment(
       return;
     }
 
-    const existingContract = await Contract.findBySubscriptionId(subscription.Id);
+    // Best-effort dedup: if the lookup fails (e.g. Contracts table not yet
+    // migrated), we continue and still send the email so behaviour never
+    // regresses versus the previous flow.
+    let existingContract = null;
+    try {
+      existingContract = await Contract.findBySubscriptionId(subscription.Id);
+    } catch (lookupError) {
+      console.warn(`⚠️ [processTermsAfterPayment] Could not check existing contract, continuing:`, lookupError);
+    }
     if (existingContract) {
       console.log(`ℹ️ [processTermsAfterPayment] Contract already processed for subscription ${stripeSubscriptionId}, skipping`);
       return;
     }
 
+    // Resolve the plan details so the contract reflects exactly what was bought,
+    // including the included benefits and the non-refundable clause.
+    let planName: string | undefined;
+    let includedFeatures: string[] | undefined;
+    try {
+      if (subscription.MembershipId) {
+        const membership = await Membership.findById(subscription.MembershipId);
+        if (membership) {
+          planName = membership.Name;
+          includedFeatures = getIncludedFeatures(membership.Name);
+        }
+      }
+    } catch (membershipError) {
+      console.warn(`⚠️ [processTermsAfterPayment] Could not resolve membership plan, continuing:`, membershipError);
+    }
+
     const acceptanceDate = new Date();
-    const pdfBuffer = await generateTermsPDF(customerName, customerEmail, acceptanceDate);
+    const pdfBuffer = await generateTermsPDF(
+      customerName,
+      customerEmail,
+      acceptanceDate,
+      planName,
+      includedFeatures
+    );
 
     await sendTermsEmail(customerName, customerEmail, pdfBuffer);
 
