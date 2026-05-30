@@ -50,7 +50,7 @@ export default function CourseCard({ course }: CourseCardProps) {
   const hasDateInfo = course.StartDate || course.EndDate;
 
   return (
-    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full flex flex-col">
       <div className="relative h-48 overflow-hidden bg-gray-200">
         {course.ImageUrl ? (
           <img 
@@ -69,7 +69,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
-      <div className="p-6">
+      <div className="p-6 flex flex-col flex-1">
         {/* Título con 2 líneas máximo */}
         <div className="mb-2">
           <h3 className={`text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors ${!showFullTitle ? 'line-clamp-2' : ''}`}>
@@ -118,7 +118,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           </div>
         )}
         
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 mt-auto">
           <span className="text-3xl font-bold text-gray-900">
             ${parseFloat(course.Price.toString()).toFixed(2)}
           </span>
