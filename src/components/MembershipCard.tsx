@@ -108,7 +108,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
   return (
     <>
       <div
-        className={`group relative flex flex-col h-full rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-white ${
+        className={`group relative flex flex-col h-full w-full rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-white ${
           plan.recommended
             ? 'border-indigo-500 ring-2 ring-indigo-300 lg:scale-[1.03] z-10'
             : 'border-gray-200'

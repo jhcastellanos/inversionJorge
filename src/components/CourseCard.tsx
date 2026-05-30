@@ -50,7 +50,7 @@ export default function CourseCard({ course }: CourseCardProps) {
   const hasDateInfo = course.StartDate || course.EndDate;
 
   return (
-    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full w-full flex flex-col">
       <div className="relative h-48 overflow-hidden bg-gray-200">
         {course.ImageUrl ? (
           <img 
