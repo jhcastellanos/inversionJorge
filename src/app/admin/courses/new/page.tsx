@@ -194,7 +194,7 @@ export default function NewCoursePage() {
               <button 
                 type="submit" 
                 disabled={uploading}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-900 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-900 transition-all disabled:opacity-50"
               >
                 Crear Curso
               </button>

@@ -111,7 +111,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
       <div
         className={`group relative flex flex-col h-full w-full rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-white ${
           plan.recommended
-            ? 'border-indigo-500 ring-2 ring-indigo-300 lg:scale-[1.03] z-10'
+            ? 'border-blue-800 ring-2 ring-blue-300 lg:scale-[1.03] z-10'
             : 'border-gray-200'
         }`}
       >
@@ -119,7 +119,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
         <div
           className={`py-3 px-6 text-center ${
             plan.recommended
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+              ? 'bg-gradient-to-r from-blue-900 to-blue-700 text-white'
               : 'bg-gray-50 text-gray-700'
           }`}
         >
@@ -141,7 +141,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
               {membership.Description.length > 100 && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 mt-1 font-medium"
+                  className="text-sm text-blue-900 hover:text-blue-900 mt-1 font-medium"
                 >
                   {showFullDescription ? 'Ver menos' : 'Ver más'}
                 </button>
@@ -182,7 +182,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
           <button
             type="button"
             onClick={() => setShowDetails(!showDetails)}
-            className="md:hidden mb-4 flex items-center justify-center gap-1 w-full text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+            className="md:hidden mb-4 flex items-center justify-center gap-1 w-full text-sm font-semibold text-blue-900 hover:text-blue-900"
             aria-expanded={showDetails}
           >
             {showDetails ? 'Ver menos' : 'Ver qué incluye'}
@@ -224,7 +224,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
             onClick={handleSubscribeClick}
             className={`w-full py-3 px-6 rounded-xl font-semibold transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg ${
               plan.recommended
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
+                ? 'bg-gradient-to-r from-blue-900 to-blue-700 text-white hover:from-blue-900 hover:to-blue-800'
                 : 'bg-gray-900 text-white hover:bg-gray-800'
             }`}
           >
@@ -251,7 +251,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
             </div>
 
             <div className="p-6">
-              <div className="bg-indigo-50 rounded-lg p-4 mb-6 border border-indigo-200">
+              <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 font-medium">Total:</span>
                   <span className="text-2xl font-bold text-green-600">
@@ -273,7 +273,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Tu nombre"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none"
                   />
                 </div>
                 <div>
@@ -283,7 +283,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="tu@email.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none"
                   />
                 </div>
               </div>

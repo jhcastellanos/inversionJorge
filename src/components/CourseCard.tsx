@@ -125,7 +125,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         </div>
         <button 
           onClick={handleCheckout}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg"
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-900 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-900 transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Inscribirse Ahora
         </button>

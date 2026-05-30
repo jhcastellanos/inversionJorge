@@ -55,7 +55,7 @@ export default async function SuccessPage({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-8">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 flex items-center justify-center p-8">
       <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8 text-center">
         <div className="mb-6">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -72,7 +72,7 @@ export default async function SuccessPage({
         <div className="border-t border-gray-200 pt-6 mt-6">
           <a 
             href="/" 
-            className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
+            className="inline-block bg-gradient-to-r from-blue-600 to-blue-900 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-900 transition-all"
           >
             Volver a Cursos
           </a>

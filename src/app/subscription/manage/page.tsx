@@ -110,9 +110,9 @@ function ManageSubscriptionContent() {
 
   if (!email || showEmailInput) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50 py-12 px-4">
         <div className="max-w-md mx-auto">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2 mb-8">
+          <Link href="/" className="text-blue-900 hover:text-blue-900 flex items-center gap-2 mb-8">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -121,8 +121,8 @@ function ManageSubscriptionContent() {
           
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <div className="bg-indigo-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -142,13 +142,13 @@ function ManageSubscriptionContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none transition-all"
                 />
               </div>
               
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                className="w-full bg-gradient-to-r from-blue-900 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-900 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
               >
                 Ver mis suscripciones
               </button>
@@ -169,7 +169,7 @@ function ManageSubscriptionContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando suscripciones...</p>
         </div>
       </div>
@@ -177,10 +177,10 @@ function ManageSubscriptionContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2 mb-4">
+          <Link href="/" className="text-blue-900 hover:text-blue-900 flex items-center gap-2 mb-4">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -194,7 +194,7 @@ function ManageSubscriptionContent() {
             </div>
             <button
               onClick={() => setShowEmailInput(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-sm text-blue-900 hover:text-blue-900 font-medium"
             >
               Cambiar cuenta
             </button>
@@ -210,7 +210,7 @@ function ManageSubscriptionContent() {
             <p className="text-gray-600 mb-6">Explora nuestras membresías disponibles</p>
             <Link 
               href="/"
-              className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
+              className="inline-block bg-gradient-to-r from-blue-900 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-900 hover:to-blue-800 transition-all"
             >
               Ver membresías
             </Link>
@@ -246,7 +246,7 @@ function ManageSubscriptionContent() {
                       <button
                         onClick={() => handleOpenPortal(sub.Id, sub.StripeCustomerId)}
                         disabled={redirectingPortal === sub.Id}
-                        className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="px-6 py-2 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-900 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {redirectingPortal === sub.Id ? (
                           <>
@@ -313,7 +313,7 @@ export default function ManageSubscriptionPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>

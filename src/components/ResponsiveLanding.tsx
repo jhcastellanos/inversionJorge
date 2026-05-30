@@ -10,16 +10,26 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
   const monthlyBasePrice = getMonthlyBasePrice(memberships);
   const orderedMemberships = sortMembershipsByPlanOrder(memberships);
 
+  // Al cambiar de sección volvemos al inicio para no quedar a mitad del scroll.
+  const handleTabChange = (tab: 'memberships' | 'courses') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-      {/* Selector de sección (mismo en móvil y escritorio) */}
-      <div className="sticky top-[73px] z-40 -mx-4 px-4 sm:mx-0 sm:px-0 pt-2 pb-6">
-        <div className="mx-auto flex max-w-xl gap-2 rounded-2xl border-2 border-indigo-200 bg-white/95 p-2 shadow-xl backdrop-blur-md">
-          <button
-            onClick={() => setActiveTab('memberships')}
+    <>
+      {/* Banda del selector: a todo el ancho y opaca para que el contenido
+          desaparezca por completo al hacer scroll por debajo (sin efecto "bug"). */}
+      <div className="sticky top-[73px] z-40 border-b border-slate-200 bg-slate-100 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-xl gap-2 rounded-2xl border-2 border-blue-200 bg-white p-2 shadow-md">
+            <button
+              onClick={() => handleTabChange('memberships')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition-all duration-300 ${
               activeTab === 'memberships'
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg'
+                ? 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -30,7 +40,7 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             {memberships.length > 0 && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                  activeTab === 'memberships' ? 'bg-white/30 text-white' : 'bg-indigo-100 text-indigo-700'
+                  activeTab === 'memberships' ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-900'
                 }`}
               >
                 {memberships.length}
@@ -38,10 +48,10 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             )}
           </button>
           <button
-            onClick={() => setActiveTab('courses')}
+            onClick={() => handleTabChange('courses')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition-all duration-300 ${
               activeTab === 'courses'
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg'
+                ? 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -52,16 +62,18 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             {courses.length > 0 && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                  activeTab === 'courses' ? 'bg-white/30 text-white' : 'bg-indigo-100 text-indigo-700'
+                  activeTab === 'courses' ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-900'
                 }`}
               >
                 {courses.length}
               </span>
             )}
           </button>
+          </div>
         </div>
       </div>
 
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       {/* Sección: Membresías */}
       {activeTab === 'memberships' && (
         <section className="animate-fadeIn">
@@ -117,6 +129,7 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
           )}
         </section>
       )}
-    </div>
+      </div>
+    </>
   );
 }

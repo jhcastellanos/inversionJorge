@@ -30,7 +30,7 @@ export default async function AdminMembershipsPage() {
                 <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
                   Cursos
                 </Link>
-                <Link href="/admin/memberships" className="text-indigo-600 font-semibold">
+                <Link href="/admin/memberships" className="text-blue-900 font-semibold">
                   Membresías
                 </Link>
                 <Link href="/admin/subscriptions" className="text-gray-600 hover:text-gray-900">
@@ -61,7 +61,7 @@ export default async function AdminMembershipsPage() {
           </div>
           <Link
             href="/admin/memberships/create"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors"
           >
             + Nueva Membresía
           </Link>
@@ -73,7 +73,7 @@ export default async function AdminMembershipsPage() {
             <p className="text-gray-500 mb-4">No hay membresías creadas</p>
             <Link
               href="/admin/memberships/create"
-              className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+              className="inline-block bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-900"
             >
               Crear primera membresía
             </Link>
@@ -98,7 +98,7 @@ export default async function AdminMembershipsPage() {
                   
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3">{membership.Description}</p>
                   
-                  <div className="text-3xl font-bold text-indigo-600 mb-4">
+                  <div className="text-3xl font-bold text-blue-900 mb-4">
                     ${parseFloat(membership.MonthlyPrice).toFixed(2)}
                     <span className="text-lg text-gray-500 font-normal">/mes</span>
                   </div>
@@ -123,7 +123,7 @@ export default async function AdminMembershipsPage() {
                   <div className="flex gap-2">
                     <Link
                       href={`/admin/memberships/${membership.Id}/edit`}
-                      className="flex-1 bg-indigo-600 text-white text-center py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                      className="flex-1 bg-blue-900 text-white text-center py-2 rounded-lg hover:bg-blue-900 transition-colors text-sm font-medium"
                     >
                       Editar
                     </Link>

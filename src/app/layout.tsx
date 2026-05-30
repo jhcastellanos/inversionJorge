@@ -2,8 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Inversión Real con Jorge - Aprende a Invertir en Bolsa',
-  description: 'Cursos profesionales de inversión en bolsa y mercado de valores. Aprende estrategias reales de trading con Jorge.',
+  title: 'Inversión Real con Jorge y Guille - Aprende a Invertir en Bolsa',
+  description: 'Cursos profesionales de inversión en bolsa y mercado de valores. Aprende estrategias reales de trading con Jorge y Guille.',
 }
 
 export default function RootLayout({

@@ -27,7 +27,7 @@ export default async function AdminDashboard() {
             <div className="flex items-center gap-8">
               <h1 className="text-xl font-bold text-gray-900">Panel de Administración</h1>
               <div className="flex gap-4">
-                <Link href="/admin/dashboard" className="text-indigo-600 font-semibold">
+                <Link href="/admin/dashboard" className="text-blue-900 font-semibold">
                   Cursos
                 </Link>
                 <Link href="/admin/memberships" className="text-gray-600 hover:text-gray-900">
@@ -56,7 +56,7 @@ export default async function AdminDashboard() {
           <h2 className="text-xl font-semibold text-gray-900">Courses</h2>
           <Link 
             href="/admin/courses/new" 
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
+            className="bg-gradient-to-r from-blue-600 to-blue-900 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-900 transition-all"
           >
             + Add Course
           </Link>

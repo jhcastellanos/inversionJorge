@@ -4,7 +4,7 @@
 
 1. Ve a https://github.com/new
 2. Nombre del repo: `inversion-real-cursos` (o el que prefieras)
-3. Descripción: "Plataforma de cursos - Inversión Real con Jorge"
+3. Descripción: "Plataforma de cursos - Inversión Real con Jorge y Guille"
 4. **Privado** o Público (tu eliges)
 5. NO inicializar con README (ya lo tenemos)
 6. Crear repositorio
@@ -224,4 +224,4 @@ Tu plataforma está en producción. Accede a:
 
 ---
 
-**© 2025 Inversión Real con Jorge**
+**© 2025 Inversión Real con Jorge y Guille**

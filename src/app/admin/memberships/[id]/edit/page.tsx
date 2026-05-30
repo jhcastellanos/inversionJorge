@@ -63,7 +63,7 @@ export default function EditMembershipPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function EditMembershipPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 text-lg mb-4">No se encontró la membresía</p>
-          <Link href="/admin/memberships" className="text-indigo-600 hover:text-indigo-700">
+          <Link href="/admin/memberships" className="text-blue-900 hover:text-blue-900">
             Volver a Membresías
           </Link>
         </div>
@@ -95,7 +95,7 @@ export default function EditMembershipPage() {
                 <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
                   Cursos
                 </Link>
-                <Link href="/admin/memberships" className="text-indigo-600 font-semibold">
+                <Link href="/admin/memberships" className="text-blue-900 font-semibold">
                   Membresías
                 </Link>
                 <Link href="/admin/subscriptions" className="text-gray-600 hover:text-gray-900">
@@ -113,7 +113,7 @@ export default function EditMembershipPage() {
       {/* Main Content */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/admin/memberships" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2">
+          <Link href="/admin/memberships" className="text-blue-900 hover:text-blue-900 flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -143,7 +143,7 @@ export default function EditMembershipPage() {
                   name="name"
                   required
                   defaultValue={membership.Name}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="Comunidad Trading Pro"
                 />
               </div>
@@ -168,7 +168,7 @@ export default function EditMembershipPage() {
                   id="image_url"
                   name="image_url"
                   defaultValue={membership.ImageUrl || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="https://ejemplo.com/imagen.jpg"
                 />
                 <p className="text-sm text-gray-500 mt-1">
@@ -187,7 +187,7 @@ export default function EditMembershipPage() {
                   required
                   rows={4}
                   defaultValue={membership.Description}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="Acceso completo a nuestra comunidad exclusiva..."
                 />
               </div>
@@ -205,7 +205,7 @@ export default function EditMembershipPage() {
                   step="0.01"
                   min="0"
                   defaultValue={membership.MonthlyPrice}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="150.00"
                 />
                 <p className="text-sm text-gray-500 mt-1">Precio fijo mensual de la suscripción</p>
@@ -221,7 +221,7 @@ export default function EditMembershipPage() {
                   id="start_date"
                   name="start_date"
                   defaultValue={membership.StartDate ? new Date(membership.StartDate).toISOString().slice(0, 10) : ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Si se define, las compras antes de esta fecha entrarán en período de prueba sin cobro hasta la fecha de inicio
@@ -239,7 +239,7 @@ export default function EditMembershipPage() {
                   required
                   rows={8}
                   defaultValue={membership.Benefits}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent font-mono text-sm"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent font-mono text-sm"
                   placeholder="Señales de trading en tiempo real&#10;Análisis técnico diario"
                 />
                 <p className="text-sm text-gray-500 mt-1">Escribe cada beneficio en una línea separada</p>
@@ -252,7 +252,7 @@ export default function EditMembershipPage() {
                   id="is_active"
                   name="is_active"
                   defaultChecked={membership.IsActive}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-600 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
                   Membresía activa (visible en el sitio)
@@ -264,7 +264,7 @@ export default function EditMembershipPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-900 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>

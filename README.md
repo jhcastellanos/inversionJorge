@@ -1,6 +1,6 @@
-# Inversión Real con Jorge - Plataforma de Cursos
+# Inversión Real con Jorge y Guille - Plataforma de Cursos
 
-Plataforma de venta de cursos para la academia **Inversión Real con Jorge**, especializada en educación sobre bolsa de valores, trading y estrategias de inversión.
+Plataforma de venta de cursos para la academia **Inversión Real con Jorge y Guille**, especializada en educación sobre bolsa de valores, trading y estrategias de inversión.
 
 ## 🚀 Stack Tecnológico
 
@@ -46,4 +46,4 @@ Usar para database Postgres o conectar Neon existente.
 
 ---
 
-**© 2025 Inversión Real con Jorge**
+**© 2025 Inversión Real con Jorge y Guille**

@@ -46,7 +46,7 @@ export default function CreateMembershipPage() {
                 <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
                   Cursos
                 </Link>
-                <Link href="/admin/memberships" className="text-indigo-600 font-semibold">
+                <Link href="/admin/memberships" className="text-blue-900 font-semibold">
                   Membresías
                 </Link>
                 <Link href="/admin/subscriptions" className="text-gray-600 hover:text-gray-900">
@@ -64,7 +64,7 @@ export default function CreateMembershipPage() {
       {/* Main Content */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/admin/memberships" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2">
+          <Link href="/admin/memberships" className="text-blue-900 hover:text-blue-900 flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -93,7 +93,7 @@ export default function CreateMembershipPage() {
                   id="name"
                   name="name"
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="Ej: Comunidad Trading Pro"
                 />
               </div>
@@ -107,7 +107,7 @@ export default function CreateMembershipPage() {
                   type="url"
                   id="image_url"
                   name="image_url"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="https://ejemplo.com/imagen.jpg"
                 />
                 <p className="text-sm text-gray-500 mt-1">URL pública de la imagen (opcional)</p>
@@ -123,7 +123,7 @@ export default function CreateMembershipPage() {
                   name="description"
                   required
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="Describe los beneficios principales de la membresía..."
                 />
               </div>
@@ -140,7 +140,7 @@ export default function CreateMembershipPage() {
                   required
                   step="0.01"
                   min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="150.00"
                 />
                 <p className="text-sm text-gray-500 mt-1">Precio fijo mensual de la suscripción</p>
@@ -155,7 +155,7 @@ export default function CreateMembershipPage() {
                   type="date"
                   id="start_date"
                   name="start_date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Si se define, las compras antes de esta fecha entrarán en período de prueba sin cobro hasta la fecha de inicio
@@ -172,7 +172,7 @@ export default function CreateMembershipPage() {
                   name="benefits"
                   required
                   rows={8}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent font-mono text-sm"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent font-mono text-sm"
                   placeholder="Señales de trading en tiempo real&#10;Análisis técnico diario&#10;Grupo privado de Telegram&#10;Soporte personalizado 24/7"
                 />
                 <p className="text-sm text-gray-500 mt-1">Escribe cada beneficio en una línea separada</p>
@@ -185,7 +185,7 @@ export default function CreateMembershipPage() {
                   id="is_active"
                   name="is_active"
                   defaultChecked
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-600 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
                   Membresía activa (visible en el sitio)
@@ -197,7 +197,7 @@ export default function CreateMembershipPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-900 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Creando...' : 'Crear Membresía'}
                 </button>

@@ -33,7 +33,7 @@ export default async function AdminSubscriptionsPage() {
                 <Link href="/admin/memberships" className="text-gray-600 hover:text-gray-900">
                   Membresías
                 </Link>
-                <Link href="/admin/subscriptions" className="text-indigo-600 font-semibold">
+                <Link href="/admin/subscriptions" className="text-blue-900 font-semibold">
                   Suscripciones
                 </Link>
               </div>
@@ -81,7 +81,7 @@ export default async function AdminSubscriptionsPage() {
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600">Ingresos Mensuales</p>
-            <p className="text-2xl font-bold text-indigo-600">
+            <p className="text-2xl font-bold text-blue-900">
               ${subscriptions
                 .filter((s: any) => s.Status === 'active' && !s.CancelAtPeriodEnd)
                 .reduce((sum: number, s: any) => sum + parseFloat(s.MonthlyPrice || '0'), 0)
@@ -197,7 +197,7 @@ export default async function AdminSubscriptionsPage() {
                           href={`https://dashboard.stripe.com/test/subscriptions/${subscription.StripeSubscriptionId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                          className="text-blue-900 hover:text-blue-950 mr-4"
                         >
                           Ver en Stripe
                         </a>
