@@ -24,6 +24,7 @@ const formatMoney = (value: number) => {
 
 export default function MembershipCard({ membership, monthlyBasePrice }: MembershipCardProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [customerName, setCustomerName] = useState('');
@@ -177,8 +178,26 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
             )}
           </div>
 
-          {/* Beneficios con checks/cruces */}
-          <ul className="space-y-3 mb-6 flex-1">
+          {/* Toggle "Ver más" - solo en móvil para mantener la tarjeta compacta */}
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            className="md:hidden mb-4 flex items-center justify-center gap-1 w-full text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+            aria-expanded={showDetails}
+          >
+            {showDetails ? 'Ver menos' : 'Ver qué incluye'}
+            <svg
+              className={`w-4 h-4 transition-transform ${showDetails ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Beneficios con checks/cruces (colapsado en móvil, siempre visible en escritorio) */}
+          <ul className={`space-y-3 mb-6 md:flex-1 ${showDetails ? 'block' : 'hidden'} md:block`}>
             {plan.features.map((feature, index) => (
               <li
                 key={index}

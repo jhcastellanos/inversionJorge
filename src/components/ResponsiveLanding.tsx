@@ -78,23 +78,14 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             </div>
           ) : (
             <>
-              <p className="mb-4 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 md:hidden">
-                <span>Desliza para ver todas las opciones</span>
-                <svg className="h-4 w-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
-              </p>
-              <div className="md:mx-auto md:max-w-6xl">
-                <div className="-mx-4 flex snap-x snap-mandatory items-stretch gap-5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-3 md:gap-8 md:overflow-visible md:px-0 md:pb-0">
-                  {orderedMemberships.map((membership: any) => (
-                    <div
-                      key={membership.Id}
-                      className="flex w-[82%] shrink-0 snap-center sm:w-[60%] md:w-full"
-                    >
-                      <MembershipCard membership={membership} monthlyBasePrice={monthlyBasePrice} />
-                    </div>
-                  ))}
-                </div>
+              <div className="mx-auto grid max-w-6xl grid-cols-1 items-stretch gap-6 md:grid-cols-3 lg:gap-8">
+                {orderedMemberships.map((membership: any) => (
+                  <MembershipCard
+                    key={membership.Id}
+                    membership={membership}
+                    monthlyBasePrice={monthlyBasePrice}
+                  />
+                ))}
               </div>
               <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-gray-500">
                 Todos los pagos son recurrentes y <strong>no reembolsables</strong>. Elige bien tu plan
@@ -118,24 +109,11 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
               <p className="text-gray-500">No hay cursos disponibles</p>
             </div>
           ) : (
-            <>
-              <p className="mb-4 flex items-center justify-center gap-2 text-sm font-medium text-indigo-600 sm:hidden">
-                <span>Desliza para ver todos los cursos</span>
-                <svg className="h-4 w-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
-              </p>
-              <div className="-mx-4 flex snap-x snap-mandatory items-stretch gap-5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 lg:gap-8">
-                {courses.map((course: any) => (
-                  <div
-                    key={course.Id}
-                    className="flex w-[82%] shrink-0 snap-center sm:w-full"
-                  >
-                    <CourseCard course={course} />
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+              {courses.map((course: any) => (
+                <CourseCard key={course.Id} course={course} />
+              ))}
+            </div>
           )}
         </section>
       )}
