@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import TermsAndConditionsModal from './TermsAndConditionsModal';
 import { getMembershipPresentation } from '../lib/membershipPlans';
+import { getStoredReferralCode } from '../lib/referralStorage';
 
 interface MembershipCardProps {
   membership: {
@@ -70,6 +71,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
 
       // The contract PDF + emails are generated only AFTER payment succeeds, so
       // we go straight to checkout.
+      const referralCode = getStoredReferralCode();
       const res = await fetch('/api/stripe/subscription-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,6 +79,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
           membershipId: membership.Id,
           customerName,
           customerEmail,
+          ...(referralCode ? { referralCode } : {}),
         }),
       });
 

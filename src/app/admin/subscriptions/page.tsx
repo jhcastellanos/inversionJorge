@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Subscription } from '../../../lib/models';
 import { verifyJwt } from '../../../lib/auth';
+import AdminNav from '../../../components/AdminNav';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,37 +21,7 @@ export default async function AdminSubscriptionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold text-gray-900">Panel de Administración</h1>
-              <div className="flex gap-4">
-                <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Cursos
-                </Link>
-                <Link href="/admin/memberships" className="text-gray-600 hover:text-gray-900">
-                  Membresías
-                </Link>
-                <Link href="/admin/subscriptions" className="text-blue-900 font-semibold">
-                  Suscripciones
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-                Ver sitio
-              </Link>
-              <form action="/api/auth/logout" method="POST">
-                <button type="submit" className="text-sm text-red-600 hover:text-red-700">
-                  Cerrar sesión
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AdminNav active="subscriptions" />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

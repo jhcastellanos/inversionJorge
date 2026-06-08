@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Membership } from '../../../../lib/models';
 import { getPlanDurationMonths } from '../../../../lib/membershipPlans';
+import { ReferralTrader } from '../../../../lib/referrals';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10
 
 export async function POST(req: NextRequest) {
   try {
-    const { membershipId, customerName, customerEmail } = await req.json();
+    const { membershipId, customerName, customerEmail, referralCode } = await req.json();
     if (!membershipId) return NextResponse.json({ error: 'Missing membershipId' }, { status: 400 });
 
     const membership = await Membership.findById(parseInt(membershipId));
@@ -72,6 +73,29 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    let validatedReferralCode: string | undefined;
+    if (typeof referralCode === 'string' && referralCode.trim()) {
+      const trader = await ReferralTrader.findByCode(referralCode.trim());
+      if (trader) {
+        validatedReferralCode = trader.referral_code;
+      }
+    }
+
+    const sessionMetadata: Record<string, string> = {
+      membershipId: membership.Id.toString(),
+      type: 'membership',
+      customerName: customerName || '',
+      customerEmail: customerEmail || '',
+    };
+    if (validatedReferralCode) {
+      sessionMetadata.referralCode = validatedReferralCode;
+    }
+
+    const subscriptionMetadata: Record<string, string> = { ...sessionMetadata };
+    if (membershipStartDate) {
+      subscriptionMetadata.membershipStartDate = membershipStartDate.toISOString();
+    }
+
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -93,21 +117,10 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'subscription',
-      metadata: { 
-        membershipId: membership.Id.toString(),
-        type: 'membership',
-        customerName: customerName || '',
-        customerEmail: customerEmail || '',
-      },
+      metadata: sessionMetadata,
       subscription_data: {
         ...(trialEnd ? { trial_end: trialEnd } : {}),
-        metadata: {
-          membershipId: membership.Id.toString(),
-          type: 'membership',
-          customerName: customerName || '',
-          customerEmail: customerEmail || '',
-          ...(membershipStartDate ? { membershipStartDate: membershipStartDate.toISOString() } : {}),
-        },
+        metadata: subscriptionMetadata,
       },
       success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/`,

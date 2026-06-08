@@ -1,5 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import ReferralCapture from '../components/ReferralCapture'
 
 export const metadata: Metadata = {
   title: 'Inversión Real con Jorge y Guille - Aprende a Invertir en Bolsa',
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={null}>
+          <ReferralCapture />
+        </Suspense>
+        {children}
+      </body>
     </html>
   )
 }

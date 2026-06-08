@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { Customer, Order, Subscription, Contract } from '../../../../lib/models';
+import { Customer, Order, Subscription, Membership } from '../../../../lib/models';
 import { processTermsAfterPayment } from '../../../../lib/terms';
+import { recordReferralConversionIfEligible } from '../../../../lib/referrals';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -107,6 +108,38 @@ export async function POST(req: NextRequest) {
           console.log(`✅ Subscription created in DB: ${invoice.subscription}`);
         } else {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
+        }
+
+        const stripeSubscription = await stripe.subscriptions.retrieve(
+          invoice.subscription as string
+        );
+        const referralCode =
+          stripeSubscription.metadata?.referralCode ||
+          invoice.metadata?.referralCode ||
+          '';
+
+        const membership = await Membership.findById(membershipId);
+        const membershipName = membership?.Name || `Membresía #${membershipId}`;
+
+        const amountPaid = invoice.amount_paid ?? 0;
+        if (referralCode && email && amountPaid > 0) {
+          try {
+            const conversion = await recordReferralConversionIfEligible({
+              referralCode,
+              referredEmail: email,
+              referredName: name,
+              membershipType: membershipName,
+              stripeSubscriptionId: invoice.subscription as string,
+              completedAt: new Date(),
+            });
+            if (conversion) {
+              console.log(`✅ Referral conversion recorded: ${conversion.id}`);
+            }
+          } catch (referralError) {
+            console.error('❌ Error recording referral conversion:', referralError);
+          }
+        } else if (referralCode && amountPaid <= 0) {
+          console.log('ℹ️ Skipping referral: invoice has no payment yet');
         }
 
         // Generate, email and store the contract AFTER payment.

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { Subscription, Membership } from '../../../lib/models';
 import { processTermsAfterPayment } from '../../../lib/terms';
+import { recordReferralConversionIfEligible } from '../../../lib/referrals';
 import Link from 'next/link';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
@@ -82,6 +83,25 @@ export default async function SubscriptionSuccessPage({
       console.log('✅ Subscription created in DB (id:', newSub?.Id, ')');
     } else {
       console.log('ℹ️ Subscription already exists:', existing.Id);
+    }
+
+    const referralCode =
+      session.metadata?.referralCode || stripeSubscription.metadata?.referralCode || '';
+
+    // Record referral only when payment actually succeeded (not trial-only checkout).
+    if (referralCode && customerEmail && session.payment_status === 'paid') {
+      try {
+        await recordReferralConversionIfEligible({
+          referralCode,
+          referredEmail: customerEmail,
+          referredName: customerName,
+          membershipType: membership?.Name || `Membresía #${membershipId}`,
+          stripeSubscriptionId: stripeSubscription.id,
+          completedAt: new Date(),
+        });
+      } catch (referralError) {
+        console.error('❌ Error recording referral on success page:', referralError);
+      }
     }
 
     // Generate, email and store the contract after payment. This is idempotent
