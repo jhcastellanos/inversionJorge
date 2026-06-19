@@ -52,7 +52,10 @@ export default function ReferralsAdminPanel() {
   const [alias, setAlias] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [sendEmailOnCreate, setSendEmailOnCreate] = useState(true);
+  const [sendingEmailId, setSendingEmailId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadTraders = useCallback(async () => {
@@ -89,19 +92,28 @@ export default function ReferralsAdminPanel() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setSuccess(null);
     try {
       const res = await fetch('/api/referrals/traders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alias, email }),
+        body: JSON.stringify({ alias, email, sendEmail: sendEmailOnCreate }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok && res.status !== 201) {
         throw new Error(data.error || 'Error al crear referidor');
       }
       setAlias('');
       setEmail('');
       await loadTraders();
+      if (data.emailSent) {
+        setSuccess(`Referidor creado y email enviado a ${data.trader?.email ?? email}`);
+      } else if (data.emailError) {
+        setSuccess('Referidor creado, pero no se pudo enviar el email.');
+        setError(data.emailError);
+      } else {
+        setSuccess('Referidor creado correctamente.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear');
     } finally {
@@ -119,6 +131,24 @@ export default function ReferralsAdminPanel() {
       await loadTraders();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar');
+    }
+  };
+
+  const handleSendEmail = async (trader: Trader) => {
+    setSendingEmailId(trader.id);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch(`/api/referrals/traders/${trader.id}/send-email`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al enviar el email');
+      setSuccess(`Email enviado a ${trader.email}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al enviar el email');
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -142,6 +172,12 @@ export default function ReferralsAdminPanel() {
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {success}
         </div>
       )}
 
@@ -181,8 +217,9 @@ export default function ReferralsAdminPanel() {
         <div className="space-y-8">
           <form
             onSubmit={handleCreate}
-            className="bg-white rounded-lg shadow p-6 grid gap-4 sm:grid-cols-3 items-end"
+            className="bg-white rounded-lg shadow p-6 space-y-4"
           >
+            <div className="grid gap-4 sm:grid-cols-3 items-end">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre o alias
@@ -193,8 +230,9 @@ export default function ReferralsAdminPanel() {
                 onChange={(e) => setAlias(e.target.value)}
                 required
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="Trader X"
+                placeholder="Juan Pérez"
               />
+              <p className="text-xs text-gray-400 mt-1">Se usa el primer nombre en el saludo del email</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -214,6 +252,16 @@ export default function ReferralsAdminPanel() {
             >
               {submitting ? 'Creando...' : '+ Agregar referidor'}
             </button>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendEmailOnCreate}
+                onChange={(e) => setSendEmailOnCreate(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-900 focus:ring-blue-900"
+              />
+              Enviar email del programa de referidos al crear (desde inversionrealconjorge@gmail.com)
+            </label>
           </form>
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -264,11 +312,19 @@ export default function ReferralsAdminPanel() {
                           {t.referral_link}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSendEmail(t)}
+                          disabled={sendingEmailId === t.id}
+                          className="block text-blue-900 hover:text-blue-700 font-medium disabled:opacity-50"
+                        >
+                          {sendingEmailId === t.id ? 'Enviando...' : 'Enviar email'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(t.id, t.alias)}
-                          className="text-red-600 hover:text-red-800 font-medium"
+                          className="block text-red-600 hover:text-red-800 font-medium"
                         >
                           Eliminar
                         </button>

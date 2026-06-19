@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '../../../../lib/auth';
 import { ReferralTrader } from '../../../../lib/referrals';
+import { sendReferralProgramEmail } from '../../../../lib/referralEmail';
 import { buildReferralLink } from '../../../../lib/siteUrl';
 
 export const runtime = 'nodejs';
@@ -43,12 +44,30 @@ export async function POST(req: NextRequest) {
     const trader = await ReferralTrader.create({ alias, email });
     const host = req.headers.get('host');
     const protocol = req.headers.get('x-forwarded-proto');
+    const referral_link = buildReferralLink(trader.referral_code, host, protocol);
+
+    let emailSent = false;
+    if (body.sendEmail === true) {
+      try {
+        await sendReferralProgramEmail(trader.email, trader.alias, referral_link);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('Referidor creado pero falló el email:', emailError);
+        return NextResponse.json(
+          {
+            trader: { ...trader, referral_link },
+            emailSent: false,
+            emailError:
+              emailError instanceof Error ? emailError.message : 'Error al enviar el email',
+          },
+          { status: 201 }
+        );
+      }
+    }
 
     return NextResponse.json({
-      trader: {
-        ...trader,
-        referral_link: buildReferralLink(trader.referral_code, host, protocol),
-      },
+      trader: { ...trader, referral_link },
+      emailSent,
     });
   } catch (error) {
     console.error('Error creating referral trader:', error);
