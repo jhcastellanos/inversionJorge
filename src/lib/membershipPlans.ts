@@ -3,7 +3,7 @@ export type MembershipRecord = {
   MonthlyPrice: number | string;
 };
 
-export type PlanKey = 'mensual' | 'trimestral' | 'seis-meses';
+export type PlanKey = 'temporal-mensual' | 'mensual' | 'trimestral' | 'seis-meses';
 
 type PlanDefinition = {
   key: PlanKey;
@@ -15,6 +15,14 @@ type PlanDefinition = {
 };
 
 const PLAN_DEFINITIONS: PlanDefinition[] = [
+  {
+    key: 'temporal-mensual',
+    matchers: ['temporal', 'mensual temporal'],
+    durationMonths: 1,
+    badge: 'Oferta temporal',
+    recommended: false,
+    displayOrder: 0,
+  },
   {
     key: 'mensual',
     matchers: ['mensual', '1 mes', 'un mes', '1mes'],
@@ -46,8 +54,8 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
 type PlanFeatureDefinition = { label: string; includedIn: PlanKey[] };
 
 const PLAN_FEATURES: PlanFeatureDefinition[] = [
-  { label: 'Acceso al canal de trading en vivo con nosotros', includedIn: ['mensual', 'trimestral', 'seis-meses'] },
-  { label: 'Acceso a las clases grabadas', includedIn: ['mensual', 'trimestral', 'seis-meses'] },
+  { label: 'Acceso al canal de trading en vivo con nosotros', includedIn: ['temporal-mensual', 'mensual', 'trimestral', 'seis-meses'] },
+  { label: 'Acceso a las clases grabadas', includedIn: ['temporal-mensual', 'mensual', 'trimestral', 'seis-meses'] },
   { label: 'Acceso a todas las clases en vivo', includedIn: ['trimestral', 'seis-meses'] },
   { label: 'Todo el nuevo material educativo (grabado y presencial)', includedIn: ['trimestral', 'seis-meses'] },
   {

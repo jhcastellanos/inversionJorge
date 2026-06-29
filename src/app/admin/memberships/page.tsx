@@ -5,6 +5,8 @@ import { Membership } from '../../../lib/models';
 import { verifyJwt } from '../../../lib/auth';
 import DeleteMembershipButton from '../../../components/DeleteMembershipButton';
 import AdminNav from '../../../components/AdminNav';
+import TemporaryMembershipControl from '../../../components/TemporaryMembershipControl';
+import { isTemporaryMembership } from '../../../lib/temporaryMembership';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +40,8 @@ export default async function AdminMembershipsPage() {
           </Link>
         </div>
 
+        <TemporaryMembershipControl />
+
         {/* Memberships Grid */}
         {memberships.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -52,10 +56,21 @@ export default async function AdminMembershipsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {memberships.map((membership: any) => (
-              <div key={membership.Id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div
+                key={membership.Id}
+                className={`bg-white rounded-lg shadow-lg overflow-hidden ${
+                  isTemporaryMembership(membership) ? 'ring-2 ring-amber-400' : ''
+                }`}
+              >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-gray-900">{membership.Name}</h3>
+                    <div className="flex flex-col items-end gap-1">
+                      {isTemporaryMembership(membership) && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          Temporal $150
+                        </span>
+                      )}
                     {membership.IsActive ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Activa
@@ -65,6 +80,7 @@ export default async function AdminMembershipsPage() {
                         Inactiva
                       </span>
                     )}
+                    </div>
                   </div>
                   
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3">{membership.Description}</p>

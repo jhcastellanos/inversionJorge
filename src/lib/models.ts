@@ -226,6 +226,35 @@ export const Membership = {
     }
   },
 
+  async setActive(id: number, isActive: boolean) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE "Memberships" SET "IsActive" = $1 WHERE "Id" = $2 RETURNING *',
+        [isActive, id]
+      );
+      if (result.rowCount === 0) {
+        throw new Error('Membresía no encontrada');
+      }
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  },
+
+  async findByName(name: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM "Memberships" WHERE LOWER("Name") = LOWER($1) LIMIT 1',
+        [name.trim()]
+      );
+      return result.rows[0] ?? null;
+    } finally {
+      client.release();
+    }
+  },
+
   async delete(id: number) {
     const client = await pool.connect();
     try {

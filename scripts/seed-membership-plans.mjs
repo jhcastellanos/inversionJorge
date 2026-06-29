@@ -61,6 +61,19 @@ const PLANS = [
   },
 ];
 
+const TEMPORARY_PLAN = {
+  name: 'Mensual Temporal $150',
+  description:
+    'Oferta temporal por tiempo limitado. Acceso mensual al canal de trading en vivo y clases grabadas.',
+  monthlyPrice: 150,
+  benefits: [
+    'Acceso al canal de trading en vivo con nosotros',
+    'Acceso a las clases grabadas',
+  ],
+};
+
+const MANAGED_PLAN_NAMES = [...PLANS.map((p) => p.name), TEMPORARY_PLAN.name];
+
 async function seed() {
   if (!process.env.DATABASE_URL) {
     console.error('❌ Falta la variable DATABASE_URL.');
@@ -72,11 +85,13 @@ async function seed() {
   const client = await pool.connect();
 
   try {
-    console.log('🔄 Desactivando membresías activas actuales...');
+    console.log('🔄 Desactivando membresías legacy (excepto planes gestionados)...');
     const deactivated = await client.query(
-      'UPDATE "Memberships" SET "IsActive" = false WHERE "IsActive" = true'
+      `UPDATE "Memberships" SET "IsActive" = false
+       WHERE "IsActive" = true AND "Name" <> ALL($1::text[])`,
+      [MANAGED_PLAN_NAMES]
     );
-    console.log(`   ✅ ${deactivated.rowCount} membresía(s) desactivada(s).`);
+    console.log(`   ✅ ${deactivated.rowCount} membresía(s) legacy desactivada(s).`);
 
     for (const plan of PLANS) {
       const benefitsText = plan.benefits.join('\n');
@@ -105,7 +120,36 @@ async function seed() {
       }
     }
 
+    // Membresía temporal $150: siempre existe, oculta por defecto al crear.
+    // Al actualizar NO tocamos IsActive (lo controla el panel admin).
+    {
+      const plan = TEMPORARY_PLAN;
+      const benefitsText = plan.benefits.join('\n');
+      const updated = await client.query(
+        `UPDATE "Memberships"
+           SET "Description" = $2,
+               "MonthlyPrice" = $3,
+               "Benefits" = $4
+         WHERE "Name" = $1
+         RETURNING "Id"`,
+        [plan.name, plan.description, plan.monthlyPrice, benefitsText]
+      );
+
+      if (updated.rowCount > 0) {
+        console.log(`   ♻️  Plan "${plan.name}" actualizado (id ${updated.rows[0].Id}, IsActive sin cambios).`);
+      } else {
+        const inserted = await client.query(
+          `INSERT INTO "Memberships" ("Name", "Description", "MonthlyPrice", "Benefits", "IsActive", "CreatedAt")
+           VALUES ($1, $2, $3, $4, false, NOW())
+           RETURNING "Id"`,
+          [plan.name, plan.description, plan.monthlyPrice, benefitsText]
+        );
+        console.log(`   ➕ Plan "${plan.name}" creado inactivo (id ${inserted.rows[0].Id}).`);
+      }
+    }
+
     console.log('\n🎉 Seed completado. Planes activos: Mensual, Trimestral, Semestral.');
+    console.log('   Membresía temporal $150: oculta hasta activarla en Admin → Membresías.');
     console.log('   Recuerda: el cobro = MonthlyPrice x meses (1/3/6).');
   } catch (error) {
     console.error('❌ Error en el seed:', error);

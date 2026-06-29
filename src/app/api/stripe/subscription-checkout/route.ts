@@ -3,6 +3,10 @@ import Stripe from 'stripe';
 import { Membership } from '../../../../lib/models';
 import { getPlanDurationMonths } from '../../../../lib/membershipPlans';
 import { ReferralTrader } from '../../../../lib/referrals';
+import {
+  isTemporaryMembership,
+  TEMPORARY_MEMBERSHIP_PRICE,
+} from '../../../../lib/temporaryMembership';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,8 +31,16 @@ export async function POST(req: NextRequest) {
     const monthlyPrice = parseFloat(membership.MonthlyPrice.toString());
     // Billing period in months for this plan (1 monthly, 3 quarterly, 6 semestral).
     // The customer is charged the full period total recurring on that interval.
-    const durationMonths = getPlanDurationMonths(membership.Name);
-    const totalAmount = Math.round(monthlyPrice * durationMonths * 100) / 100;
+    let durationMonths = getPlanDurationMonths(membership.Name);
+    let totalAmount = Math.round(monthlyPrice * durationMonths * 100) / 100;
+
+    // Membresía temporal: solo cambia visibilidad en el sitio; en Stripe siempre
+    // es suscripción mensual recurrente de $150 USD.
+    if (isTemporaryMembership(membership)) {
+      durationMonths = 1;
+      totalAmount = TEMPORARY_MEMBERSHIP_PRICE;
+    }
+
     const intervalLabel =
       durationMonths === 1 ? 'mensual' : `cada ${durationMonths} meses`;
     const membershipStartDate = membership.StartDate ? new Date(membership.StartDate) : null;
@@ -133,7 +145,9 @@ export async function POST(req: NextRequest) {
     console.log('✅ Checkout session created:', {
       sessionId: session.id,
       membershipId: membership.Id,
-      price: monthlyPrice,
+      price: totalAmount,
+      intervalMonths: durationMonths,
+      isTemporary: isTemporaryMembership(membership),
       hasTrialEnd: !!trialEnd,
     });
 
