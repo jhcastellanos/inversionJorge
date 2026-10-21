@@ -32,12 +32,17 @@ export type MemberAccessInfo = {
 };
 
 async function getStripeSubscriptions(user: PlatformUserRow) {
-  const emailSubs = await Subscription.findByEmail(user.email);
-  if (emailSubs.length > 0) {
+  /** Acceso Stripe solo si el admin vinculó cus_… (no basta el email suelto en Subscriptions) */
+  if (!user.stripe_customer_id) {
+    return { hasStripeAccess: false, source: 'none' as const, subscriptions: [] };
+  }
+
+  const dbSubs = await Subscription.findActiveByStripeCustomerId(user.stripe_customer_id);
+  if (dbSubs.length > 0) {
     return {
       hasStripeAccess: true,
       source: 'database' as const,
-      subscriptions: emailSubs.map((s: any) => ({
+      subscriptions: dbSubs.map((s: any) => ({
         membershipName: s.MembershipName ?? 'Membresía',
         status: s.Status,
         stripeSubscriptionId: s.StripeSubscriptionId,
@@ -45,7 +50,7 @@ async function getStripeSubscriptions(user: PlatformUserRow) {
     };
   }
 
-  if (user.stripe_customer_id && stripe) {
+  if (stripe) {
     try {
       const list = await stripe.subscriptions.list({
         customer: user.stripe_customer_id,

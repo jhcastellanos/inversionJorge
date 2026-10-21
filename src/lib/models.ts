@@ -317,6 +317,23 @@ export const Subscription = {
     }
   },
 
+  async findActiveByStripeCustomerId(stripeCustomerId: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT s.*, m."Name" as "MembershipName", m."MonthlyPrice"
+         FROM "Subscriptions" s
+         JOIN "Memberships" m ON s."MembershipId" = m."Id"
+         WHERE s."StripeCustomerId" = $1 AND s."Status" = 'active'
+         ORDER BY s."CreatedAt" DESC`,
+        [stripeCustomerId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
   async findByStripeId(stripeSubscriptionId: string) {
     const client = await pool.connect();
     try {

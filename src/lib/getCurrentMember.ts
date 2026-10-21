@@ -7,10 +7,10 @@ import { getMemberAccess } from './memberAccess';
 export async function requireMemberSession() {
   const token = cookies().get(MEMBER_COOKIE)?.value;
   const session = token ? verifyMemberJwt(token) : null;
-  if (!session) redirect('/login');
+  if (!session) redirect('/');
 
   const user = await PlatformUser.findById(session.userId);
-  if (!user) redirect('/login');
+  if (!user) redirect('/');
 
   const access = await getMemberAccess(user);
   return { user, access, session };

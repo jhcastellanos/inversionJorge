@@ -72,8 +72,8 @@ export default function OnboardingWizard({
             className={`font-semibold ${hasAccess ? 'text-green-700' : 'text-amber-700'}`}
           >
             {hasAccess
-              ? 'Acceso activo (Stripe o rol asignado por admin)'
-              : 'Sin acceso aún — paga o pide al admin un rol'}
+              ? 'Acceso activo (rol asignado o Stripe vinculado)'
+              : 'Sin acceso — pide al admin un rol o que vincule tu cus_… de Stripe'}
           </span>
         </p>
       </div>
