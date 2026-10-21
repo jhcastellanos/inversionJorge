@@ -1,8 +1,9 @@
-export const PLATFORM_ROLES = ['admin', 'inversor', 'trader', 'alumno'] as const;
+export const PLATFORM_ROLES = ['admin', 'soporte', 'inversor', 'trader', 'alumno'] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
 export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
   admin: 'Admin',
+  soporte: 'Soporte',
   inversor: 'Inversor',
   trader: 'Trader',
   alumno: 'Alumno',
@@ -11,6 +12,8 @@ export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
 export type PlatformPermissions = {
   /** Panel /admin y gestión total */
   admin: boolean;
+  /** Panel /admin con restricciones (sin CRUD clases/eventos ni eliminar usuarios) */
+  soporte: boolean;
   /** Herramientas de inversor + trader + alumno */
   inversor: boolean;
   /** Herramientas de trader + alumno */
@@ -18,6 +21,27 @@ export type PlatformPermissions = {
   /** Contenido base (clases, entrenamientos) */
   alumno: boolean;
 };
+
+export type StaffCapabilities = {
+  canDeletePlatformUsers: boolean;
+  canManagePlatformContent: boolean;
+};
+
+export function isPlatformStaffRole(role: PlatformRole | null): role is 'admin' | 'soporte' {
+  return role === 'admin' || role === 'soporte';
+}
+
+/** Permisos de staff en panel admin (login admin JWT = admin completo) */
+export function getStaffCapabilities(role: PlatformRole): StaffCapabilities {
+  switch (role) {
+    case 'admin':
+      return { canDeletePlatformUsers: true, canManagePlatformContent: true };
+    case 'soporte':
+      return { canDeletePlatformUsers: false, canManagePlatformContent: false };
+    default:
+      return { canDeletePlatformUsers: false, canManagePlatformContent: false };
+  }
+}
 
 export function parsePlatformRole(value: unknown): PlatformRole | null {
   if (typeof value !== 'string') return null;
@@ -30,19 +54,33 @@ export function parsePlatformRole(value: unknown): PlatformRole | null {
 /** Jerarquía: Admin ⊃ Inversor ⊃ Trader ⊃ Alumno */
 export function getPermissionsForRole(role: PlatformRole | null): PlatformPermissions {
   if (!role) {
-    return { admin: false, inversor: false, trader: false, alumno: false };
+    return {
+      admin: false,
+      soporte: false,
+      inversor: false,
+      trader: false,
+      alumno: false,
+    };
   }
   switch (role) {
     case 'admin':
-      return { admin: true, inversor: true, trader: true, alumno: true };
+      return { admin: true, soporte: false, inversor: true, trader: true, alumno: true };
+    case 'soporte':
+      return { admin: false, soporte: true, inversor: true, trader: true, alumno: true };
     case 'inversor':
-      return { admin: false, inversor: true, trader: true, alumno: true };
+      return { admin: false, soporte: false, inversor: true, trader: true, alumno: true };
     case 'trader':
-      return { admin: false, inversor: false, trader: true, alumno: true };
+      return { admin: false, soporte: false, inversor: false, trader: true, alumno: true };
     case 'alumno':
-      return { admin: false, inversor: false, trader: false, alumno: true };
+      return { admin: false, soporte: false, inversor: false, trader: false, alumno: true };
     default:
-      return { admin: false, inversor: false, trader: false, alumno: false };
+      return {
+        admin: false,
+        soporte: false,
+        inversor: false,
+        trader: false,
+        alumno: false,
+      };
   }
 }
 
@@ -76,6 +114,7 @@ export function getContentAccessForRole(role: PlatformRole | null): ContentAcces
 
   switch (role) {
     case 'admin':
+    case 'soporte':
     case 'inversor':
       return {
         classes: { basico: true, avanzado: true },

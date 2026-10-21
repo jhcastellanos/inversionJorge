@@ -39,3 +39,10 @@ export function isAdminRequest(req: NextRequest): boolean {
   if (!token) return false;
   return verifyJwt(token) !== null;
 }
+
+/** Admin JWT o miembro con rol admin/soporte en plataforma */
+export async function isStaffRequest(req: NextRequest): Promise<boolean> {
+  const { getStaffFromRequest } = await import('./staffAccess');
+  const staff = await getStaffFromRequest(req);
+  return staff !== null;
+}

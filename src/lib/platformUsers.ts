@@ -122,6 +122,16 @@ export const PlatformUser = {
     }
   },
 
+  async deleteById(id: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('DELETE FROM platform_users WHERE id = $1', [id]);
+      return (result.rowCount ?? 0) > 0;
+    } finally {
+      client.release();
+    }
+  },
+
   async findAll(): Promise<PlatformUserRow[]> {
     const client = await pool.connect();
     try {

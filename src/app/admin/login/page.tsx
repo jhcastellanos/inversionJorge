@@ -41,16 +41,20 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Portal</h1>
-          <p className="text-gray-600">Sign in to manage courses</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de administración</h1>
+          <p className="text-gray-600">
+            Acceso staff (cursos, membresías). No uses tu email de miembro aquí: es{' '}
+            <strong>usuario</strong> + contraseña del admin.
+          </p>
         </div>
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
               <input 
                 type="text" 
-                placeholder="Enter your username" 
+                placeholder="ej. admin" 
+                autoComplete="username"
                 value={username} 
                 onChange={e => setUsername(e.target.value)} 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
@@ -58,10 +62,11 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
               <input 
                 type="password" 
-                placeholder="Enter your password" 
+                placeholder="Contraseña del admin" 
+                autoComplete="current-password"
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
@@ -77,8 +82,20 @@ export default function AdminLoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-          <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">← Back to courses</Link>
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-xs text-gray-500">
+              ¿Eres miembro de la plataforma? Entra en{' '}
+              <Link href="/login" className="text-blue-600 hover:underline">
+                /login
+              </Link>
+              . El rol Admin/Soporte en usuarios plataforma usa ese acceso + enlace al panel.
+            </p>
+            <Link href="/admin/logout" className="text-sm text-gray-600 hover:text-gray-800 block">
+              Cerrar sesión admin (limpiar cookie)
+            </Link>
+            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 block">
+              ← Volver al sitio
+            </Link>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Membership } from '../../../../../lib/models';
-import { isAdminRequest } from '../../../../../lib/auth';
+import { isStaffRequest } from '../../../../../lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdminRequest(request)) {
+  if (!(await isStaffRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

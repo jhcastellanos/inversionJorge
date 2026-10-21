@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '../../../../../lib/auth';
+import { requireStaffApi } from '../../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../../lib/platformContent';
 import type { EventLevel } from '../../../../../lib/platformRoles';
 
@@ -9,9 +9,8 @@ export const dynamic = 'force-dynamic';
 const EVENT_LEVELS: EventLevel[] = ['basico', 'medio', 'avanzado'];
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const id = Number(params.id);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
@@ -42,9 +41,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const id = Number(params.id);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 });

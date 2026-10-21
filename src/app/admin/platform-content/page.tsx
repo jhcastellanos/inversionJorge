@@ -1,22 +1,12 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { verifyJwt } from '../../../lib/auth';
-import AdminNav from '../../../components/AdminNav';
+import AdminPageWrapper from '../../../components/AdminPageWrapper';
 import PlatformContentAdminPanel from '../../../components/platform/PlatformContentAdminPanel';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function PlatformContentAdminPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-  if (!token || !verifyJwt(token)) {
-    redirect('/admin/login');
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNav active="platform-content" />
+    <AdminPageWrapper active="platform-content" requireManageContent>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Clases y calendario (plataforma)</h2>
         <p className="text-sm text-gray-600 mb-6">
@@ -25,6 +15,6 @@ export default async function PlatformContentAdminPage() {
         </p>
         <PlatformContentAdminPanel />
       </main>
-    </div>
+    </AdminPageWrapper>
   );
 }

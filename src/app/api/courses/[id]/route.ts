@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Course } from '../../../../lib/models';
-import { isAdminRequest } from '../../../../lib/auth';
+import { isStaffRequest } from '../../../../lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!isAdminRequest(req)) {
+  if (!(await isStaffRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { title, description, imageUrl, finalPrice, isActive, startDate, endDate } = await req.json();
@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!isAdminRequest(req)) {
+  if (!(await isStaffRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   await Course.delete(parseInt(params.id));

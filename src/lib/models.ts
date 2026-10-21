@@ -160,7 +160,10 @@ export const AdminUser = {
   async findByUsername(username: string) {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM admin_user WHERE username = $1', [username]);
+      const result = await client.query(
+        'SELECT * FROM admin_user WHERE LOWER(username) = LOWER($1)',
+        [username.trim()]
+      );
       return result.rows[0];
     } finally {
       client.release();

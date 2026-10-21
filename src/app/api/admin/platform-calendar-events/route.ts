@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '../../../../lib/auth';
+import { requireStaffApi } from '../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../lib/platformContent';
 import type { EventLevel } from '../../../../lib/platformRoles';
 
@@ -13,17 +13,15 @@ function parseEventLevel(v: unknown): EventLevel | null {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const rows = await PlatformCalendarEvent.findAllAdmin();
   return NextResponse.json({ events: rows });
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const body = await req.json();
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const event_level = parseEventLevel(body.event_level);

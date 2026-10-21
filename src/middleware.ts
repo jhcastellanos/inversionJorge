@@ -31,14 +31,12 @@ export function middleware(req: NextRequest) {
   // For protected admin routes, just check if cookie exists
   // Full JWT validation happens in the page component (nodejs runtime)
   if (pathname.startsWith('/admin')) {
-    const token = req.cookies.get('admin_token')?.value;
-    
-    if (!token) {
-      console.log('No token, redirect to login from:', pathname);
+    const adminToken = req.cookies.get('admin_token')?.value;
+    const memberToken = req.cookies.get('member_token')?.value;
+
+    if (!adminToken && !memberToken) {
       return NextResponse.redirect(new URL('/admin/login', req.url));
     }
-    
-    console.log('Token exists, allow (validation in page)');
   }
   
   return NextResponse.next();

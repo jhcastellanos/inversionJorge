@@ -1,10 +1,7 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Membership } from '../../../lib/models';
-import { verifyJwt } from '../../../lib/auth';
 import DeleteMembershipButton from '../../../components/DeleteMembershipButton';
-import AdminNav from '../../../components/AdminNav';
+import AdminPageWrapper from '../../../components/AdminPageWrapper';
 import TemporaryMembershipControl from '../../../components/TemporaryMembershipControl';
 import { isTemporaryMembership } from '../../../lib/temporaryMembership';
 
@@ -12,20 +9,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMembershipsPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-
-  if (!token || !verifyJwt(token)) {
-    redirect('/admin/login');
-  }
-
   const memberships = await Membership.findAll();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNav active="memberships" />
-
-      {/* Main Content */}
+    <AdminPageWrapper active="memberships">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -127,6 +114,6 @@ export default async function AdminMembershipsPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminPageWrapper>
   );
 }

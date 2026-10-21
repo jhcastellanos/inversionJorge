@@ -1,29 +1,15 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Subscription } from '../../../lib/models';
-import { verifyJwt } from '../../../lib/auth';
-import AdminNav from '../../../components/AdminNav';
+import AdminPageWrapper from '../../../components/AdminPageWrapper';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSubscriptionsPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-
-  if (!token || !verifyJwt(token)) {
-    redirect('/admin/login');
-  }
-
-  // Get all subscriptions with membership info
   const subscriptions = await Subscription.findAll();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNav active="subscriptions" />
-
-      {/* Main Content */}
+    <AdminPageWrapper active="subscriptions">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -181,6 +167,6 @@ export default async function AdminSubscriptionsPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminPageWrapper>
   );
 }

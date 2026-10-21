@@ -19,6 +19,7 @@ export default function PlatformUsersAdminPanel() {
   const [success, setSuccess] = useState<string | null>(null);
   const [draftStripe, setDraftStripe] = useState<Record<number, string>>({});
   const [draftRole, setDraftRole] = useState<Record<number, string>>({});
+  const [canDeleteUsers, setCanDeleteUsers] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -27,6 +28,7 @@ export default function PlatformUsersAdminPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
       setUsers(data.users ?? []);
+      setCanDeleteUsers(Boolean(data.staff?.capabilities?.canDeletePlatformUsers));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error');
     } finally {
@@ -77,6 +79,20 @@ export default function PlatformUsersAdminPanel() {
     await load();
   };
 
+  const deleteUser = async (userId: number, name: string) => {
+    if (!confirm(`¿Eliminar permanentemente a ${name}?`)) return;
+    setError(null);
+    setSuccess(null);
+    const res = await fetch(`/api/admin/platform-users/${userId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || 'No se pudo eliminar');
+      return;
+    }
+    setSuccess('Usuario eliminado');
+    await load();
+  };
+
   if (loading) return <p className="text-gray-500">Cargando usuarios...</p>;
 
   return (
@@ -95,9 +111,9 @@ export default function PlatformUsersAdminPanel() {
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
         <p className="font-semibold mb-1">Jerarquía de roles</p>
         <p>
-          <strong>Admin</strong> → todo · <strong>Inversor</strong> → Trader + Alumno ·{' '}
-          <strong>Trader</strong> → Alumno · <strong>Alumno</strong> → solo alumno. Asignar un rol
-          da acceso a la plataforma aunque Stripe no esté vinculado.
+          <strong>Admin</strong> → todo · <strong>Soporte</strong> → panel admin sin CRUD clases/calendario ni
+          eliminar usuarios · <strong>Inversor</strong> → Trader + Alumno · <strong>Trader</strong> → Alumno ·{' '}
+          <strong>Alumno</strong> → contenido base. Asignar rol da acceso aunque Stripe no esté vinculado.
         </p>
       </div>
 
@@ -148,6 +164,15 @@ export default function PlatformUsersAdminPanel() {
                       >
                         Guardar rol
                       </button>
+                      {canDeleteUsers && (
+                        <button
+                          type="button"
+                          onClick={() => deleteUser(u.id, u.full_name)}
+                          className="text-xs font-semibold text-red-700 hover:underline text-left"
+                        >
+                          Eliminar usuario
+                        </button>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3">

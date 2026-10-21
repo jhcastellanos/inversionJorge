@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '../../../../../../lib/auth';
+import { isStaffRequest } from '../../../../../../lib/auth';
 import { ReferralTrader } from '../../../../../../lib/referrals';
 import { sendReferralProgramEmail } from '../../../../../../lib/referralEmail';
 import { buildReferralLink } from '../../../../../../lib/siteUrl';
@@ -11,7 +11,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdminRequest(req)) {
+  if (!(await isStaffRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

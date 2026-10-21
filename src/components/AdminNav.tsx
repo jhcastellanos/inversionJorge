@@ -8,12 +8,14 @@ type AdminNavProps = {
     | 'referrals'
     | 'platform-users'
     | 'platform-content';
+  /** false para rol Soporte (sin CRUD clases/calendario) */
+  showPlatformContent?: boolean;
 };
 
 const linkClass = (isActive: boolean) =>
   isActive ? 'text-blue-900 font-semibold' : 'text-gray-600 hover:text-gray-900';
 
-export default function AdminNav({ active }: AdminNavProps) {
+export default function AdminNav({ active, showPlatformContent = true }: AdminNavProps) {
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,9 +38,11 @@ export default function AdminNav({ active }: AdminNavProps) {
               <Link href="/admin/platform-users" className={linkClass(active === 'platform-users')}>
                 Usuarios plataforma
               </Link>
-              <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>
-                Clases / Calendario
-              </Link>
+              {showPlatformContent && (
+                <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>
+                  Clases / Calendario
+                </Link>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">

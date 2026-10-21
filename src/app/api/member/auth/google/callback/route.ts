@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSiteBaseUrl } from '../../../../../../lib/siteUrl';
 import { PlatformUser } from '../../../../../../lib/platformUsers';
 import { getMemberAccess } from '../../../../../../lib/memberAccess';
+import { syncOnboardingIfHasAccess } from '../../../../../../lib/memberOnboarding';
 import { signMemberJwt, MEMBER_COOKIE, memberCookieOptions } from '../../../../../../lib/memberAuth';
 
 export const runtime = 'nodejs';
@@ -82,10 +83,10 @@ export async function GET(req: NextRequest) {
   }
 
   const access = await getMemberAccess(user);
+  await syncOnboardingIfHasAccess(user, access);
   const token = signMemberJwt({ userId: user.id, email: user.email });
 
-  const destination =
-    access.hasAccess && user.onboarding_completed ? `${baseUrl}/app` : `${baseUrl}/onboarding`;
+  const destination = access.hasAccess ? `${baseUrl}/app` : `${baseUrl}/onboarding`;
 
   const res = NextResponse.redirect(destination);
   res.cookies.set(MEMBER_COOKIE, token, memberCookieOptions());

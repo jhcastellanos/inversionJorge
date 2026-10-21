@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequest } from '../../../../lib/auth';
+import { requireStaffApi } from '../../../../lib/staffAccess';
 import { PlatformClass } from '../../../../lib/platformContent';
 import type { ClassLevel } from '../../../../lib/platformRoles';
 
@@ -13,17 +13,15 @@ function parseClassLevel(v: unknown): ClassLevel | null {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const rows = await PlatformClass.findAllAdmin();
   return NextResponse.json({ classes: rows });
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const staff = await requireStaffApi(req, { requireManageContent: true });
+  if (staff instanceof NextResponse) return staff;
   const body = await req.json();
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const class_level = parseClassLevel(body.class_level);

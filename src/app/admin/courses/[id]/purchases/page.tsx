@@ -1,8 +1,6 @@
 import { Course, Order } from '../../../../../lib/models';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { verifyJwt } from '../../../../../lib/auth';
+import { requireStaffPage } from '../../../../../lib/staffAccess';
 import Link from 'next/link';
 
 export const runtime = 'nodejs';
@@ -12,13 +10,7 @@ export default async function CoursePurchasesPage({ params }: { params: Promise<
   // Await params first
   const { id } = await params;
   
-  // Validate JWT
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-  
-  if (!token || !verifyJwt(token)) {
-    redirect('/admin/login');
-  }
+  await requireStaffPage();
 
   try {
     const course = await Course.findById(parseInt(id));

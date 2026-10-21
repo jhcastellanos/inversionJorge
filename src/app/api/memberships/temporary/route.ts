@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Membership } from '../../../../lib/models';
-import { isAdminRequest } from '../../../../lib/auth';
+import { isStaffRequest } from '../../../../lib/auth';
 import {
   TEMPORARY_MEMBERSHIP_DEFAULTS,
   TEMPORARY_MEMBERSHIP_NAME,
@@ -25,7 +25,7 @@ async function ensureTemporaryMembership() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAdminRequest(req)) {
+  if (!(await isStaffRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminRequest(req)) {
+  if (!(await isStaffRequest(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

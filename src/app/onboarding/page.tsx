@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../../lib/memberAuth';
 import { PlatformUser } from '../../lib/platformUsers';
 import { getMemberAccess } from '../../lib/memberAccess';
+import { syncOnboardingIfHasAccess } from '../../lib/memberOnboarding';
 import OnboardingWizard from '../../components/platform/OnboardingWizard';
 
 export const runtime = 'nodejs';
@@ -18,7 +19,8 @@ export default async function OnboardingPage() {
   if (!user) redirect('/login');
 
   const access = await getMemberAccess(user);
-  if (access.hasAccess && user.onboarding_completed) {
+  if (access.hasAccess) {
+    await syncOnboardingIfHasAccess(user, access);
     redirect('/app');
   }
 

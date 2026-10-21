@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function OnboardingWizard({
   hasAccess,
@@ -19,12 +19,27 @@ export default function OnboardingWizard({
     try {
       const res = await fetch('/api/member/onboarding/complete', { method: 'POST' });
       if (!res.ok) throw new Error('No se pudo completar');
-      router.push('/app');
+      router.replace('/app');
       router.refresh();
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (hasAccess) {
+      void finish();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar con acceso
+  }, [hasAccess]);
+
+  if (hasAccess) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 pb-16 text-center text-gray-600 py-12">
+        {loading ? 'Entrando a la plataforma…' : 'Redirigiendo…'}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-16 space-y-6">
