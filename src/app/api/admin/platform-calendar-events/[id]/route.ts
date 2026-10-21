@@ -19,6 +19,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const patch: Parameters<typeof PlatformCalendarEvent.update>[1] = {};
   if (typeof body.title === 'string') patch.title = body.title.trim();
   if (typeof body.description === 'string') patch.description = body.description;
+  if (body.zoom_url === null) patch.zoom_url = null;
+  else if (typeof body.zoom_url === 'string') patch.zoom_url = body.zoom_url.trim() || null;
   if (typeof body.event_level === 'string' && EVENT_LEVELS.includes(body.event_level as EventLevel)) {
     patch.event_level = body.event_level as EventLevel;
   }

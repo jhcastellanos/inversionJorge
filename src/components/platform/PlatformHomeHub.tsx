@@ -6,6 +6,7 @@ import PlatformHomeAdminSection from './PlatformHomeAdminSection';
 import {
   formatEventDayShort,
   formatEventLine,
+  getEventJoinUrl,
   greetingForNow,
   headerDateLine,
   type SerializedEvent,
@@ -20,11 +21,6 @@ type Props = {
   upcoming: SerializedEvent[];
   adminEvents: SerializedEvent[];
 };
-
-function joinHref(ev: SerializedEvent) {
-  if (ev.description?.startsWith('http')) return ev.description.trim().split(/\s/)[0];
-  return null;
-}
 
 export default function PlatformHomeHub({
   user,
@@ -91,9 +87,9 @@ export default function PlatformHomeHub({
               >
                 Go to Academy
               </Link>
-              {joinHref(hero) ? (
+              {getEventJoinUrl(hero) ? (
                 <a
-                  href={joinHref(hero)!}
+                  href={getEventJoinUrl(hero)!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold hover:bg-blue-500"
@@ -124,7 +120,7 @@ export default function PlatformHomeHub({
             {(heroIsLive ? upcoming : upcoming.filter((e) => !hero || e.id !== hero.id)).map((ev) => {
               const d = new Date(ev.starts_at);
               const { day, month } = formatEventDayShort(d);
-              const external = joinHref(ev);
+              const external = getEventJoinUrl(ev);
               return (
                 <li key={ev.id} className="flex gap-4 py-5 items-start">
                   <div className="text-center w-12 shrink-0 text-slate-400">

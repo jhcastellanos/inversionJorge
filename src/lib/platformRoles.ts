@@ -93,9 +93,16 @@ export const CLASS_LEVEL_LABELS: Record<ClassLevel, string> = {
 };
 
 export const EVENT_LEVEL_LABELS: Record<EventLevel, string> = {
-  basico: 'Eventos básicos',
-  medio: 'Eventos medios',
-  avanzado: 'Eventos avanzados',
+  basico: 'Básico — Estudiante',
+  medio: 'Medio — Trader',
+  avanzado: 'Avanzado — Inversor',
+};
+
+/** Quién ve cada tipo de evento en inicio/calendario */
+export const EVENT_LEVEL_AUDIENCE: Record<EventLevel, string> = {
+  basico: 'Estudiante y roles superiores',
+  medio: 'Trader, Inversor, Admin y Soporte',
+  avanzado: 'Inversor, Admin y Soporte',
 };
 
 export type ContentAccess = {

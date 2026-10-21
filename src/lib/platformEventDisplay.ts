@@ -76,17 +76,59 @@ export type SerializedEvent = {
   id: number;
   title: string;
   description: string | null;
+  zoom_url: string | null;
   event_level: EventLevel;
   starts_at: string;
   ends_at: string | null;
   is_published: boolean;
 };
 
+export function getEventJoinUrl(ev: {
+  zoom_url?: string | null;
+  description?: string | null;
+}): string | null {
+  const zoom = ev.zoom_url?.trim();
+  if (zoom && /^https?:\/\//i.test(zoom)) return zoom;
+  const desc = ev.description?.trim();
+  if (desc?.startsWith('http')) return desc.split(/\s/)[0];
+  return null;
+}
+
+export function eventDurationMinutes(startsAt: Date, endsAt: Date | null): number {
+  if (endsAt) {
+    const mins = Math.round((endsAt.getTime() - startsAt.getTime()) / 60000);
+    return mins > 0 ? mins : 60;
+  }
+  return 60;
+}
+
+export function formatEventAdminMeta(startsAt: Date, endsAt: Date | null) {
+  const datePart = startsAt.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: DISPLAY_TZ,
+  });
+  const mins = eventDurationMinutes(startsAt, endsAt);
+  return `${datePart} EST · ${mins} min`;
+}
+
+/** Valor para input datetime-local en hora local del navegador */
+export function toDatetimeLocalValue(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function serializeEvent(row: PlatformCalendarEventRow): SerializedEvent {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
+    zoom_url: row.zoom_url ?? null,
     event_level: row.event_level,
     starts_at: new Date(row.starts_at).toISOString(),
     ends_at: row.ends_at ? new Date(row.ends_at).toISOString() : null,

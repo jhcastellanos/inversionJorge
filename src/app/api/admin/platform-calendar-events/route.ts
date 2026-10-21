@@ -30,12 +30,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'title, event_level y starts_at requeridos' }, { status: 400 });
   }
   const ends_at = body.ends_at ? new Date(body.ends_at) : null;
+  const zoom_url =
+    typeof body.zoom_url === 'string' && body.zoom_url.trim()
+      ? body.zoom_url.trim()
+      : null;
+
   const row = await PlatformCalendarEvent.create({
     title,
     event_level,
     starts_at,
     ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
     description: typeof body.description === 'string' ? body.description : undefined,
+    zoom_url,
     is_published: typeof body.is_published === 'boolean' ? body.is_published : undefined,
   });
   return NextResponse.json({ event: row }, { status: 201 });

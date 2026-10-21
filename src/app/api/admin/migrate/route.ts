@@ -170,6 +170,9 @@ export async function POST(req: NextRequest) {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_platform_events_level ON platform_calendar_events (event_level, starts_at)
       `);
+      await client.query(`
+        ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS zoom_url TEXT
+      `);
       console.log('✅ platform content tables ready');
 
       return NextResponse.json({

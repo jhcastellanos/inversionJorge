@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS platform_calendar_events (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
+  zoom_url TEXT,
   event_level VARCHAR(16) NOT NULL CHECK (event_level IN ('basico', 'medio', 'avanzado')),
   starts_at TIMESTAMPTZ NOT NULL,
   ends_at TIMESTAMPTZ,

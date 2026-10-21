@@ -18,6 +18,7 @@ export type PlatformCalendarEventRow = {
   id: number;
   title: string;
   description: string | null;
+  zoom_url: string | null;
   event_level: EventLevel;
   starts_at: Date;
   ends_at: Date | null;
@@ -177,6 +178,7 @@ export const PlatformCalendarEvent = {
   async create(data: {
     title: string;
     description?: string;
+    zoom_url?: string | null;
     event_level: EventLevel;
     starts_at: Date;
     ends_at?: Date | null;
@@ -186,12 +188,13 @@ export const PlatformCalendarEvent = {
     try {
       const result = await client.query(
         `INSERT INTO platform_calendar_events
-         (title, description, event_level, starts_at, ends_at, is_published, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+         (title, description, zoom_url, event_level, starts_at, ends_at, is_published, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
          RETURNING *`,
         [
           data.title,
           data.description ?? null,
+          data.zoom_url ?? null,
           data.event_level,
           data.starts_at,
           data.ends_at ?? null,
@@ -209,6 +212,7 @@ export const PlatformCalendarEvent = {
     data: Partial<{
       title: string;
       description: string | null;
+      zoom_url: string | null;
       event_level: EventLevel;
       starts_at: Date;
       ends_at: Date | null;

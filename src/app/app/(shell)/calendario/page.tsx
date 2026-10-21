@@ -6,6 +6,7 @@ import {
   PLATFORM_ROLE_LABELS,
   type EventLevel,
 } from '../../../../lib/platformRoles';
+import { getEventJoinUrl } from '../../../../lib/platformEventDisplay';
 
 function formatRange(starts: Date, ends: Date | null) {
   const opts: Intl.DateTimeFormatOptions = {
@@ -59,7 +60,9 @@ export default async function CalendarioPage() {
         </div>
       ) : (
         <ul className="mt-8 space-y-4">
-          {visible.map((ev) => (
+          {visible.map((ev) => {
+            const joinUrl = getEventJoinUrl(ev);
+            return (
             <li key={ev.id} className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
@@ -69,8 +72,19 @@ export default async function CalendarioPage() {
               </div>
               <h2 className="font-semibold text-lg text-gray-900 mt-2">{ev.title}</h2>
               {ev.description && <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ev.description}</p>}
+              {joinUrl && (
+                <a
+                  href={joinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex mt-4 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  Unirse en Zoom ↗
+                </a>
+              )}
             </li>
-          ))}
+          );
+          })}
         </ul>
       )}
 
