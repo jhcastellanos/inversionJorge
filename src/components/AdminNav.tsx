@@ -1,7 +1,13 @@
 import Link from 'next/link';
 
 type AdminNavProps = {
-  active: 'courses' | 'memberships' | 'subscriptions' | 'referrals' | 'platform-users';
+  active:
+    | 'courses'
+    | 'memberships'
+    | 'subscriptions'
+    | 'referrals'
+    | 'platform-users'
+    | 'platform-content';
 };
 
 const linkClass = (isActive: boolean) =>
@@ -29,6 +35,9 @@ export default function AdminNav({ active }: AdminNavProps) {
               </Link>
               <Link href="/admin/platform-users" className={linkClass(active === 'platform-users')}>
                 Usuarios plataforma
+              </Link>
+              <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>
+                Clases / Calendario
               </Link>
             </div>
           </div>

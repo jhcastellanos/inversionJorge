@@ -7,6 +7,7 @@ export type PlatformUserRow = {
   full_name: string;
   google_id: string | null;
   stripe_customer_id: string | null;
+  platform_role: string | null;
   onboarding_completed: boolean;
   created_at: Date;
   updated_at: Date;
@@ -88,6 +89,19 @@ export const PlatformUser = {
       const result = await client.query(
         `UPDATE platform_users SET onboarding_completed = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
         [completed, id]
+      );
+      return result.rows[0] ?? null;
+    } finally {
+      client.release();
+    }
+  },
+
+  async updatePlatformRole(id: number, role: string | null) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE platform_users SET platform_role = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [role, id]
       );
       return result.rows[0] ?? null;
     } finally {

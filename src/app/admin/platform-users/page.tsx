@@ -17,8 +17,8 @@ export default async function AdminPlatformUsersPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Usuarios de la plataforma</h2>
         <p className="text-gray-600 mb-6 text-sm">
-          Vincula el <code className="bg-gray-100 px-1 rounded">stripe_customer_id</code> de quien
-          ya pagaba antes de registrarse.
+          Vincula <code className="bg-gray-100 px-1 rounded">stripe_customer_id</code> o asigna rol
+          (Admin, Inversor, Trader, Alumno). El rol da acceso sin depender de Stripe.
         </p>
         <PlatformUsersAdminPanel />
       </main>

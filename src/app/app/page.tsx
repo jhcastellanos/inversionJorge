@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { requireMemberSession } from '../../lib/getCurrentMember';
+import { PLATFORM_ROLE_LABELS } from '../../lib/platformRoles';
 
 export default async function AppDashboardPage() {
   const { user, access } = await requireMemberSession();
@@ -11,10 +12,15 @@ export default async function AppDashboardPage() {
 
       <div className="mt-8 grid sm:grid-cols-2 gap-4">
         <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Estado de membresía</h2>
+          <h2 className="font-semibold text-gray-900">Estado de acceso</h2>
           <p className={`mt-2 text-lg font-bold ${access.hasAccess ? 'text-green-700' : 'text-amber-700'}`}>
-            {access.hasAccess ? 'Activa' : 'Sin acceso'}
+            {access.hasAccess ? 'Activo' : 'Sin acceso'}
           </p>
+          {access.effectiveRole && (
+            <p className="text-sm text-gray-600 mt-1">
+              Rol para contenido: <strong>{PLATFORM_ROLE_LABELS[access.effectiveRole]}</strong>
+            </p>
+          )}
           {!access.hasAccess && (
             <Link href="/onboarding" className="text-sm text-blue-900 font-medium mt-2 inline-block">
               Completar onboarding →
@@ -22,13 +28,16 @@ export default async function AppDashboardPage() {
           )}
         </div>
         <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Clases y Entrenamientos</h2>
-          <p className="text-sm text-gray-600 mt-2">
-            Módulo en construcción. Aquí verás videos organizados por secciones.
-          </p>
-          <Link href="/app/clases" className="text-sm text-blue-900 font-medium mt-3 inline-block">
-            Ir al módulo →
-          </Link>
+          <h2 className="font-semibold text-gray-900">Clases y Calendario</h2>
+          <p className="text-sm text-gray-600 mt-2">Videos por sección y eventos según tu rol.</p>
+          <div className="flex flex-wrap gap-4 mt-3">
+            <Link href="/app/clases" className="text-sm text-blue-900 font-medium">
+              Clases →
+            </Link>
+            <Link href="/app/calendario" className="text-sm text-blue-900 font-medium">
+              Calendario →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

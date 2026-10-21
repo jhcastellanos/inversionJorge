@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const navItems = [
   { href: '/app', label: 'Inicio' },
   { href: '/app/clases', label: 'Clases y Entrenamientos' },
+  { href: '/app/calendario', label: 'Calendario' },
   { href: '/app/membresia', label: 'Mi membresía' },
   { href: '/planes', label: 'Ver planes' },
 ];

@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
       full_name: user.full_name,
       onboarding_completed: user.onboarding_completed,
       stripe_customer_id: user.stripe_customer_id,
+      platform_role: access.role,
     },
     access,
   });

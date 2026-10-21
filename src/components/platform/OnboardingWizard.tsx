@@ -56,7 +56,9 @@ export default function OnboardingWizard({
           <span
             className={`font-semibold ${hasAccess ? 'text-green-700' : 'text-amber-700'}`}
           >
-            {hasAccess ? 'Membresía activa detectada' : 'Sin membresía activa aún'}
+            {hasAccess
+              ? 'Acceso activo (Stripe o rol asignado por admin)'
+              : 'Sin acceso aún — paga o pide al admin un rol'}
           </span>
         </p>
       </div>
