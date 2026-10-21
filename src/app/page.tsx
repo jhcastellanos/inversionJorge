@@ -1,75 +1,83 @@
-import { Course, Membership } from '../lib/models';
 import Link from 'next/link';
-import ResponsiveLanding from '../components/ResponsiveLanding';
 
-// Force dynamic rendering to access DATABASE_URL at runtime
-export const dynamic = 'force-dynamic';
-
-export default async function HomePage() {
-  const courses = await Course.findActive();
-  const memberships = await Membership.findActive();
-
-  // Orden personalizado: ID 3, luego 9, luego 8, resto por fecha de creación
-  const customOrder = [3, 9, 8];
-  const sortedCourses = courses.sort((a: any, b: any) => {
-    const indexA = customOrder.indexOf(a.Id);
-    const indexB = customOrder.indexOf(b.Id);
-    
-    // Si ambos están en el orden personalizado, ordenar según ese orden
-    if (indexA !== -1 && indexB !== -1) {
-      return indexA - indexB;
-    }
-    
-    // Si solo A está en el orden personalizado, va primero
-    if (indexA !== -1) return -1;
-    
-    // Si solo B está en el orden personalizado, va primero
-    if (indexB !== -1) return 1;
-    
-    // Si ninguno está en el orden personalizado, mantener orden original
-    return 0;
-  });
-
+export default function PlatformHomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">Inversión Real con Jorge y Guille</h1>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link 
-              href="/subscription/manage" 
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-lg text-sm sm:text-base font-semibold hover:from-blue-900 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="hidden sm:inline">Mis Suscripciones</span>
-              <span className="sm:hidden">Cuenta</span>
-            </Link>
-            <Link href="/admin/login" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors">Admin</Link>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
+      <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-blue-300">Plataforma CRM</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Inversión Real con Jorge y Guille</h1>
+        </div>
+        <div className="flex gap-2 sm:gap-3">
+          <Link
+            href="/login"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-white/20 text-sm font-semibold hover:bg-white/10"
+          >
+            Iniciar sesión
+          </Link>
+          <Link
+            href="/registro"
+            className="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 text-sm font-semibold hover:bg-blue-500"
+          >
+            Crear cuenta
+          </Link>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 text-center">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6">
-          Domina la <span className="bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">Bolsa de Valores</span>
-        </h2>
-        <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto mb-6 sm:mb-8">
-          Aprende a invertir en la bolsa de valores con estrategias probadas y mentoría directa. Conviértete en un trader exitoso con cursos prácticos diseñados para el mercado real.
-        </p>
-      </section>
-
-      {/* Responsive Two-Column Layout with Mobile Tabs */}
-      <ResponsiveLanding courses={sortedCourses} memberships={memberships} />
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-600">
-          <p>&copy; 2025 Inversión Real con Jorge y Guille. Todos los derechos reservados.</p>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="max-w-3xl">
+          <h2 className="text-4xl sm:text-5xl font-extrabold leading-tight">
+            Tu academia de trading, en un solo lugar
+          </h2>
+          <p className="mt-6 text-lg text-slate-300 leading-relaxed">
+            Regístrate, elige tu membresía y accede a la plataforma con clases, entrenamientos y
+            recursos. El acceso se mantiene activo mientras tu suscripción en Stripe esté al día.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row gap-4">
+            <Link
+              href="/registro"
+              className="inline-flex justify-center rounded-xl bg-white text-blue-950 px-6 py-3 font-bold hover:bg-slate-100"
+            >
+              Empezar — crear cuenta
+            </Link>
+            <Link
+              href="/planes"
+              className="inline-flex justify-center rounded-xl border border-white/30 px-6 py-3 font-semibold hover:bg-white/10"
+            >
+              Ver membresías y cursos
+            </Link>
+          </div>
         </div>
+
+        <section className="mt-20 grid sm:grid-cols-3 gap-6">
+          {[
+            {
+              title: '1. Registro',
+              text: 'Cuenta con email o Google. Si ya pagaste en Stripe, el admin vincula tu customer ID.',
+            },
+            {
+              title: '2. Membresía',
+              text: 'Wizard para elegir plan y pagar. Stripe define tu acceso recurrente.',
+            },
+            {
+              title: '3. Plataforma',
+              text: 'Clases y entrenamientos organizados por módulos (contenido en expansión).',
+            },
+          ].map((step) => (
+            <div key={step.title} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <h3 className="font-bold text-lg">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-300">{step.text}</p>
+            </div>
+          ))}
+        </section>
+      </main>
+
+      <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-400">
+        <Link href="/admin/login" className="hover:text-white">
+          Admin
+        </Link>
+        <span className="mx-2">·</span>
+        © 2025 Inversión Real con Jorge y Guille
       </footer>
     </div>
   );

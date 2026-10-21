@@ -6,11 +6,19 @@ import { NextRequest, NextResponse } from 'next/server';
 // Solution: Only check cookie existence here, validate JWT in page routes
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/app/:path*'],
 };
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith('/app')) {
+    const token = req.cookies.get('member_token')?.value;
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
+    return NextResponse.next();
+  }
   
   // Allow login, logout pages and API routes
   if (pathname === '/admin/login' || 
