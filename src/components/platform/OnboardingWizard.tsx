@@ -19,7 +19,7 @@ export default function OnboardingWizard({
     try {
       const res = await fetch('/api/member/onboarding/complete', { method: 'POST' });
       if (!res.ok) throw new Error('No se pudo completar');
-      router.replace('/');
+      router.replace('/app');
       router.refresh();
     } finally {
       setLoading(false);

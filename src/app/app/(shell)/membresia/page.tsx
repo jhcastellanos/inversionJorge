@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireMemberSession } from '../../../lib/getCurrentMember';
+import { requireMemberSession } from '../../../../lib/getCurrentMember';
 
 export default async function MembresiaPage() {
   const { access } = await requireMemberSession();

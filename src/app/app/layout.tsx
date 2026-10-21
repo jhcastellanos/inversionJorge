@@ -1,5 +1,4 @@
 import { requireMemberSession } from '../../lib/getCurrentMember';
-import PlatformShell from '../../components/platform/PlatformShell';
 import { redirect } from 'next/navigation';
 import { syncOnboardingIfHasAccess } from '../../lib/memberOnboarding';
 
@@ -13,7 +12,7 @@ export default async function MemberAppLayout({ children }: { children: React.Re
     redirect('/onboarding');
   }
 
-  user = await syncOnboardingIfHasAccess(user, access);
+  await syncOnboardingIfHasAccess(user, access);
 
-  return <PlatformShell userName={user.full_name.split(' ')[0]}>{children}</PlatformShell>;
+  return <>{children}</>;
 }

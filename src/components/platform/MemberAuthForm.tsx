@@ -11,13 +11,15 @@ export default function MemberAuthForm({
   variant = 'default',
 }: {
   mode: Mode;
-  variant?: 'default' | 'dark';
+  variant?: 'default' | 'dark' | 'landing';
 }) {
-  const isDark = variant === 'dark';
-  const inputClass = isDark
-    ? 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-500'
+  const onLanding = variant === 'landing' || variant === 'dark';
+  const inputClass = onLanding
+    ? 'w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder:text-slate-400'
     : 'w-full rounded-lg border border-gray-300 px-3 py-2';
-  const labelClass = isDark ? 'block text-sm font-medium text-slate-300 mb-1' : 'block text-sm font-medium text-gray-700 mb-1';
+  const labelClass = onLanding
+    ? 'block text-sm font-medium text-slate-200 mb-1'
+    : 'block text-sm font-medium text-gray-700 mb-1';
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,7 +49,7 @@ export default function MemberAuthForm({
       if (!res.ok) throw new Error(data.error || 'Error');
 
       if (data.access?.hasAccess) {
-        router.push('/');
+        router.push('/app');
       } else {
         router.push('/onboarding');
       }
@@ -105,12 +107,16 @@ export default function MemberAuthForm({
           type="submit"
           disabled={loading}
           className={
-            isDark
-              ? 'w-full rounded-lg bg-amber-500 py-3 font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50'
+            onLanding
+              ? 'w-full rounded-lg bg-blue-600 py-3 font-bold text-white hover:bg-blue-500 disabled:opacity-50'
               : 'w-full rounded-lg bg-blue-900 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50'
           }
         >
-          {loading ? 'Procesando...' : mode === 'login' ? 'Entrar a la plataforma' : 'Crear cuenta'}
+          {loading
+            ? 'Procesando...'
+            : mode === 'login'
+              ? 'Entrar al CRM'
+              : 'Crear cuenta y continuar'}
         </button>
       </form>
 
@@ -127,8 +133,8 @@ export default function MemberAuthForm({
           <a
             href="/api/member/auth/google"
             className={
-              isDark
-                ? 'flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-900 py-3 font-medium text-white hover:bg-slate-800'
+              onLanding
+                ? 'flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 py-3 font-medium text-white hover:bg-white/10'
                 : 'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-800 hover:bg-gray-50'
             }
           >
@@ -137,12 +143,12 @@ export default function MemberAuthForm({
         </div>
       )}
 
-      {!isDark && (
+      {!onLanding && (
         <p className="mt-6 text-center text-sm text-gray-600">
           {mode === 'login' ? (
             <>
               ¿No tienes cuenta?{' '}
-              <Link href="/?register=1" className="font-semibold text-blue-900 hover:underline">
+              <Link href="/?register=1" className="font-semibold text-blue-700 hover:underline">
                 Regístrate
               </Link>
             </>

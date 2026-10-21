@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { requireMemberSession } from '../../../lib/getCurrentMember';
-import { PlatformClass } from '../../../lib/platformContent';
+import { requireMemberSession } from '../../../../lib/getCurrentMember';
+import { PlatformClass } from '../../../../lib/platformContent';
 import {
   CLASS_LEVEL_LABELS,
   PLATFORM_ROLE_LABELS,
   type ClassLevel,
-} from '../../../lib/platformRoles';
+} from '../../../../lib/platformRoles';
 
 export default async function ClasesPage() {
   const { access } = await requireMemberSession();

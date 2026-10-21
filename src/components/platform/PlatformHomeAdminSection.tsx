@@ -67,17 +67,17 @@ export default function PlatformHomeAdminSection({ initialEvents }: { initialEve
   };
 
   return (
-    <section className="mt-10 border border-amber-500/30 rounded-2xl bg-amber-500/5 overflow-hidden">
+    <section className="mt-10 border border-blue-400/30 rounded-2xl bg-blue-950/40 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex justify-between items-center px-5 py-4 text-left text-amber-200 font-semibold hover:bg-amber-500/10"
+        className="w-full flex justify-between items-center px-5 py-4 text-left text-blue-200 font-semibold hover:bg-white/5"
       >
         <span>Admin — gestionar eventos del inicio</span>
         <span className="text-sm">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="px-5 pb-6 space-y-6 border-t border-amber-500/20">
+        <div className="px-5 pb-6 space-y-6 border-t border-blue-400/20">
           {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
           <form onSubmit={addEvent} className="grid sm:grid-cols-2 gap-3 mt-4">
             <input
@@ -115,7 +115,7 @@ export default function PlatformHomeAdminSection({ initialEvents }: { initialEve
             />
             <button
               type="submit"
-              className="sm:col-span-2 rounded-lg bg-amber-500 text-slate-950 py-2 text-sm font-bold hover:bg-amber-400"
+              className="sm:col-span-2 rounded-lg bg-blue-600 text-white py-2 text-sm font-bold hover:bg-blue-500"
             >
               Publicar evento
             </button>
@@ -133,7 +133,7 @@ export default function PlatformHomeAdminSection({ initialEvents }: { initialEve
                 <span className="flex gap-2">
                   <button
                     type="button"
-                    className="text-amber-300 hover:underline"
+                    className="text-blue-300 hover:underline"
                     onClick={() => togglePublished(ev)}
                   >
                     {ev.is_published ? 'Ocultar' : 'Publicar'}
@@ -147,7 +147,7 @@ export default function PlatformHomeAdminSection({ initialEvents }: { initialEve
           </ul>
           <p className="text-xs text-slate-500">
             Usuarios y clases: usa las secciones Admin en{' '}
-            <a href="/app/clases" className="text-amber-300 underline">
+            <a href="/app/clases" className="text-blue-300 underline">
               Academia
             </a>{' '}
             o contacta soporte para membresías legacy en /admin.

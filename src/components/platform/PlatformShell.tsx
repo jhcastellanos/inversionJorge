@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
-  { href: '/', label: 'Inicio' },
+  { href: '/app', label: 'Inicio' },
   { href: '/app/clases', label: 'Clases y Entrenamientos' },
   { href: '/app/calendario', label: 'Calendario' },
   { href: '/app/membresia', label: 'Mi membresía' },

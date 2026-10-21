@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { requireMemberSession } from '../../../lib/getCurrentMember';
-import { PlatformCalendarEvent } from '../../../lib/platformContent';
+import { requireMemberSession } from '../../../../lib/getCurrentMember';
+import { PlatformCalendarEvent } from '../../../../lib/platformContent';
 import {
   EVENT_LEVEL_LABELS,
   PLATFORM_ROLE_LABELS,
   type EventLevel,
-} from '../../../lib/platformRoles';
+} from '../../../../lib/platformRoles';
 
 function formatRange(starts: Date, ends: Date | null) {
   const opts: Intl.DateTimeFormatOptions = {

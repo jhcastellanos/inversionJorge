@@ -21,7 +21,7 @@ export default async function OnboardingPage() {
   const access = await getMemberAccess(user);
   if (access.hasAccess) {
     await syncOnboardingIfHasAccess(user, access);
-    redirect('/');
+    redirect('/app');
   }
 
   return (
