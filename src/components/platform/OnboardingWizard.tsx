@@ -1,54 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 export default function OnboardingWizard({
   hasAccess,
+  subscriptionActive,
   userId,
 }: {
   hasAccess: boolean;
+  subscriptionActive: boolean;
   userId: number;
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  const finish = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/member/onboarding/complete', { method: 'POST' });
-      if (!res.ok) throw new Error('No se pudo completar');
-      router.replace('/app');
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (hasAccess) {
-      void finish();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar con acceso
-  }, [hasAccess]);
-
   if (hasAccess) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 pb-16 text-center text-gray-600 py-12">
-        {loading ? 'Entrando a la plataforma…' : 'Redirigiendo…'}
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-16 space-y-6">
+      {subscriptionActive && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <h2 className="font-bold">Tienes membresía activa en Stripe</h2>
+          <p className="text-sm mt-2">
+            Aún no tienes rol en la plataforma. Contacta a soporte para que te asignen el rol
+            correcto (Trader, Inversor, etc.) según tu plan.
+          </p>
+        </div>
+      )}
+
       <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
         <p className="text-sm font-semibold text-blue-900">Paso 1</p>
         <h2 className="text-xl font-bold mt-1">Elige tu membresía</h2>
         <p className="text-gray-600 mt-2 text-sm">
-          Compra en la página de planes. Tu acceso se activa cuando Stripe confirme el pago con el
-          mismo email de tu cuenta.
+          La suscripción debe estar <strong>activa</strong> y el admin debe vincular tu{' '}
+          <code className="text-xs bg-gray-100 px-1 rounded">cus_…</code> en usuarios de plataforma.
         </p>
         <Link
           href="/planes"
@@ -60,38 +44,20 @@ export default function OnboardingWizard({
 
       <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
         <p className="text-sm font-semibold text-blue-900">Paso 2</p>
-        <h2 className="text-xl font-bold mt-1">¿Ya pagaste antes en Stripe?</h2>
+        <h2 className="text-xl font-bold mt-1">Rol en la plataforma</h2>
         <p className="text-gray-600 mt-2 text-sm">
-          Si ya tenías suscripción activa, contacta al equipo para que el admin vincule tu{' '}
-          <code className="text-xs bg-gray-100 px-1 rounded">stripe_customer_id</code> desde el
-          panel. Luego recarga esta página.
+          Sin rol asignado no puedes entrar al CRM. Pide al admin un rol (Estudiante, Trader,
+          Inversor…) o la vinculación de Stripe.
         </p>
         <p className="mt-3 text-sm">
-          Estado actual:{' '}
-          <span
-            className={`font-semibold ${hasAccess ? 'text-green-700' : 'text-amber-700'}`}
-          >
-            {hasAccess
-              ? 'Acceso activo (rol asignado o Stripe vinculado)'
-              : 'Sin acceso — pide al admin un rol o que vincule tu cus_… de Stripe'}
+          Estado:{' '}
+          <span className="font-semibold text-amber-700">
+            {subscriptionActive
+              ? 'Suscripción activa — falta rol asignado'
+              : 'Sin rol y sin suscripción activa vinculada'}
           </span>
         </p>
       </div>
-
-      {hasAccess && (
-        <div className="rounded-2xl bg-green-50 border border-green-200 p-6">
-          <h2 className="font-bold text-green-900">Listo para entrar</h2>
-          <p className="text-sm text-green-800 mt-1">Tu suscripción está activa. Entra a la plataforma.</p>
-          <button
-            type="button"
-            onClick={finish}
-            disabled={loading}
-            className="mt-4 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
-          >
-            {loading ? 'Entrando...' : 'Ir a la plataforma'}
-          </button>
-        </div>
-      )}
 
       <p className="text-xs text-gray-500 text-center">ID de cuenta: {userId}</p>
     </div>

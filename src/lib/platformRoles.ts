@@ -6,7 +6,7 @@ export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
   soporte: 'Soporte',
   inversor: 'Inversor',
   trader: 'Trader',
-  alumno: 'Alumno',
+  alumno: 'Estudiante',
 };
 
 export type PlatformPermissions = {

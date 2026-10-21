@@ -9,9 +9,11 @@ export async function requireMemberSession() {
   const session = token ? verifyMemberJwt(token) : null;
   if (!session) redirect('/');
 
-  const user = await PlatformUser.findById(session.userId);
+  let user = await PlatformUser.findById(session.userId);
   if (!user) redirect('/');
 
   const access = await getMemberAccess(user);
+  user = (await PlatformUser.findById(session.userId)) ?? user;
+
   return { user, access, session };
 }

@@ -11,7 +11,7 @@ export default async function AdminPlatformUsersPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Usuarios de la plataforma</h2>
         <p className="text-gray-600 mb-6 text-sm">
           Vincula <code className="bg-gray-100 px-1 rounded">stripe_customer_id</code> o asigna rol (Admin, Soporte,
-          Inversor, Trader, Alumno). El rol da acceso sin depender de Stripe. Solo Admin puede eliminar usuarios.
+          Inversor, Trader, Estudiante). Trader/Inversor sin suscripción activa pasan a Estudiante. Solo Admin puede eliminar usuarios.
         </p>
         <PlatformUsersAdminPanel />
       </main>

@@ -13,10 +13,10 @@ export const dynamic = 'force-dynamic';
 export default async function OnboardingPage() {
   const token = cookies().get(MEMBER_COOKIE)?.value;
   const session = token ? verifyMemberJwt(token) : null;
-  if (!session) redirect('/login');
+  if (!session) redirect('/');
 
   const user = await PlatformUser.findById(session.userId);
-  if (!user) redirect('/login');
+  if (!user) redirect('/');
 
   const access = await getMemberAccess(user);
   if (access.hasAccess) {
@@ -36,7 +36,11 @@ export default async function OnboardingPage() {
           ya pagaste antes.
         </p>
       </header>
-      <OnboardingWizard hasAccess={access.hasAccess} userId={user.id} />
+      <OnboardingWizard
+        hasAccess={access.hasAccess}
+        subscriptionActive={access.subscriptionActive}
+        userId={user.id}
+      />
     </div>
   );
 }
