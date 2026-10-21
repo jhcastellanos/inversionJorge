@@ -83,10 +83,12 @@ export async function GET(req: NextRequest) {
   }
 
   const access = await getMemberAccess(user);
-  await syncOnboardingIfHasAccess(user, access);
+  if (access.hasAccess) {
+    await syncOnboardingIfHasAccess(user, access);
+  }
   const token = signMemberJwt({ userId: user.id, email: user.email });
 
-  const destination = access.hasAccess ? `${baseUrl}/app` : `${baseUrl}/onboarding`;
+  const destination = access.hasAccess ? `${baseUrl}/` : `${baseUrl}/onboarding`;
 
   const res = NextResponse.redirect(destination);
   res.cookies.set(MEMBER_COOKIE, token, memberCookieOptions());

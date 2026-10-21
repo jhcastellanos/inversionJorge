@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
-  { href: '/app', label: 'Inicio' },
+  { href: '/', label: 'Inicio' },
   { href: '/app/clases', label: 'Clases y Entrenamientos' },
   { href: '/app/calendario', label: 'Calendario' },
   { href: '/app/membresia', label: 'Mi membresía' },
@@ -14,11 +14,9 @@ const navItems = [
 export default function PlatformShell({
   children,
   userName,
-  showAdminLink = false,
 }: {
   children: React.ReactNode;
   userName: string;
-  showAdminLink?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,14 +36,6 @@ export default function PlatformShell({
           <p className="text-sm text-slate-300 mt-1">Hola, {userName}</p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
-          {showAdminLink && (
-            <Link
-              href="/admin/dashboard"
-              className="block rounded-lg px-3 py-2 text-sm font-medium text-amber-200 hover:bg-slate-800 border border-amber-600/40 mb-2"
-            >
-              Panel de administración
-            </Link>
-          )}
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (

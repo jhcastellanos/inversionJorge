@@ -15,7 +15,7 @@ export function middleware(req: NextRequest) {
   if (pathname.startsWith('/app')) {
     const token = req.cookies.get('member_token')?.value;
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.redirect(new URL('/', req.url));
     }
     return NextResponse.next();
   }

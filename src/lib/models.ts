@@ -304,8 +304,12 @@ export const Subscription = {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT s.*, m."Name" as "MembershipName", m."MonthlyPrice" FROM "Subscriptions" s JOIN "Memberships" m ON s."MembershipId" = m."Id" WHERE s."CustomerEmail" = $1 AND s."Status" = \'active\' ORDER BY s."CreatedAt" DESC',
-        [email]
+        `SELECT s.*, m."Name" as "MembershipName", m."MonthlyPrice"
+         FROM "Subscriptions" s
+         JOIN "Memberships" m ON s."MembershipId" = m."Id"
+         WHERE LOWER(s."CustomerEmail") = LOWER($1) AND s."Status" = 'active'
+         ORDER BY s."CreatedAt" DESC`,
+        [email.trim()]
       );
       return result.rows;
     } finally {

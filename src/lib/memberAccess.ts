@@ -78,7 +78,8 @@ export async function getMemberAccess(user: PlatformUserRow): Promise<MemberAcce
   const permissions = getPermissionsForRole(role);
   const stripeInfo = await getStripeSubscriptions(user);
 
-  const hasRoleAccess = permissions.alumno || permissions.admin || permissions.soporte;
+  const hasRoleAccess =
+    role !== null && (permissions.alumno || permissions.admin || permissions.soporte);
   const hasAccess = stripeInfo.hasStripeAccess || hasRoleAccess;
 
   let source: MemberAccessInfo['source'] = 'none';

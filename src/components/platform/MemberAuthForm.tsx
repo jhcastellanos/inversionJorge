@@ -6,7 +6,18 @@ import { useState } from 'react';
 
 type Mode = 'login' | 'register';
 
-export default function MemberAuthForm({ mode }: { mode: Mode }) {
+export default function MemberAuthForm({
+  mode,
+  variant = 'default',
+}: {
+  mode: Mode;
+  variant?: 'default' | 'dark';
+}) {
+  const isDark = variant === 'dark';
+  const inputClass = isDark
+    ? 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-white placeholder:text-slate-500'
+    : 'w-full rounded-lg border border-gray-300 px-3 py-2';
+  const labelClass = isDark ? 'block text-sm font-medium text-slate-300 mb-1' : 'block text-sm font-medium text-gray-700 mb-1';
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,8 +46,8 @@ export default function MemberAuthForm({ mode }: { mode: Mode }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
 
-      if (mode === 'login' && data.access?.hasAccess) {
-        router.push('/app');
+      if (data.access?.hasAccess) {
+        router.push('/');
       } else {
         router.push('/onboarding');
       }
@@ -59,41 +70,45 @@ export default function MemberAuthForm({ mode }: { mode: Mode }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === 'register' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+            <label className={labelClass}>Nombre completo</label>
             <input
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              className={inputClass}
             />
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className={labelClass}>Email</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+          <label className={labelClass}>Contraseña</label>
           <input
             type="password"
             required
             minLength={mode === 'register' ? 8 : 1}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            className={inputClass}
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-blue-900 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+          className={
+            isDark
+              ? 'w-full rounded-lg bg-amber-500 py-3 font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50'
+              : 'w-full rounded-lg bg-blue-900 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50'
+          }
         >
           {loading ? 'Procesando...' : mode === 'login' ? 'Entrar a la plataforma' : 'Crear cuenta'}
         </button>
@@ -111,30 +126,36 @@ export default function MemberAuthForm({ mode }: { mode: Mode }) {
           </div>
           <a
             href="/api/member/auth/google"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-800 hover:bg-gray-50"
+            className={
+              isDark
+                ? 'flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-900 py-3 font-medium text-white hover:bg-slate-800'
+                : 'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-800 hover:bg-gray-50'
+            }
           >
             Google
           </a>
         </div>
       )}
 
-      <p className="mt-6 text-center text-sm text-gray-600">
-        {mode === 'login' ? (
-          <>
-            ¿No tienes cuenta?{' '}
-            <Link href="/registro" className="font-semibold text-blue-900 hover:underline">
-              Regístrate
-            </Link>
-          </>
-        ) : (
-          <>
-            ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="font-semibold text-blue-900 hover:underline">
-              Inicia sesión
-            </Link>
-          </>
-        )}
-      </p>
+      {!isDark && (
+        <p className="mt-6 text-center text-sm text-gray-600">
+          {mode === 'login' ? (
+            <>
+              ¿No tienes cuenta?{' '}
+              <Link href="/?register=1" className="font-semibold text-blue-900 hover:underline">
+                Regístrate
+              </Link>
+            </>
+          ) : (
+            <>
+              ¿Ya tienes cuenta?{' '}
+              <Link href="/" className="font-semibold text-blue-900 hover:underline">
+                Inicia sesión
+              </Link>
+            </>
+          )}
+        </p>
+      )}
     </div>
   );
 }

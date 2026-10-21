@@ -145,6 +145,23 @@ export const PlatformCalendarEvent = {
     }
   },
 
+  /** Ventana para inicio: eventos en vivo recientes + próximos */
+  async findPublishedForHome(): Promise<PlatformCalendarEventRow[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM platform_calendar_events
+         WHERE is_published = true
+           AND starts_at >= NOW() - INTERVAL '2 days'
+           AND starts_at <= NOW() + INTERVAL '120 days'
+         ORDER BY starts_at ASC`
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
   async findAllAdmin(): Promise<PlatformCalendarEventRow[]> {
     const client = await pool.connect();
     try {
