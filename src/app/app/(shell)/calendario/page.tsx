@@ -44,8 +44,8 @@ export default async function CalendarioPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-3xl font-bold text-gray-900">Calendario</h1>
-      <p className="text-gray-600 mt-2">
+      <h1 className="text-3xl font-bold ventic-text">Calendario</h1>
+      <p className="ventic-muted mt-2">
         Tu acceso ({roleLabel}
         {access.subscriptionActive ? ', membresía activa' : ''}). Los eventos de trading y avanzados requieren
         membresía y rol según el tipo.
@@ -60,7 +60,7 @@ export default async function CalendarioPage() {
           {visible.map((ev) => {
             const joinUrl = getEventJoinUrl(ev);
             return (
-              <li key={ev.id} className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
+              <li key={ev.id} className="rounded-xl ventic-surface border ventic-border p-5 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
                     {LIVE_EVENT_TIER_LABELS[resolveEventTier(ev)]}
@@ -76,7 +76,7 @@ export default async function CalendarioPage() {
                     href={joinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex mt-4 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+                    className="inline-flex mt-4 rounded-lg bg-[var(--ventic-accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--ventic-accent-hover)]"
                   >
                     Unirse en Zoom ↗
                   </a>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LIVE_EVENT_TIER_LABELS, type LiveEventTier } from '../../lib/platformRoles';
 import AdminPanelChrome from './admin/AdminPanelChrome';
+import { usePlatformPreferences } from './PlatformPreferencesProvider';
 import {
   adminBadge,
   adminGhostBtn,
@@ -19,16 +20,23 @@ import {
   getEventJoinUrl,
   type SerializedEvent,
 } from '../../lib/platformEventDisplay';
-import PlatformEventEditorModal, { type EventEditorPayload } from './PlatformEventEditorModal';
+import PlatformEventEditorForm, { type EventEditorPayload } from './PlatformEventEditorForm';
 
 function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
   const { isDark } = useAdminPanelTheme();
+  const { t } = usePlatformPreferences();
   const router = useRouter();
   const [events, setEvents] = useState(initialEvents);
   const [error, setError] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create');
-  const [editing, setEditing] = useState<SerializedEvent | null>(null);
+  type EditorState = null | { mode: 'create' } | { mode: 'edit'; event: SerializedEvent };
+  const [editor, setEditor] = useState<EditorState>(null);
+
+  useEffect(() => {
+    if (!editor) return;
+    requestAnimationFrame(() => {
+      document.getElementById('event-editor-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [editor]);
 
   const sorted = useMemo(() => {
     return [...events].sort(
@@ -84,8 +92,8 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
   };
 
   const saveEdit = async (form: EventEditorPayload) => {
-    if (!editing) return;
-    const res = await fetch(`/api/admin/platform-calendar-events/${editing.id}`, {
+    if (editor?.mode !== 'edit') return;
+    const res = await fetch(`/api/admin/platform-calendar-events/${editor.event.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadFromForm(form)),
@@ -123,17 +131,23 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
 
   return (
     <>
+      {editor && (
+        <PlatformEventEditorForm
+          mode={editor.mode}
+          initial={editor.mode === 'edit' ? editor.event : null}
+          onCancel={() => setEditor(null)}
+          onSave={editor.mode === 'create' ? saveCreate : saveEdit}
+        />
+      )}
+
       <div className="flex justify-end mb-4">
         <button
           type="button"
-          onClick={() => {
-            setEditorMode('create');
-            setEditing(null);
-            setEditorOpen(true);
-          }}
-          className={adminPrimaryBtn(isDark)}
+          disabled={editor?.mode === 'create'}
+          onClick={() => setEditor({ mode: 'create' })}
+          className={`${adminPrimaryBtn(isDark)} disabled:opacity-50`}
         >
-          + Agregar evento
+          + {t('admin.events.add')}
         </button>
       </div>
 
@@ -220,11 +234,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setEditorMode('edit');
-                          setEditing(ev);
-                          setEditorOpen(true);
-                        }}
+                        onClick={() => setEditor({ mode: 'edit', event: ev })}
                         className={`${adminGhostBtn(isDark)} !px-3 !py-2 !text-xs w-full justify-center`}
                       >
                         Editar
@@ -252,23 +262,14 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
         })}
       </ul>
 
-      <PlatformEventEditorModal
-        open={editorOpen}
-        mode={editorMode}
-        initial={editing}
-        onClose={() => setEditorOpen(false)}
-        onSave={editorMode === 'create' ? saveCreate : saveEdit}
-      />
     </>
   );
 }
 
 export default function PlatformEventsManagePanel({ initialEvents }: { initialEvents: SerializedEvent[] }) {
+  const { t } = usePlatformPreferences();
   return (
-    <AdminPanelChrome
-      title="Gestionar eventos"
-      subtitle="Clases/retrospectivas, operativas de trading y sesiones avanzadas con reglas de membresía y rol."
-    >
+    <AdminPanelChrome title={t('admin.events.title')} subtitle={t('admin.events.subtitle')}>
       <EventsList initialEvents={initialEvents} />
     </AdminPanelChrome>
   );

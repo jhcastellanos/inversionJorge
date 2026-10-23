@@ -2,14 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-
-const navItems = [
-  { href: '/app', label: 'Inicio' },
-  { href: '/app/clases', label: 'Clases y Entrenamientos' },
-  { href: '/app/calendario', label: 'Calendario' },
-  { href: '/app/membresia', label: 'Mi membresía' },
-  { href: '/planes', label: 'Ver planes' },
-];
+import { usePlatformPreferences } from './PlatformPreferencesProvider';
+import PlatformPreferencesBar from './PlatformPreferencesBar';
 
 function ShieldIcon({ className }: { className?: string }) {
   return (
@@ -54,14 +48,12 @@ function AdminNavLink({
       href={href}
       className={`relative flex items-center gap-2.5 rounded-full border pl-3 pr-4 py-2.5 text-sm font-medium transition-colors ${
         active
-          ? 'border-emerald-400/35 bg-gradient-to-b from-slate-800 to-[#0f1612] text-emerald-50 shadow-inner shadow-emerald-950/30'
-          : 'border-transparent text-slate-200 hover:bg-slate-800 hover:border-emerald-500/10'
+          ? 'border-[var(--ventic-accent)]/40 bg-ventic-accent-soft ventic-text shadow-sm'
+          : 'border-transparent ventic-muted hover:bg-ventic-accent-soft hover:ventic-text'
       }`}
     >
-      {active && (
-        <span className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-emerald-400" />
-      )}
-      <span className={`shrink-0 pl-1 ${active ? 'text-emerald-400' : 'text-slate-400'}`}>{icon}</span>
+      {active && <span className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-[var(--ventic-accent)]" />}
+      <span className={`shrink-0 pl-1 ${active ? 'text-[var(--ventic-accent-muted)]' : ''}`}>{icon}</span>
       <span>{label}</span>
     </Link>
   );
@@ -79,8 +71,17 @@ export default function PlatformShell({
   const pathname = usePathname();
   const homeFullBleed = pathname === '/app';
   const router = useRouter();
+  const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
   const academyActive = pathname === '/app/academy-manager';
+
+  const navItems = [
+    { href: '/app', label: t('nav.home') },
+    { href: '/app/clases', label: t('nav.classes') },
+    { href: '/app/calendario', label: t('nav.calendar') },
+    { href: '/app/membresia', label: t('nav.membership') },
+    { href: '/planes', label: t('nav.plans') },
+  ];
 
   const logout = async () => {
     await fetch('/api/member/logout', { method: 'POST' });
@@ -91,17 +92,28 @@ export default function PlatformShell({
   const navLinkClass = (href: string) => {
     const active = pathname === href;
     return `block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-      active ? 'bg-emerald-600 text-white' : 'text-slate-200 hover:bg-slate-800'
+      active
+        ? 'bg-[var(--ventic-accent)] text-white'
+        : 'ventic-muted hover:bg-ventic-accent-soft hover:ventic-text'
     }`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
-      <aside className="hidden md:flex w-64 flex-col bg-slate-900 text-white shrink-0">
-        <div className="p-6 border-b border-slate-700">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Plataforma</p>
-          <h1 className="font-bold text-lg leading-tight mt-1">Inversión Real</h1>
-          <p className="text-sm text-slate-300 mt-1">Hola, {userName}</p>
+    <div className="min-h-screen ventic-bg flex ventic-text">
+      <aside className="hidden md:flex w-64 flex-col border-r ventic-border ventic-surface shrink-0">
+        <div className="p-6 border-b ventic-border">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ventic-accent)] text-white font-bold">
+              IR
+            </span>
+            <div>
+              <p className="text-xs uppercase tracking-wide ventic-muted">{t('shell.platform')}</p>
+              <h1 className="font-bold text-base leading-tight">{t('shell.brand')}</h1>
+            </div>
+          </div>
+          <p className="text-sm ventic-muted mt-3">
+            {t('shell.hello')}, {userName}
+          </p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => (
@@ -111,66 +123,71 @@ export default function PlatformShell({
           ))}
 
           {showAdminNav && (
-            <div className="pt-4 mt-4 border-t border-slate-700">
-              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Admin
+            <div className="pt-4 mt-4 border-t ventic-border">
+              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider ventic-muted">
+                {t('nav.admin')}
               </p>
               <div className="space-y-1.5">
                 <AdminNavLink
                   href="/app/academy-manager"
                   active={academyActive}
-                  label="Academy Manager"
+                  label={t('nav.academyManager')}
                   icon={<BookIcon className="w-4 h-4" />}
                 />
                 <AdminNavLink
                   href="/app/gestionar-eventos"
                   active={adminEventsActive}
-                  label="Gestionar eventos"
+                  label={t('nav.manageEvents')}
                   icon={<ShieldIcon className="w-4 h-4" />}
                 />
               </div>
             </div>
           )}
         </nav>
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t ventic-border">
           <button
             type="button"
             onClick={logout}
-            className="w-full rounded-lg bg-slate-800 py-2 text-sm font-medium hover:bg-slate-700"
+            className="w-full rounded-lg border ventic-border py-2 text-sm font-medium ventic-text hover:bg-ventic-accent-soft"
           >
-            Cerrar sesión
+            {t('nav.logout')}
           </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-slate-900 text-white px-4 py-3 flex flex-wrap justify-between items-center gap-2">
-          <span className="font-semibold">Inversión Real</span>
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+        <header className="hidden md:flex items-center justify-between gap-4 px-6 py-3 border-b ventic-border ventic-surface">
+          <p className="text-sm font-medium ventic-muted">{t('shell.platform')}</p>
+          <PlatformPreferencesBar userName={userName} />
+        </header>
+
+        <header className="md:hidden ventic-surface border-b ventic-border px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+          <span className="font-semibold ventic-text">{t('shell.brand')}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <PlatformPreferencesBar />
             {showAdminNav && (
               <>
                 <Link
                   href="/app/academy-manager"
-                  className={academyActive ? 'text-emerald-300 font-semibold' : 'text-slate-300'}
+                  className={academyActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
                 >
                   Academy
                 </Link>
                 <Link
                   href="/app/gestionar-eventos"
-                  className={adminEventsActive ? 'text-emerald-300 font-semibold' : 'text-slate-300'}
+                  className={adminEventsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
                 >
-                  Eventos
+                  Events
                 </Link>
               </>
             )}
-            <button type="button" onClick={logout} className="text-slate-300">
-              Salir
+            <button type="button" onClick={logout} className="text-sm ventic-muted">
+              {t('nav.logoutShort')}
             </button>
           </div>
         </header>
-        <main
-          className={`flex-1 min-w-0 ${homeFullBleed ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}
-        >
+
+        <main className={`flex-1 min-w-0 ventic-bg ${homeFullBleed ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
           {children}
         </main>
       </div>

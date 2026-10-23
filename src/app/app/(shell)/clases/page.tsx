@@ -56,8 +56,8 @@ export default async function ClasesPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-3xl font-bold text-gray-900">Clases y Entrenamientos</h1>
-      <p className="text-gray-600 mt-2">
+      <h1 className="text-3xl font-bold ventic-text">Clases y Entrenamientos</h1>
+      <p className="ventic-muted mt-2">
         Academia para miembros activos ({roleLabel}). Módulos y lecciones publicados por el equipo.
       </p>
 
@@ -65,18 +65,18 @@ export default async function ClasesPage() {
         <div className="mt-8 space-y-10">
           {academyModules.map((mod, idx) => (
             <section key={mod.id}>
-              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2 flex items-center gap-2">
-                <span className="text-sm font-bold text-blue-900 bg-blue-50 rounded-full w-7 h-7 inline-flex items-center justify-center">
+              <h2 className="text-xl font-semibold ventic-text border-b ventic-border pb-2 flex items-center gap-2">
+                <span className="text-sm font-bold text-white bg-[var(--ventic-accent)] rounded-full w-7 h-7 inline-flex items-center justify-center">
                   {idx + 1}
                 </span>
                 {mod.title}
               </h2>
-              {mod.description && <p className="text-sm text-gray-600 mt-2">{mod.description}</p>}
+              {mod.description && <p className="text-sm ventic-muted mt-2">{mod.description}</p>}
               <ul className="mt-4 space-y-3">
                 {mod.lessons.map((lesson) => (
-                  <li key={lesson.id} className="rounded-xl bg-white border border-gray-200 p-4 shadow-sm">
-                    <p className="font-semibold text-gray-900">{lesson.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                  <li key={lesson.id} className="rounded-xl ventic-surface border ventic-border p-4 shadow-sm">
+                    <p className="font-semibold ventic-text">{lesson.title}</p>
+                    <p className="text-xs ventic-muted mt-1">
                       {lesson.lesson_code}
                       {lesson.duration_label ? ` · ${lesson.duration_label}` : ''}
                     </p>
@@ -85,7 +85,7 @@ export default async function ClasesPage() {
                         href={lesson.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block mt-3 text-sm font-medium text-blue-900 hover:underline"
+                        className="inline-block mt-3 text-sm font-medium text-[var(--ventic-accent)] hover:underline"
                       >
                         {lessonActionLabel(lesson.lesson_type)} →
                       </a>
@@ -97,7 +97,7 @@ export default async function ClasesPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+        <div className="mt-8 rounded-2xl border border-dashed ventic-border ventic-surface p-10 text-center ventic-muted">
           Aún no hay módulos en la academia. Revisa más tarde.
         </div>
       )}
@@ -121,7 +121,7 @@ export default async function ClasesPage() {
                           href={c.video_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block mt-3 text-sm font-medium text-blue-900 hover:underline"
+                          className="inline-block mt-3 text-sm font-medium text-[var(--ventic-accent)] hover:underline"
                         >
                           Ver video →
                         </a>

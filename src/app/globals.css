@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --ventic-bg: #f8f9fa;
+  --ventic-surface: #ffffff;
+  --ventic-surface-elevated: #ffffff;
+  --ventic-sidebar: #ffffff;
+  --ventic-text: #1a1d21;
+  --ventic-muted: #6b7280;
+  --ventic-border: #e5e7eb;
+  --ventic-accent: #208b67;
+  --ventic-accent-hover: #1a7355;
+  --ventic-accent-soft: rgba(32, 139, 103, 0.12);
+  --ventic-accent-muted: #2d9a72;
+}
+
+.dark {
+  --ventic-bg: #1a1d21;
+  --ventic-surface: #24282d;
+  --ventic-surface-elevated: #2c3138;
+  --ventic-sidebar: #1a1d21;
+  --ventic-text: #f3f4f6;
+  --ventic-muted: #9ca3af;
+  --ventic-border: #3a3f47;
+  --ventic-accent: #208b67;
+  --ventic-accent-hover: #2aa37a;
+  --ventic-accent-soft: rgba(32, 139, 103, 0.18);
+  --ventic-accent-muted: #4ade80;
+}
+
+@layer utilities {
+  .ventic-bg {
+    background-color: var(--ventic-bg);
+  }
+  .ventic-surface {
+    background-color: var(--ventic-surface);
+  }
+  .ventic-text {
+    color: var(--ventic-text);
+  }
+  .ventic-muted {
+    color: var(--ventic-muted);
+  }
+  .ventic-border {
+    border-color: var(--ventic-border);
+  }
+  .bg-ventic-accent {
+    background-color: var(--ventic-accent);
+  }
+  .bg-ventic-accent-soft {
+    background-color: var(--ventic-accent-soft);
+  }
+  .text-ventic-accent {
+    color: var(--ventic-accent-muted);
+  }
+  .hover\:bg-ventic-accent:hover {
+    background-color: var(--ventic-accent-hover);
+  }
+}
+
+body {
+  background-color: var(--ventic-bg);
+  color: var(--ventic-text);
+}
