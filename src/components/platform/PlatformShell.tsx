@@ -97,9 +97,12 @@ export default function PlatformShell({
     }`;
   };
 
+  const logoutButtonClass =
+    'shrink-0 rounded-lg border ventic-border px-3 py-1.5 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft transition-colors';
+
   return (
     <div className="min-h-screen ventic-bg flex ventic-text">
-      <aside className="hidden md:flex w-64 flex-col border-r ventic-border ventic-surface shrink-0">
+      <aside className="hidden md:flex w-64 flex-col border-r ventic-border ventic-surface shrink-0 h-screen sticky top-0">
         <div className="p-6 border-b ventic-border">
           <div className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--ventic-accent)] text-white font-bold">
@@ -114,7 +117,7 @@ export default function PlatformShell({
             {t('shell.hello')}, {userName}
           </p>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} className={navLinkClass(item.href)}>
               {item.label}
@@ -143,26 +146,32 @@ export default function PlatformShell({
             </div>
           )}
         </nav>
-        <div className="p-4 border-t ventic-border">
-          <button
-            type="button"
-            onClick={logout}
-            className="w-full rounded-lg border ventic-border py-2 text-sm font-medium ventic-text hover:bg-ventic-accent-soft"
-          >
+        <div className="p-4 border-t ventic-border shrink-0 ventic-surface">
+          <button type="button" onClick={logout} className={`w-full ${logoutButtonClass}`}>
             {t('nav.logout')}
           </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="hidden md:flex items-center justify-between gap-4 px-6 py-3 border-b ventic-border ventic-surface">
+        <header className="hidden md:flex items-center justify-between gap-4 px-6 py-3 border-b ventic-border ventic-surface sticky top-0 z-20">
           <p className="text-sm font-medium ventic-muted">{t('shell.platform')}</p>
-          <PlatformPreferencesBar userName={userName} />
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <PlatformPreferencesBar userName={userName} />
+            <button type="button" onClick={logout} className={logoutButtonClass}>
+              {t('nav.logout')}
+            </button>
+          </div>
         </header>
 
-        <header className="md:hidden ventic-surface border-b ventic-border px-4 py-3 flex flex-wrap justify-between items-center gap-2">
-          <span className="font-semibold ventic-text">{t('shell.brand')}</span>
-          <div className="flex flex-wrap items-center gap-2">
+        <header className="md:hidden ventic-surface border-b ventic-border px-4 py-3 sticky top-0 z-20">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <span className="font-semibold ventic-text">{t('shell.brand')}</span>
+            <button type="button" onClick={logout} className={logoutButtonClass}>
+              {t('nav.logout')}
+            </button>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlatformPreferencesBar />
             {showAdminNav && (
               <>
@@ -180,9 +189,6 @@ export default function PlatformShell({
                 </Link>
               </>
             )}
-            <button type="button" onClick={logout} className="text-sm ventic-muted">
-              {t('nav.logoutShort')}
-            </button>
           </div>
         </header>
 
