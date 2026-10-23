@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS platform_calendar_events (
 );
 ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS zoom_url TEXT;
 ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva';
-ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN DEFAULT false;
+ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS suppress_live BOOLEAN DEFAULT false;
 `;
 
 function directNeonUrl(url) {

@@ -30,6 +30,7 @@ export type PlatformCalendarEventRow = {
   ends_at: Date | null;
   is_published: boolean;
   force_live: boolean;
+  suppress_live: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -193,6 +194,7 @@ export const PlatformCalendarEvent = {
     ends_at?: Date | null;
     is_published?: boolean;
     force_live?: boolean;
+    suppress_live?: boolean;
   }) {
     const insert = async () => {
       await ensurePlatformCalendarEventSchema();
@@ -200,8 +202,8 @@ export const PlatformCalendarEvent = {
       try {
         const result = await client.query(
           `INSERT INTO platform_calendar_events
-           (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, force_live, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+           (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, force_live, suppress_live, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
            RETURNING *`,
           [
             data.title,
@@ -214,6 +216,7 @@ export const PlatformCalendarEvent = {
             data.ends_at ?? null,
             data.is_published ?? true,
             data.force_live ?? false,
+            data.suppress_live ?? false,
           ]
         );
         return result.rows[0];
@@ -248,6 +251,7 @@ export const PlatformCalendarEvent = {
       ends_at: Date | null;
       is_published: boolean;
       force_live: boolean;
+      suppress_live: boolean;
     }>
   ) {
     await ensurePlatformCalendarEventSchema();

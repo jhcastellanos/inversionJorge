@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       zoom_url,
       is_published: typeof body.is_published === 'boolean' ? body.is_published : undefined,
       force_live: typeof body.force_live === 'boolean' ? body.force_live : undefined,
+      suppress_live: typeof body.suppress_live === 'boolean' ? body.suppress_live : undefined,
     });
     return NextResponse.json({ event: row }, { status: 201 });
   } catch (err) {

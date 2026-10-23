@@ -26,6 +26,8 @@ const DDL_STEPS = [
   `ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva'`,
   `ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN DEFAULT false`,
   `UPDATE platform_calendar_events SET force_live = false WHERE force_live IS NULL`,
+  `ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS suppress_live BOOLEAN DEFAULT false`,
+  `UPDATE platform_calendar_events SET suppress_live = false WHERE suppress_live IS NULL`,
   `UPDATE platform_calendar_events SET event_tier = 'clase_retrospectiva' WHERE event_tier IS NULL OR event_tier = ''`,
 ];
 

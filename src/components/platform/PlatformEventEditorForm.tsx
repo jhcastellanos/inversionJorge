@@ -236,7 +236,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
             className={checkClass}
           />
           <span className="text-sm ventic-muted">
-            Marcar como <strong className="ventic-text">EN VIVO</strong> manualmente (ignora horario programado)
+            Forzar <strong className="ventic-text">EN VIVO</strong> antes del horario (durante el horario se activa solo)
           </span>
         </label>
 

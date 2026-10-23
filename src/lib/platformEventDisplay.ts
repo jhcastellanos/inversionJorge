@@ -11,8 +11,14 @@ import {
 
 const DISPLAY_TZ = 'America/New_York';
 
-export function isEventLive(event: PlatformCalendarEventRow, now = new Date()): boolean {
-  if (event.force_live) return true;
+export type EventLiveTiming = {
+  starts_at: Date | string;
+  ends_at?: Date | string | null;
+  force_live?: boolean | null;
+  suppress_live?: boolean | null;
+};
+
+export function isEventLiveBySchedule(event: EventLiveTiming, now = new Date()): boolean {
   const start = new Date(event.starts_at);
   const end = event.ends_at
     ? new Date(event.ends_at)
@@ -20,8 +26,15 @@ export function isEventLive(event: PlatformCalendarEventRow, now = new Date()): 
   return start <= now && now <= end;
 }
 
-export function isEventUpcoming(event: PlatformCalendarEventRow, now = new Date()): boolean {
-  if (event.force_live) return false;
+/** En vivo en inicio/CRM: horario, manual (force_live) o no si suppress_live */
+export function isEventLive(event: EventLiveTiming, now = new Date()): boolean {
+  if (event.suppress_live) return false;
+  if (event.force_live) return true;
+  return isEventLiveBySchedule(event, now);
+}
+
+export function isEventUpcoming(event: EventLiveTiming, now = new Date()): boolean {
+  if (isEventLive(event, now)) return false;
   return new Date(event.starts_at) > now;
 }
 
@@ -111,6 +124,7 @@ export type SerializedEvent = {
   ends_at: string | null;
   is_published: boolean;
   force_live: boolean;
+  suppress_live: boolean;
 };
 
 export function getEventJoinUrl(ev: {
@@ -166,5 +180,6 @@ export function serializeEvent(row: PlatformCalendarEventRow): SerializedEvent {
     ends_at: row.ends_at ? new Date(row.ends_at).toISOString() : null,
     is_published: row.is_published,
     force_live: Boolean(row.force_live),
+    suppress_live: Boolean(row.suppress_live),
   };
 }

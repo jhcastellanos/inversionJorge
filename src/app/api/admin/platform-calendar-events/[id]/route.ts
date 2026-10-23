@@ -50,6 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   if (typeof body.is_published === 'boolean') patch.is_published = body.is_published;
   if (typeof body.force_live === 'boolean') patch.force_live = body.force_live;
+  if (typeof body.suppress_live === 'boolean') patch.suppress_live = body.suppress_live;
 
   const row = await PlatformCalendarEvent.update(id, patch);
   if (!row) {

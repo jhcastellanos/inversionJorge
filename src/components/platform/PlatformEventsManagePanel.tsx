@@ -18,6 +18,8 @@ import {
   formatEventAdminMeta,
   formatEventDayShort,
   getEventJoinUrl,
+  isEventLive,
+  isEventLiveBySchedule,
   type SerializedEvent,
 } from '../../lib/platformEventDisplay';
 import PlatformEventEditorForm, { type EventEditorPayload } from './PlatformEventEditorForm';
@@ -30,6 +32,12 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
   const [error, setError] = useState<string | null>(null);
   type EditorState = null | { mode: 'create' } | { mode: 'edit'; event: SerializedEvent };
   const [editor, setEditor] = useState<EditorState>(null);
+  const [, clockTick] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => clockTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!editor) return;
@@ -62,6 +70,8 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
         ...e,
         zoom_url: e.zoom_url ?? null,
         event_kind: e.event_kind ?? 'clase_en_vivo',
+        force_live: Boolean(e.force_live),
+        suppress_live: Boolean(e.suppress_live),
       }))
     );
     router.refresh();
@@ -79,6 +89,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
       ends_at: ends.toISOString(),
       is_published: form.is_published,
       force_live: form.force_live,
+      suppress_live: form.force_live ? false : undefined,
     };
   };
 
@@ -106,11 +117,18 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
     await reload();
   };
 
-  const toggleForceLive = async (ev: SerializedEvent) => {
+  const toggleLiveDisplay = async (ev: SerializedEvent) => {
+    const liveNow = isEventLive(ev);
+    const bySchedule = isEventLiveBySchedule(ev);
+    const body = liveNow
+      ? { force_live: false, suppress_live: true }
+      : bySchedule
+        ? { suppress_live: false, force_live: false }
+        : { force_live: true, suppress_live: false };
     await fetch(`/api/admin/platform-calendar-events/${ev.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force_live: !ev.force_live }),
+      body: JSON.stringify(body),
     });
     await reload();
   };
@@ -131,6 +149,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
       body: JSON.stringify({
         is_published: false,
         force_live: false,
+        suppress_live: true,
         ends_at: ev.ends_at ?? new Date().toISOString(),
       }),
     });
@@ -188,6 +207,15 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
           const joinUrl = getEventJoinUrl(ev);
           const isNext = ev.id === nextUpcomingId;
           const tier = ev.event_tier as LiveEventTier;
+          const liveNow = isEventLive(ev);
+          const liveBySchedule = isEventLiveBySchedule(ev) && !ev.suppress_live && !ev.force_live;
+          const liveLabel = liveNow
+            ? liveBySchedule
+              ? 'En vivo (horario)'
+              : ev.force_live
+                ? 'En vivo (manual)'
+                : 'En vivo'
+            : 'En vivo';
 
           return (
             <li key={ev.id}>
@@ -207,7 +235,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                         {!ev.is_published && (
                           <span className="text-[10px] font-semibold uppercase text-amber-700">Oculto</span>
                         )}
-                        {ev.force_live && (
+                        {liveNow && (
                           <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-600 text-white">
                             EN VIVO
                           </span>
@@ -234,21 +262,29 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                   </div>
 
                   <div className="mt-4 lg:mt-0 lg:w-52 shrink-0 flex flex-col gap-3">
-                    <label className={`flex items-center justify-between gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-                      <span>En vivo (manual)</span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={ev.force_live}
-                        onClick={() => toggleForceLive(ev)}
-                        className={`relative h-6 w-11 rounded-full transition-colors ${adminToggleTrack(ev.force_live, isDark)}`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                            ev.force_live ? 'translate-x-5' : ''
-                          }`}
-                        />
-                      </button>
+                    <label className={`flex flex-col gap-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{liveLabel}</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={liveNow}
+                          onClick={() => toggleLiveDisplay(ev)}
+                          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${adminToggleTrack(liveNow, isDark)}`}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                              liveNow ? 'translate-x-5' : ''
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      {liveBySchedule && (
+                        <span className="text-[10px] opacity-80">Automático por hora · apaga para ocultar en inicio</span>
+                      )}
+                      {!liveNow && !isEventLiveBySchedule(ev) && (
+                        <span className="text-[10px] opacity-80">Fuera de horario · enciende para forzar en vivo</span>
+                      )}
                     </label>
                     <label className={`flex items-center justify-between gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                       <span>Visible en inicio</span>
