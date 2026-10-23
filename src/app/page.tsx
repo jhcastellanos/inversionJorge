@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LandingAuthPanel from '../components/platform/LandingAuthPanel';
+import MarketingTopBar from '../components/platform/MarketingTopBar';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../lib/memberAuth';
 import { PlatformUser } from '../lib/platformUsers';
 import { getMemberAccess } from '../lib/memberAccess';
@@ -30,20 +31,7 @@ export default async function LandingPage({ searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen ventic-bg ventic-text">
-      <nav className="ventic-surface border-b ventic-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--ventic-accent-muted)]">Plataforma CRM</p>
-            <h1 className="text-xl sm:text-2xl font-bold ventic-text">Inversión Real con Jorge y Guille</h1>
-          </div>
-          <Link
-            href="/planes"
-            className="px-3 sm:px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"
-          >
-            Ver planes
-          </Link>
-        </div>
-      </nav>
+      <MarketingTopBar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 lg:pb-24">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">

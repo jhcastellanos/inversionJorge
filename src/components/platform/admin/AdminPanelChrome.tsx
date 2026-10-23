@@ -1,7 +1,6 @@
 'use client';
 
 import { AdminPanelThemeProvider, adminPageWrap, useAdminPanelTheme } from './AdminPanelTheme';
-import PlatformPreferencesBar from '../PlatformPreferencesBar';
 export default function AdminPanelChrome({
   title,
   subtitle,
@@ -45,10 +44,7 @@ function AdminPanelChromeInner({
             {subtitle && <p className="mt-2 text-sm max-w-2xl ventic-muted">{subtitle}</p>}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <PlatformPreferencesBar />
-          {action}
-        </div>
+        {action && <div className="flex flex-col items-end gap-2 shrink-0">{action}</div>}
       </div>
       {children}
     </div>

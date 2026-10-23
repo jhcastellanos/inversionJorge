@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ResponsiveLanding from '../../components/ResponsiveLanding';
+import MarketingTopBar from '../../components/platform/MarketingTopBar';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../../lib/memberAuth';
 import { PlatformUser } from '../../lib/platformUsers';
 import { getMemberAccess } from '../../lib/memberAccess';
@@ -36,19 +37,7 @@ export default async function PlanesPage() {
 
   return (
     <div className="min-h-screen ventic-bg ventic-text">
-      <nav className="ventic-surface border-b ventic-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
-          <Link href="/" className="text-xl sm:text-2xl font-bold text-[var(--ventic-accent)]">
-            Inversión Real con Jorge y Guille
-          </Link>
-          <Link
-            href="/"
-            className="px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"
-          >
-            Entrar a la plataforma
-          </Link>
-        </div>
-      </nav>
+      <MarketingTopBar ctaHref="/" ctaLabel="Entrar a la plataforma" />
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
         <h2 className="text-3xl sm:text-4xl font-extrabold ventic-text mb-4">Planes y cursos</h2>

@@ -13,13 +13,18 @@ export default function MemberAuthForm({
   mode: Mode;
   variant?: 'default' | 'dark' | 'landing';
 }) {
-  const onLanding = variant === 'landing' || variant === 'dark';
-  const inputClass = onLanding
-    ? 'w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder:text-slate-400'
-    : 'w-full rounded-lg border border-gray-300 px-3 py-2';
-  const labelClass = onLanding
-    ? 'block text-sm font-medium text-slate-200 mb-1'
-    : 'block text-sm font-medium text-gray-700 mb-1';
+  const onLanding = variant === 'landing';
+  const onDark = variant === 'dark';
+  const inputClass =
+    onLanding || onDark
+      ? 'w-full rounded-lg border ventic-border bg-[var(--ventic-bg)] px-3 py-2 ventic-text placeholder:ventic-muted focus:outline-none focus:ring-2 focus:ring-[var(--ventic-accent)]/40'
+      : 'w-full rounded-lg border border-gray-300 px-3 py-2';
+  const labelClass =
+    onLanding || onDark
+      ? 'block text-sm font-medium ventic-muted mb-1'
+      : 'block text-sm font-medium text-gray-700 mb-1';
+  const primaryBtnClass =
+    'w-full rounded-lg bg-[var(--ventic-accent)] py-3 font-semibold text-white hover:bg-[var(--ventic-accent-hover)] disabled:opacity-50';
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -107,9 +112,9 @@ export default function MemberAuthForm({
           type="submit"
           disabled={loading}
           className={
-            onLanding
-              ? 'w-full rounded-lg bg-blue-600 py-3 font-bold text-white hover:bg-blue-500 disabled:opacity-50'
-              : 'w-full rounded-lg bg-blue-900 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50'
+            onLanding || onDark
+              ? primaryBtnClass
+              : 'w-full rounded-lg bg-[var(--ventic-accent)] py-3 font-semibold text-white hover:bg-[var(--ventic-accent-hover)] disabled:opacity-50'
           }
         >
           {loading
@@ -124,18 +129,18 @@ export default function MemberAuthForm({
         <div className="mt-6">
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t ventic-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">o continúa con</span>
+              <span className="ventic-surface px-2 ventic-muted">o continúa con</span>
             </div>
           </div>
           <a
             href="/api/member/auth/google"
             className={
-              onLanding
-                ? 'flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 py-3 font-medium text-white hover:bg-white/10'
-                : 'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-800 hover:bg-gray-50'
+              onLanding || onDark
+                ? 'flex w-full items-center justify-center gap-2 rounded-lg border ventic-border ventic-surface py-3 font-medium ventic-text hover:bg-ventic-accent-soft'
+                : 'flex w-full items-center justify-center gap-2 rounded-lg border ventic-border ventic-surface py-3 font-medium ventic-text hover:bg-ventic-accent-soft'
             }
           >
             Google
