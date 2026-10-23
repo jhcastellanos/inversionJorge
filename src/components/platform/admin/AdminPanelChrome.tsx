@@ -1,16 +1,16 @@
 'use client';
 
-import { AdminPanelThemeProvider, useAdminPanelTheme } from './AdminPanelTheme';
+import {
+  AdminPanelThemeProvider,
+  adminPageWrap,
+  adminThemeToggleBtn,
+  useAdminPanelTheme,
+} from './AdminPanelTheme';
 
 function ThemeToggle() {
-  const { theme, toggle } = useAdminPanelTheme();
+  const { theme, toggle, isDark } = useAdminPanelTheme();
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="text-xs font-medium rounded-lg border px-3 py-1.5 border-white/15 text-slate-300 hover:bg-white/5 dark:border-white/15 dark:text-slate-300 light:border-gray-300 light:text-gray-600"
-      title="Cambiar tema del panel"
-    >
+    <button type="button" onClick={toggle} className={adminThemeToggleBtn(isDark)} title="Cambiar tema del panel">
       {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
     </button>
   );
@@ -49,15 +49,18 @@ function AdminPanelChromeInner({
 }) {
   const { isDark } = useAdminPanelTheme();
   return (
-    <div className={isDark ? 'text-white' : 'text-gray-900'}>
+    <div className={adminPageWrap(isDark)}>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h1>
-          {subtitle && (
-            <p className={`mt-2 text-sm max-w-2xl ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              {subtitle}
-            </p>
-          )}
+        <div className="flex gap-3 min-w-0">
+          <span className={`w-1 self-stretch rounded-full shrink-0 ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
+          <div>
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h1>
+            {subtitle && (
+              <p className={`mt-2 text-sm max-w-2xl ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ThemeToggle />

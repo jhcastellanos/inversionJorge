@@ -6,8 +6,12 @@ import {
   adminField,
   adminLabel,
   adminPanelShell,
+  adminGhostBtn,
+  adminLessonPanel,
+  adminLinkAccent,
   adminPrimaryBtn,
   adminStatCard,
+  adminStatValue,
   useAdminPanelTheme,
 } from './admin/AdminPanelTheme';
 import type { LessonType } from '../../lib/platformAcademy';
@@ -106,7 +110,7 @@ function NewLessonBar({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`mt-4 text-sm font-semibold ${isDark ? 'text-amber-400 hover:text-amber-300' : 'text-blue-900 hover:underline'}`}
+        className={`mt-4 text-sm font-semibold ${adminLinkAccent(isDark)}`}
       >
         + Add Lesson
       </button>
@@ -114,10 +118,8 @@ function NewLessonBar({
   }
 
   return (
-    <div
-      className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-amber-500/20 bg-[#141820]' : 'border-gray-200 bg-slate-50'}`}
-    >
-      <p className={`text-[11px] font-bold tracking-widest uppercase ${isDark ? 'text-amber-400' : 'text-blue-900'}`}>
+    <div className={adminLessonPanel(isDark)}>
+      <p className={`text-[11px] font-bold tracking-widest uppercase ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
         New lesson
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-12 items-end">
@@ -157,7 +159,7 @@ function NewLessonBar({
                 const f = e.target.files?.[0];
                 if (f) void uploadFile(f);
               }}
-              className={`${adminField(isDark)} file:mr-3 file:rounded-lg file:border-0 file:bg-amber-500 file:px-3 file:py-1 file:text-xs file:font-bold file:text-slate-950`}
+              className={`${adminField(isDark)} file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1 file:text-xs file:font-bold file:text-white`}
             />
             {fileUrl && (
               <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>
@@ -183,7 +185,7 @@ function NewLessonBar({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className={`rounded-lg border px-4 py-2 text-sm ${isDark ? 'border-white/20 text-slate-300' : 'border-gray-300 text-gray-700'}`}
+          className={adminGhostBtn(isDark)}
         >
           ✕ Cancel
         </button>
@@ -219,7 +221,7 @@ function ModuleList({ modules, reload }: { modules: ModuleRow[]; reload: () => v
                 <div className="flex gap-3 min-w-0">
                   <span
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                      isDark ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-100 text-blue-900'
+                      isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-900'
                     }`}
                   >
                     {idx + 1}
@@ -366,7 +368,7 @@ function AcademyManagerInner({ initialModules }: { initialModules: ModuleRow[] }
             <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>
               {label}
             </p>
-            <p className="text-2xl font-bold mt-1">{n}</p>
+            <p className={`text-2xl font-bold mt-1 ${adminStatValue(isDark)}`}>{n}</p>
           </div>
         ))}
       </div>

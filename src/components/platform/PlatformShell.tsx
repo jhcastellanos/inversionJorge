@@ -54,14 +54,14 @@ function AdminNavLink({
       href={href}
       className={`relative flex items-center gap-2.5 rounded-full border pl-3 pr-4 py-2.5 text-sm font-medium transition-colors ${
         active
-          ? 'border-amber-200/30 bg-gradient-to-b from-slate-800 to-slate-900 text-amber-50 shadow-inner'
-          : 'border-transparent text-slate-200 hover:bg-slate-800 hover:border-white/10'
+          ? 'border-emerald-400/35 bg-gradient-to-b from-slate-800 to-[#0f1612] text-emerald-50 shadow-inner shadow-emerald-950/30'
+          : 'border-transparent text-slate-200 hover:bg-slate-800 hover:border-emerald-500/10'
       }`}
     >
       {active && (
-        <span className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-amber-400" />
+        <span className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-emerald-400" />
       )}
-      <span className={`shrink-0 pl-1 ${active ? 'text-amber-400' : 'text-slate-400'}`}>{icon}</span>
+      <span className={`shrink-0 pl-1 ${active ? 'text-emerald-400' : 'text-slate-400'}`}>{icon}</span>
       <span>{label}</span>
     </Link>
   );
@@ -91,7 +91,7 @@ export default function PlatformShell({
   const navLinkClass = (href: string) => {
     const active = pathname === href;
     return `block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-      active ? 'bg-blue-700 text-white' : 'text-slate-200 hover:bg-slate-800'
+      active ? 'bg-emerald-600 text-white' : 'text-slate-200 hover:bg-slate-800'
     }`;
   };
 
@@ -151,13 +151,13 @@ export default function PlatformShell({
               <>
                 <Link
                   href="/app/academy-manager"
-                  className={academyActive ? 'text-amber-300 font-semibold' : 'text-slate-300'}
+                  className={academyActive ? 'text-emerald-300 font-semibold' : 'text-slate-300'}
                 >
                   Academy
                 </Link>
                 <Link
                   href="/app/gestionar-eventos"
-                  className={adminEventsActive ? 'text-amber-300 font-semibold' : 'text-slate-300'}
+                  className={adminEventsActive ? 'text-emerald-300 font-semibold' : 'text-slate-300'}
                 >
                   Eventos
                 </Link>

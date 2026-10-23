@@ -4,7 +4,15 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LIVE_EVENT_TIER_LABELS, type LiveEventTier } from '../../lib/platformRoles';
 import AdminPanelChrome from './admin/AdminPanelChrome';
-import { adminPanelShell, adminPrimaryBtn, useAdminPanelTheme } from './admin/AdminPanelTheme';
+import {
+  adminBadge,
+  adminGhostBtn,
+  adminLinkAccent,
+  adminPanelShell,
+  adminPrimaryBtn,
+  adminToggleTrack,
+  useAdminPanelTheme,
+} from './admin/AdminPanelTheme';
 import {
   formatEventAdminMeta,
   formatEventDayShort,
@@ -139,7 +147,9 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
 
       <ul className="space-y-4 max-w-4xl">
         {sorted.length === 0 && (
-          <li className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500 text-sm">
+          <li
+            className={`rounded-2xl border border-dashed p-12 text-center text-sm ${isDark ? 'border-emerald-500/20 text-slate-500 bg-[#121820]' : 'border-emerald-200 text-gray-500 bg-white'}`}
+          >
             No hay eventos. Usa &quot;Agregar evento&quot; para crear el primero.
           </li>
         )}
@@ -157,37 +167,31 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                 <div className="flex flex-col lg:flex-row lg:gap-6">
                   <div className="flex gap-4 flex-1 min-w-0">
                     <div className="text-center w-14 shrink-0 pt-1">
-                      <div className="text-2xl font-bold text-gray-900 leading-none">{day}</div>
-                      <div className="text-[10px] font-bold tracking-wider text-gray-500 mt-1">{month}</div>
+                      <div className={`text-2xl font-bold leading-none ${isDark ? 'text-white' : 'text-gray-900'}`}>{day}</div>
+                      <div className={`text-[10px] font-bold tracking-wider mt-1 ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>{month}</div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {isNext && (
-                          <span className="text-[10px] font-bold tracking-wide text-blue-900 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
-                            PRÓXIMO
-                          </span>
+                          <span className={adminBadge(isDark)}>PRÓXIMO</span>
                         )}
-                        <span
-                          className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${isDark ? 'text-amber-200 bg-amber-500/15' : 'text-blue-900 bg-blue-50'}`}
-                        >
-                          {LIVE_EVENT_TIER_LABELS[tier]}
-                        </span>
+                        <span className={adminBadge(isDark)}>{LIVE_EVENT_TIER_LABELS[tier]}</span>
                         {!ev.is_published && (
                           <span className="text-[10px] font-semibold uppercase text-amber-700">Oculto</span>
                         )}
                       </div>
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-900 mt-2 leading-snug">{ev.title}</h2>
+                      <h2 className={`text-lg sm:text-xl font-bold mt-2 leading-snug ${isDark ? 'text-white' : 'text-gray-900'}`}>{ev.title}</h2>
                       {ev.description && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-3">{ev.description}</p>
+                        <p className={`text-sm mt-2 line-clamp-3 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{ev.description}</p>
                       )}
-                      <p className="text-xs text-gray-500 mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <p className={`text-xs mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 ${isDark ? 'text-slate-500' : 'text-gray-500'}`}>
                         <span>{formatEventAdminMeta(start, end)}</span>
                         {joinUrl && (
                           <a
                             href={joinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-800 hover:underline truncate max-w-full sm:max-w-md"
+                            className={`${adminLinkAccent(isDark)} hover:underline truncate max-w-full sm:max-w-md`}
                           >
                             Zoom ↗
                           </a>
@@ -197,16 +201,14 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                   </div>
 
                   <div className="mt-4 lg:mt-0 lg:w-52 shrink-0 flex flex-col gap-3">
-                    <label className="flex items-center justify-between gap-2 text-xs text-gray-600">
+                    <label className={`flex items-center justify-between gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                       <span>Visible en inicio</span>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={ev.is_published}
                         onClick={() => togglePublished(ev)}
-                        className={`relative h-6 w-11 rounded-full transition-colors ${
-                          ev.is_published ? 'bg-blue-700' : 'bg-gray-300'
-                        }`}
+                        className={`relative h-6 w-11 rounded-full transition-colors ${adminToggleTrack(ev.is_published, isDark)}`}
                       >
                         <span
                           className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
@@ -223,14 +225,14 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                           setEditing(ev);
                           setEditorOpen(true);
                         }}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+                        className={`${adminGhostBtn(isDark)} !px-3 !py-2 !text-xs w-full justify-center`}
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => markComplete(ev)}
-                        className="rounded-lg bg-blue-900 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800"
+                        className={`${adminPrimaryBtn(isDark)} !px-3 !py-2 !text-xs w-full justify-center`}
                       >
                         Marcar completado
                       </button>
