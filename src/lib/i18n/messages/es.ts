@@ -24,6 +24,7 @@ export const es = {
     liveBadge: 'EN VIVO',
     nextBadge: 'PRÓXIMO',
     noEvents: 'No hay eventos en vivo ni próximos. Revisa el calendario más adelante.',
+    liveNowTitle: 'EN VIVO AHORA',
     upcomingTitle: 'PRÓXIMOS EVENTOS',
     noMoreEvents: 'Sin más eventos programados.',
     join: 'Unirse',

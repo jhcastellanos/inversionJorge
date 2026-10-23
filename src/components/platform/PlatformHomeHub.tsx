@@ -19,6 +19,59 @@ type Props = {
   upcoming: SerializedEvent[];
 };
 
+function EventListRow({
+  ev,
+  locale,
+  t,
+  showLiveBadge,
+}: {
+  ev: SerializedEvent;
+  locale: 'es' | 'en';
+  t: (key: string) => string;
+  showLiveBadge?: boolean;
+}) {
+  const d = new Date(ev.starts_at);
+  const { day, month } = formatEventDayShortForLocale(locale, d);
+  const external = getEventJoinUrl(ev);
+  return (
+    <li className="flex gap-4 py-5 items-start">
+      <div className="text-center w-12 shrink-0 ventic-muted">
+        <div className="text-lg font-bold ventic-text leading-none">{day}</div>
+        <div className="text-[10px] font-bold tracking-wider">{month}</div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          {showLiveBadge && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              {t('home.liveBadge')}
+            </span>
+          )}
+          <p className="font-semibold ventic-text leading-snug">{ev.title}</p>
+        </div>
+        <p className="text-sm ventic-muted mt-1">{formatEventLineForLocale(locale, d)}</p>
+      </div>
+      {external ? (
+        <a
+          href={external}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-lg border ventic-border px-3 py-2 text-xs font-medium ventic-text hover:bg-ventic-accent-soft"
+        >
+          {showLiveBadge ? `${t('home.join')} ↗` : `${t('home.details')} ↗`}
+        </a>
+      ) : (
+        <Link
+          href="/app/calendario"
+          className="shrink-0 rounded-lg border ventic-border px-3 py-2 text-xs font-medium ventic-text hover:bg-ventic-accent-soft"
+        >
+          {t('home.calendar')}
+        </Link>
+      )}
+    </li>
+  );
+}
+
 export default function PlatformHomeHub({
   user,
   contactSupportForRoleUpgrade,
@@ -29,7 +82,8 @@ export default function PlatformHomeHub({
   const hero = live[0] ?? upcoming[0] ?? null;
   const heroIsLive = hero ? live.some((e) => e.id === hero.id) : false;
   const displayName = user.full_name.split(' ')[0];
-  const listEvents = heroIsLive ? upcoming : upcoming.filter((e) => !hero || e.id !== hero.id);
+  const otherLive = heroIsLive ? live.filter((e) => e.id !== hero.id) : live;
+  const listEvents = upcoming.filter((e) => !hero || e.id !== hero.id);
   const tierLabels = locale === 'en'
     ? {
         clase_retrospectiva: 'Live class / retrospective',
@@ -105,6 +159,17 @@ export default function PlatformHomeHub({
         </div>
       )}
 
+      {otherLive.length > 0 && (
+        <section className="mt-10">
+          <h3 className="text-xs font-bold tracking-[0.2em] text-red-500 mb-4">{t('home.liveNowTitle')}</h3>
+          <ul className="divide-y ventic-border border-t ventic-border rounded-xl border ventic-border ventic-surface px-4">
+            {otherLive.map((ev) => (
+              <EventListRow key={ev.id} ev={ev} locale={locale} t={t} showLiveBadge />
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-10">
         <h3 className="text-xs font-bold tracking-[0.2em] text-[var(--ventic-accent-muted)] mb-4">
           {t('home.upcomingTitle')}
@@ -113,40 +178,9 @@ export default function PlatformHomeHub({
           <p className="text-sm ventic-muted py-4 border-t ventic-border">{t('home.noMoreEvents')}</p>
         ) : (
           <ul className="divide-y ventic-border border-t ventic-border">
-            {listEvents.map((ev) => {
-              const d = new Date(ev.starts_at);
-              const { day, month } = formatEventDayShortForLocale(locale, d);
-              const external = getEventJoinUrl(ev);
-              return (
-                <li key={ev.id} className="flex gap-4 py-5 items-start">
-                  <div className="text-center w-12 shrink-0 ventic-muted">
-                    <div className="text-lg font-bold ventic-text leading-none">{day}</div>
-                    <div className="text-[10px] font-bold tracking-wider">{month}</div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold ventic-text leading-snug">{ev.title}</p>
-                    <p className="text-sm ventic-muted mt-1">{formatEventLineForLocale(locale, d)}</p>
-                  </div>
-                  {external ? (
-                    <a
-                      href={external}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 rounded-lg border ventic-border px-3 py-2 text-xs font-medium ventic-text hover:bg-ventic-accent-soft"
-                    >
-                      {t('home.details')} ↗
-                    </a>
-                  ) : (
-                    <Link
-                      href="/app/calendario"
-                      className="shrink-0 rounded-lg border ventic-border px-3 py-2 text-xs font-medium ventic-text hover:bg-ventic-accent-soft"
-                    >
-                      {t('home.calendar')}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
+            {listEvents.map((ev) => (
+              <EventListRow key={ev.id} ev={ev} locale={locale} t={t} />
+            ))}
           </ul>
         )}
       </section>

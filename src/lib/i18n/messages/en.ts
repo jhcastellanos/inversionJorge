@@ -26,6 +26,7 @@ export const en: Messages = {
     liveBadge: 'LIVE',
     nextBadge: 'UP NEXT',
     noEvents: 'No live or upcoming events. Check the calendar later.',
+    liveNowTitle: 'LIVE NOW',
     upcomingTitle: 'UPCOMING EVENTS',
     noMoreEvents: 'No more scheduled events.',
     join: 'Join',
