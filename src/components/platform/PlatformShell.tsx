@@ -69,7 +69,6 @@ export default function PlatformShell({
   showAdminNav?: boolean;
 }) {
   const pathname = usePathname();
-  const homeFullBleed = pathname === '/app';
   const router = useRouter();
   const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
@@ -80,7 +79,7 @@ export default function PlatformShell({
     { href: '/app/clases', label: t('nav.classes') },
     { href: '/app/calendario', label: t('nav.calendar') },
     { href: '/app/membresia', label: t('nav.membership') },
-    { href: '/planes', label: t('nav.plans') },
+    { href: '/app/planes', label: t('nav.plans') },
   ];
 
   const logout = async () => {
@@ -187,7 +186,7 @@ export default function PlatformShell({
           </div>
         </header>
 
-        <main className={`flex-1 min-w-0 ventic-bg ${homeFullBleed ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
+        <main className="flex-1 min-w-0 ventic-bg p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

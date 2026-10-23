@@ -87,7 +87,10 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadFromForm(form)),
     });
-    if (!res.ok) throw new Error('Error al crear evento');
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(typeof data.error === 'string' ? data.error : 'Error al crear evento');
+    }
     await reload();
   };
 

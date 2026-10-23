@@ -5,10 +5,27 @@ import CourseCard from './CourseCard';
 import MembershipCard from './MembershipCard';
 import { getMonthlyBasePrice, sortMembershipsByPlanOrder } from '../lib/membershipPlans';
 
-export default function ResponsiveLanding({ courses, memberships }: { courses: any[]; memberships: any[] }) {
+export default function ResponsiveLanding({
+  courses,
+  memberships,
+  variant = 'landing',
+  stickyOffset = 73,
+}: {
+  courses: any[];
+  memberships: any[];
+  variant?: 'landing' | 'ventic';
+  stickyOffset?: number;
+}) {
   const [activeTab, setActiveTab] = useState<'memberships' | 'courses'>('memberships');
   const monthlyBasePrice = getMonthlyBasePrice(memberships);
   const orderedMemberships = sortMembershipsByPlanOrder(memberships);
+  const isVentic = variant === 'ventic';
+  const headingClass = isVentic ? 'ventic-text' : 'text-gray-900';
+  const subClass = isVentic ? 'ventic-muted' : 'text-gray-600';
+  const emptyWrap = isVentic
+    ? 'rounded-2xl border ventic-border ventic-surface p-10 text-center'
+    : 'rounded-2xl bg-white p-10 text-center shadow-sm';
+  const emptyText = isVentic ? 'ventic-muted' : 'text-gray-500';
 
   // Al cambiar de sección volvemos al inicio para no quedar a mitad del scroll.
   const handleTabChange = (tab: 'memberships' | 'courses') => {
@@ -22,15 +39,32 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
     <>
       {/* Banda del selector: a todo el ancho y opaca para que el contenido
           desaparezca por completo al hacer scroll por debajo (sin efecto "bug"). */}
-      <div className="sticky top-[73px] z-40 border-b border-slate-200 bg-slate-100 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-xl gap-2 rounded-2xl border-2 border-blue-200 bg-white p-2 shadow-md">
+      <div
+        className={
+          isVentic
+            ? 'sticky z-30 border-b ventic-border ventic-surface py-3 mb-2'
+            : 'sticky z-40 border-b border-slate-200 bg-slate-100 shadow-sm'
+        }
+        style={isVentic ? { top: stickyOffset } : { top: stickyOffset }}
+      >
+        <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${isVentic ? '' : 'py-3'}`}>
+          <div
+            className={`mx-auto flex max-w-xl gap-2 rounded-2xl p-2 ${
+              isVentic
+                ? 'border ventic-border bg-ventic-accent-soft/30'
+                : 'border-2 border-blue-200 bg-white shadow-md'
+            }`}
+          >
             <button
               onClick={() => handleTabChange('memberships')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition-all duration-300 ${
               activeTab === 'memberships'
-                ? 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? isVentic
+                  ? 'bg-[var(--ventic-accent)] text-white shadow-sm'
+                  : 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
+                : isVentic
+                  ? 'ventic-muted hover:bg-ventic-accent-soft hover:ventic-text'
+                  : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -40,7 +74,11 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             {memberships.length > 0 && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                  activeTab === 'memberships' ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-900'
+                  activeTab === 'memberships'
+                    ? 'bg-white/30 text-white'
+                    : isVentic
+                      ? 'bg-ventic-accent-soft text-[var(--ventic-accent)]'
+                      : 'bg-blue-100 text-blue-900'
                 }`}
               >
                 {memberships.length}
@@ -51,8 +89,12 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             onClick={() => handleTabChange('courses')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition-all duration-300 ${
               activeTab === 'courses'
-                ? 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? isVentic
+                  ? 'bg-[var(--ventic-accent)] text-white shadow-sm'
+                  : 'bg-gradient-to-br from-blue-900 to-blue-700 text-white shadow-lg'
+                : isVentic
+                  ? 'ventic-muted hover:bg-ventic-accent-soft hover:ventic-text'
+                  : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +104,11 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
             {courses.length > 0 && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                  activeTab === 'courses' ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-900'
+                  activeTab === 'courses'
+                    ? 'bg-white/30 text-white'
+                    : isVentic
+                      ? 'bg-ventic-accent-soft text-[var(--ventic-accent)]'
+                      : 'bg-blue-100 text-blue-900'
                 }`}
               >
                 {courses.length}
@@ -78,15 +124,15 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
       {activeTab === 'memberships' && (
         <section className="animate-fadeIn">
           <div className="mx-auto mb-8 max-w-3xl text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Membresías Exclusivas</h2>
-            <p className="mt-3 text-gray-600">
+            <h2 className={`text-3xl font-extrabold sm:text-4xl ${headingClass}`}>Membresías Exclusivas</h2>
+            <p className={`mt-3 ${subClass}`}>
               Elige el plan que mejor se adapta a ti. Mientras más largo, más ahorras.
             </p>
           </div>
 
           {orderedMemberships.length === 0 ? (
-            <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-              <p className="text-gray-500">No hay membresías disponibles</p>
+            <div className={emptyWrap}>
+              <p className={emptyText}>No hay membresías disponibles</p>
             </div>
           ) : (
             <>
@@ -96,10 +142,11 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
                     key={membership.Id}
                     membership={membership}
                     monthlyBasePrice={monthlyBasePrice}
+                    accent={isVentic ? 'ventic' : 'blue'}
                   />
                 ))}
               </div>
-              <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-gray-500">
+              <p className={`mx-auto mt-8 max-w-2xl text-center text-sm ${subClass}`}>
                 Todos los pagos son recurrentes y <strong>no reembolsables</strong>. Elige bien tu plan
                 antes de suscribirte.
               </p>
@@ -112,13 +159,13 @@ export default function ResponsiveLanding({ courses, memberships }: { courses: a
       {activeTab === 'courses' && (
         <section className="animate-fadeIn">
           <div className="mx-auto mb-8 max-w-3xl text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Cursos y Clases Grabadas</h2>
-            <p className="mt-3 text-gray-600">Pago único · Acceso de por vida al contenido.</p>
+            <h2 className={`text-3xl font-extrabold sm:text-4xl ${headingClass}`}>Cursos y Clases Grabadas</h2>
+            <p className={`mt-3 ${subClass}`}>Pago único · Acceso de por vida al contenido.</p>
           </div>
 
           {courses.length === 0 ? (
-            <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-              <p className="text-gray-500">No hay cursos disponibles</p>
+            <div className={emptyWrap}>
+              <p className={emptyText}>No hay cursos disponibles</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">

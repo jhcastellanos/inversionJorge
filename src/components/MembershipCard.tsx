@@ -15,6 +15,7 @@ interface MembershipCardProps {
     ImageUrl?: string | null;
   };
   monthlyBasePrice: number;
+  accent?: 'blue' | 'ventic';
 }
 
 const formatMoney = (value: number) => {
@@ -23,7 +24,16 @@ const formatMoney = (value: number) => {
   return value.toFixed(hasDecimals ? 2 : 0);
 };
 
-export default function MembershipCard({ membership, monthlyBasePrice }: MembershipCardProps) {
+export default function MembershipCard({ membership, monthlyBasePrice, accent = 'blue' }: MembershipCardProps) {
+  const isVentic = accent === 'ventic';
+  const accentGradient = isVentic
+    ? 'bg-[var(--ventic-accent)] text-white'
+    : 'bg-gradient-to-r from-blue-900 to-blue-700 text-white';
+  const accentText = isVentic ? 'text-[var(--ventic-accent)]' : 'text-blue-900';
+  const accentRing = isVentic ? 'border-[var(--ventic-accent)] ring-[var(--ventic-accent)]/30' : 'border-blue-800 ring-blue-300';
+  const ctaPrimary = isVentic
+    ? 'bg-[var(--ventic-accent)] text-white hover:bg-[var(--ventic-accent-hover)]'
+    : 'bg-gradient-to-r from-blue-900 to-blue-700 text-white hover:from-blue-900 hover:to-blue-800';
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -114,16 +124,14 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
       <div
         className={`group relative flex flex-col h-full w-full rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 bg-white ${
           plan.recommended
-            ? 'border-blue-800 ring-2 ring-blue-300 lg:scale-[1.03] z-10'
+            ? `ring-2 lg:scale-[1.03] z-10 ${accentRing}`
             : 'border-gray-200'
         }`}
       >
         {/* Badge superior */}
         <div
           className={`py-3 px-6 text-center ${
-            plan.recommended
-              ? 'bg-gradient-to-r from-blue-900 to-blue-700 text-white'
-              : 'bg-gray-50 text-gray-700'
+            plan.recommended ? accentGradient : 'bg-gray-50 text-gray-700'
           }`}
         >
           <span className="font-bold uppercase text-sm tracking-wide">{plan.badge}</span>
@@ -144,7 +152,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
               {membership.Description.length > 100 && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-sm text-blue-900 hover:text-blue-900 mt-1 font-medium"
+                  className={`text-sm mt-1 font-medium ${accentText}`}
                 >
                   {showFullDescription ? 'Ver menos' : 'Ver más'}
                 </button>
@@ -185,7 +193,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
           <button
             type="button"
             onClick={() => setShowDetails(!showDetails)}
-            className="md:hidden mb-4 flex items-center justify-center gap-1 w-full text-sm font-semibold text-blue-900 hover:text-blue-900"
+            className={`md:hidden mb-4 flex items-center justify-center gap-1 w-full text-sm font-semibold ${accentText}`}
             aria-expanded={showDetails}
           >
             {showDetails ? 'Ver menos' : 'Ver qué incluye'}
@@ -226,9 +234,7 @@ export default function MembershipCard({ membership, monthlyBasePrice }: Members
           <button
             onClick={handleSubscribeClick}
             className={`w-full py-3 px-6 rounded-xl font-semibold transform hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg ${
-              plan.recommended
-                ? 'bg-gradient-to-r from-blue-900 to-blue-700 text-white hover:from-blue-900 hover:to-blue-800'
-                : 'bg-gray-900 text-white hover:bg-gray-800'
+              plan.recommended ? ctaPrimary : 'bg-gray-900 text-white hover:bg-gray-800'
             }`}
           >
             Suscribirme

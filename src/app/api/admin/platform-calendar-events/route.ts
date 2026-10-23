@@ -44,16 +44,25 @@ export async function POST(req: NextRequest) {
 
   const event_kind = body.event_kind ? parseEventKind(body.event_kind) : legacy.event_kind;
 
-  const row = await PlatformCalendarEvent.create({
-    title,
-    event_kind,
-    event_level: event_level ?? legacy.event_level,
-    event_tier,
-    starts_at,
-    ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
-    description: typeof body.description === 'string' ? body.description : undefined,
-    zoom_url,
-    is_published: typeof body.is_published === 'boolean' ? body.is_published : undefined,
-  });
-  return NextResponse.json({ event: row }, { status: 201 });
+  try {
+    const row = await PlatformCalendarEvent.create({
+      title,
+      event_kind,
+      event_level: event_level ?? legacy.event_level,
+      event_tier,
+      starts_at,
+      ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
+      description: typeof body.description === 'string' ? body.description : undefined,
+      zoom_url,
+      is_published: typeof body.is_published === 'boolean' ? body.is_published : undefined,
+    });
+    return NextResponse.json({ event: row }, { status: 201 });
+  } catch (err) {
+    console.error('platform-calendar-events POST failed:', err);
+    const message =
+      err instanceof Error && /column|relation|does not exist/i.test(err.message)
+        ? 'Falta migración de base de datos (event_tier/zoom_url). Ejecuta scripts/run-platform-academy-migration.mjs en Neon.'
+        : 'Error al crear evento';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
