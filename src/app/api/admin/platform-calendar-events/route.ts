@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireStaffApi } from '../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../lib/platformContent';
 import { ensurePlatformCalendarEventSchema } from '../../../../lib/platformCalendarEventSchema';
+import { DEFAULT_EVENT_DURATION_MS } from '../../../../lib/platformEventDisplay';
 import {
   legacyFieldsFromEventTier,
   parseEventKind,
@@ -38,7 +39,10 @@ export async function POST(req: NextRequest) {
   if (!title || !starts_at || Number.isNaN(starts_at.getTime())) {
     return NextResponse.json({ error: 'title, event_tier y starts_at requeridos' }, { status: 400 });
   }
-  const ends_at = body.ends_at ? new Date(body.ends_at) : null;
+  let ends_at = body.ends_at ? new Date(body.ends_at) : null;
+  if (!ends_at || Number.isNaN(ends_at.getTime())) {
+    ends_at = new Date(starts_at.getTime() + DEFAULT_EVENT_DURATION_MS);
+  }
   const zoom_url =
     typeof body.zoom_url === 'string' && body.zoom_url.trim()
       ? body.zoom_url.trim()
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
       event_level: event_level ?? legacy.event_level,
       event_tier,
       starts_at,
-      ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
+      ends_at,
       description: typeof body.description === 'string' ? body.description : undefined,
       zoom_url,
       is_published: typeof body.is_published === 'boolean' ? body.is_published : undefined,

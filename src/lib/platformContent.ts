@@ -3,6 +3,7 @@ import {
   ensurePlatformCalendarEventSchema,
   resetPlatformCalendarEventSchemaCache,
 } from './platformCalendarEventSchema';
+import { DEFAULT_EVENT_DURATION_MS } from './platformEventDisplay';
 import type { ClassLevel, EventKind, EventLevel, LiveEventTier } from './platformRoles';
 
 export type PlatformClassRow = {
@@ -213,7 +214,8 @@ export const PlatformCalendarEvent = {
             data.event_level,
             data.event_tier ?? 'clase_retrospectiva',
             data.starts_at,
-            data.ends_at ?? null,
+            data.ends_at ??
+              new Date(data.starts_at.getTime() + DEFAULT_EVENT_DURATION_MS),
             data.is_published ?? true,
             data.force_live ?? false,
             data.suppress_live ?? false,

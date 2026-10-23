@@ -11,6 +11,10 @@ import {
 
 const DISPLAY_TZ = 'America/New_York';
 
+/** Ventana en vivo por defecto cuando no hay `ends_at` en base de datos. */
+export const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
+export const DEFAULT_EVENT_DURATION_MINUTES = 120;
+
 export type EventLiveTiming = {
   starts_at: Date | string;
   ends_at?: Date | string | null;
@@ -18,17 +22,23 @@ export type EventLiveTiming = {
   suppress_live?: boolean | null;
 };
 
+export function resolveEventEndsAt(event: EventLiveTiming): Date {
+  const start = new Date(event.starts_at);
+  if (event.ends_at) return new Date(event.ends_at);
+  return new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
+}
+
 export function isEventLiveBySchedule(event: EventLiveTiming, now = new Date()): boolean {
   const start = new Date(event.starts_at);
-  const end = event.ends_at
-    ? new Date(event.ends_at)
-    : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const end = resolveEventEndsAt(event);
   return start <= now && now <= end;
 }
 
-/** En vivo en inicio/CRM: horario, manual (force_live) o no si suppress_live */
+/** En vivo en inicio/CRM: horario, manual (force_live) o no si suppress_live. Siempre termina al llegar `ends_at`. */
 export function isEventLive(event: EventLiveTiming, now = new Date()): boolean {
   if (event.suppress_live) return false;
+  const end = resolveEventEndsAt(event);
+  if (now > end) return false;
   if (event.force_live) return true;
   return isEventLiveBySchedule(event, now);
 }
@@ -141,9 +151,9 @@ export function getEventJoinUrl(ev: {
 export function eventDurationMinutes(startsAt: Date, endsAt: Date | null): number {
   if (endsAt) {
     const mins = Math.round((endsAt.getTime() - startsAt.getTime()) / 60000);
-    return mins > 0 ? mins : 60;
+    return mins > 0 ? mins : DEFAULT_EVENT_DURATION_MINUTES;
   }
-  return 60;
+  return DEFAULT_EVENT_DURATION_MINUTES;
 }
 
 export function formatEventAdminMeta(startsAt: Date, endsAt: Date | null) {

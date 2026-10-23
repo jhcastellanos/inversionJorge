@@ -8,6 +8,7 @@ import {
   type LiveEventTier,
 } from '../../lib/platformRoles';
 import {
+  DEFAULT_EVENT_DURATION_MINUTES,
   eventDurationMinutes,
   toDatetimeLocalValue,
   type SerializedEvent,
@@ -60,7 +61,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
     zoom_url: '',
     event_tier: 'clase_retrospectiva',
     starts_at: '',
-    duration_minutes: 60,
+    duration_minutes: DEFAULT_EVENT_DURATION_MINUTES,
     is_published: true,
     force_live: false,
   });
@@ -87,7 +88,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
         zoom_url: '',
         event_tier: 'clase_retrospectiva',
         starts_at: '',
-        duration_minutes: 60,
+        duration_minutes: DEFAULT_EVENT_DURATION_MINUTES,
         is_published: true,
         force_live: false,
       });
@@ -198,7 +199,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
               onChange={(e) =>
                 setForm((f) => ({
                   ...f,
-                  duration_minutes: Math.max(15, Number(e.target.value) || 60),
+                  duration_minutes: Math.max(15, Number(e.target.value) || DEFAULT_EVENT_DURATION_MINUTES),
                 }))
               }
               className={adminField(isDark)}
