@@ -40,6 +40,13 @@ export const en: Messages = {
     viewPdf: 'View PDF',
     openLink: 'Open link',
     additionalContent: 'Additional content',
+    moduleMaterials: 'Module materials',
+    progressSummary: '{done} of {total} lessons complete',
+    markComplete: 'Mark as complete',
+    lessonCompleted: 'Completed',
+    noVideoFile:
+      'This lesson has no file yet. Upload the video or PDF in Academy Manager → Edit lesson.',
+    emptyModuleLessons: 'This module has no published lessons.',
   },
   subscriptions: {
     title: 'My subscriptions',

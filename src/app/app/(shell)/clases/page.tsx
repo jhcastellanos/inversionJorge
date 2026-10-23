@@ -50,7 +50,7 @@ export default async function ClasesPage() {
   }, {});
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-6xl">
       <h1 className="text-3xl font-bold ventic-text">Clases y Entrenamientos</h1>
       <ClasesAcademySection
         roleLabel={roleLabel}

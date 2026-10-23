@@ -1,6 +1,6 @@
 'use client';
 
-import AcademyLessonCard from './AcademyLessonCard';
+import AcademyModuleViewer from './AcademyModuleViewer';
 import { usePlatformPreferences } from './PlatformPreferencesProvider';
 import type { LessonType } from '../../lib/platformAcademy';
 
@@ -17,12 +17,6 @@ export type ClasesAcademyModule = {
     duration_label: string | null;
   }>;
 };
-
-function actionLabel(type: LessonType, t: (key: string) => string) {
-  if (type === 'pdf') return t('classes.viewPdf');
-  if (type === 'video') return t('classes.watchVideo');
-  return t('classes.openLink');
-}
 
 export default function ClasesAcademySection({
   modules,
@@ -48,7 +42,7 @@ export default function ClasesAcademySection({
   return (
     <>
       <p className="ventic-muted mt-2">{subtitle}</p>
-      <div className="mt-8 space-y-10">
+      <div className="mt-8 space-y-12">
         {modules.map((mod, idx) => (
           <section key={mod.id}>
             <h2 className="text-xl font-semibold ventic-text border-b ventic-border pb-2 flex items-center gap-2">
@@ -58,19 +52,12 @@ export default function ClasesAcademySection({
               {mod.title}
             </h2>
             {mod.description ? <p className="text-sm ventic-muted mt-2">{mod.description}</p> : null}
-            <ul className="mt-4 space-y-3">
-              {mod.lessons.map((lesson) => (
-                <AcademyLessonCard
-                  key={lesson.id}
-                  title={lesson.title}
-                  lessonCode={lesson.lesson_code}
-                  durationLabel={lesson.duration_label}
-                  lessonType={lesson.lesson_type}
-                  fileUrl={lesson.file_url}
-                  actionLabel={actionLabel(lesson.lesson_type, t)}
-                />
-              ))}
-            </ul>
+            <AcademyModuleViewer
+              moduleId={mod.id}
+              moduleTitle={mod.title}
+              moduleDescription={mod.description}
+              lessons={mod.lessons}
+            />
           </section>
         ))}
       </div>

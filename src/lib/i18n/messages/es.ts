@@ -38,6 +38,13 @@ export const es = {
     viewPdf: 'Ver PDF',
     openLink: 'Abrir enlace',
     additionalContent: 'Contenido adicional',
+    moduleMaterials: 'Materiales del módulo',
+    progressSummary: '{done} de {total} lecciones completadas',
+    markComplete: 'Marcar como completada',
+    lessonCompleted: 'Completada',
+    noVideoFile:
+      'Este material aún no tiene archivo. El equipo debe subir el video o PDF en Gestor de academia → Editar lección.',
+    emptyModuleLessons: 'Este módulo no tiene lecciones publicadas.',
   },
   subscriptions: {
     title: 'Mis suscripciones',
@@ -102,6 +109,12 @@ export type Messages = {
     viewPdf: string;
     openLink: string;
     additionalContent: string;
+    moduleMaterials: string;
+    progressSummary: string;
+    markComplete: string;
+    lessonCompleted: string;
+    noVideoFile: string;
+    emptyModuleLessons: string;
   };
   admin: {
     academy: {

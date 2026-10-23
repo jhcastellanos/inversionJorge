@@ -233,6 +233,14 @@ function AcademyLessonForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if ((lessonType === 'video' || lessonType === 'pdf') && !fileUrl.trim()) {
+      setError('Sube un archivo antes de guardar (video o PDF).');
+      return;
+    }
+    if (lessonType === 'link' && !fileUrl.trim()) {
+      setError('Ingresa la URL del enlace.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -343,7 +351,11 @@ function AcademyLessonForm({
           </label>
         </div>
         <div className="flex flex-wrap gap-2 pt-2 border-t ventic-border">
-          <button type="submit" disabled={saving || !title.trim()} className={adminPrimaryBtn(isDark)}>
+          <button
+            type="submit"
+            disabled={saving || uploading || !title.trim()}
+            className={adminPrimaryBtn(isDark)}
+          >
             {saving ? 'Guardando…' : isEdit ? 'Guardar lección' : 'Crear lección'}
           </button>
           <button type="button" onClick={onCancel} className={adminGhostBtn(isDark)}>
