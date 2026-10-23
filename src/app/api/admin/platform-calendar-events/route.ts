@@ -63,10 +63,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ event: row }, { status: 201 });
   } catch (err) {
     console.error('platform-calendar-events POST failed:', err);
-    const message =
-      err instanceof Error && /column|relation|does not exist/i.test(err.message)
-        ? 'Falta migración de base de datos (event_tier/zoom_url). Ejecuta scripts/run-platform-academy-migration.mjs en Neon.'
-        : 'Error al crear evento';
+    const detail = err instanceof Error ? err.message : 'Unknown error';
+    const isSchema =
+      /column|relation|does not exist/i.test(detail) ||
+      /DATABASE_URL/i.test(detail);
+    const message = isSchema
+      ? `No se pudo actualizar el esquema de eventos en Neon. Detalle: ${detail}. En el SQL Editor de Neon ejecuta: ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS zoom_url TEXT; ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva'; ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN DEFAULT false; (usa la misma base que DATABASE_URL en Vercel, preferible conexión directa sin -pooler).`
+      : `Error al crear evento: ${detail}`;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

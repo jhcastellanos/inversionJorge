@@ -43,8 +43,14 @@ ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS event_tier VARCHAR
 ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN NOT NULL DEFAULT false;
 `;
 
+function directNeonUrl(url) {
+  return url.replace('-pooler.', '.');
+}
+
 async function main() {
-  const connectionString = loadDatabaseUrl();
+  const connectionString = directNeonUrl(
+    process.env.DATABASE_URL_UNPOOLED || loadDatabaseUrl()
+  );
   if (!connectionString) {
     console.error('❌ Falta DATABASE_URL');
     process.exit(1);

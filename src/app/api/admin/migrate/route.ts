@@ -185,6 +185,13 @@ export async function POST(req: NextRequest) {
           ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva'
       `);
       await client.query(`
+        ALTER TABLE platform_calendar_events
+          ADD COLUMN IF NOT EXISTS force_live BOOLEAN DEFAULT false
+      `);
+      await client.query(`
+        UPDATE platform_calendar_events SET force_live = false WHERE force_live IS NULL
+      `);
+      await client.query(`
         CREATE TABLE IF NOT EXISTS platform_academy_modules (
           id SERIAL PRIMARY KEY,
           title VARCHAR(255) NOT NULL,

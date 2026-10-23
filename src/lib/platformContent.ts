@@ -1,5 +1,8 @@
 import { pool } from './db';
-import { ensurePlatformCalendarEventSchema } from './platformCalendarEventSchema';
+import {
+  ensurePlatformCalendarEventSchema,
+  resetPlatformCalendarEventSchemaCache,
+} from './platformCalendarEventSchema';
 import type { ClassLevel, EventKind, EventLevel, LiveEventTier } from './platformRoles';
 
 export type PlatformClassRow = {
@@ -191,30 +194,44 @@ export const PlatformCalendarEvent = {
     is_published?: boolean;
     force_live?: boolean;
   }) {
-    await ensurePlatformCalendarEventSchema();
-    const client = await pool.connect();
+    const insert = async () => {
+      await ensurePlatformCalendarEventSchema();
+      const client = await pool.connect();
+      try {
+        const result = await client.query(
+          `INSERT INTO platform_calendar_events
+           (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, force_live, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+           RETURNING *`,
+          [
+            data.title,
+            data.description ?? null,
+            data.zoom_url ?? null,
+            data.event_kind ?? 'clase_en_vivo',
+            data.event_level,
+            data.event_tier ?? 'clase_retrospectiva',
+            data.starts_at,
+            data.ends_at ?? null,
+            data.is_published ?? true,
+            data.force_live ?? false,
+          ]
+        );
+        return result.rows[0];
+      } finally {
+        client.release();
+      }
+    };
+
     try {
-      const result = await client.query(
-        `INSERT INTO platform_calendar_events
-         (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, force_live, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-         RETURNING *`,
-        [
-          data.title,
-          data.description ?? null,
-          data.zoom_url ?? null,
-          data.event_kind ?? 'clase_en_vivo',
-          data.event_level,
-          data.event_tier ?? 'clase_retrospectiva',
-          data.starts_at,
-          data.ends_at ?? null,
-          data.is_published ?? true,
-          data.force_live ?? false,
-        ]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
+      return await insert();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (/column|relation|does not exist/i.test(msg)) {
+        resetPlatformCalendarEventSchemaCache();
+        await ensurePlatformCalendarEventSchema({ force: true });
+        return await insert();
+      }
+      throw err;
     }
   },
 
