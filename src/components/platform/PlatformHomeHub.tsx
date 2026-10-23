@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import PlatformHomeAdminSection from './PlatformHomeAdminSection';
+import ContactSupportRoleBanner from './ContactSupportRoleBanner';
 import {
   formatEventDayShort,
   formatEventLine,
@@ -11,59 +10,41 @@ import {
   headerDateLine,
   type SerializedEvent,
 } from '../../lib/platformEventDisplay';
-import type { EventLevel } from '../../lib/platformRoles';
-import { EVENT_LEVEL_LABELS } from '../../lib/platformRoles';
+import { LIVE_EVENT_TIER_LABELS } from '../../lib/platformRoles';
 
 type Props = {
   user: { full_name: string; email: string };
-  isPlatformAdmin: boolean;
+  contactSupportForRoleUpgrade?: boolean;
   live: SerializedEvent[];
   upcoming: SerializedEvent[];
-  adminEvents: SerializedEvent[];
 };
 
 export default function PlatformHomeHub({
   user,
-  isPlatformAdmin,
+  contactSupportForRoleUpgrade,
   live,
   upcoming,
-  adminEvents,
 }: Props) {
-  const router = useRouter();
   const hero = live[0] ?? upcoming[0] ?? null;
   const heroIsLive = hero ? live.some((e) => e.id === hero.id) : false;
   const displayName = user.full_name.split(' ')[0];
 
-  const logout = async () => {
-    await fetch('/api/member/logout', { method: 'POST' });
-    router.push('/');
-    router.refresh();
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
-      <header className="max-w-3xl mx-auto px-4 pt-10 pb-4 flex justify-between items-start gap-4">
-        <div>
-          <p className="text-[11px] tracking-[0.2em] text-blue-300/80 font-medium">{headerDateLine()}</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-3 leading-snug">
-            {greetingForNow()},{' '}
-            <span className="text-blue-300">{displayName}</span>.
-          </h1>
-        </div>
-        <nav className="flex flex-col items-end gap-2 text-sm shrink-0">
-          <Link href="/app/clases" className="text-slate-200 hover:text-white">
-            Academia
-          </Link>
-          <Link href="/app/membresia" className="text-slate-200 hover:text-white">
-            Membresía
-          </Link>
-          <button type="button" onClick={logout} className="text-slate-400 hover:text-white">
-            Salir
-          </button>
-        </nav>
+    <div className="min-h-full bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
+      <header className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 pb-4">
+        <p className="text-[11px] tracking-[0.2em] text-blue-300/80 font-medium">{headerDateLine()}</p>
+        <h1 className="text-3xl sm:text-4xl font-bold mt-3 leading-snug">
+          {greetingForNow()},{' '}
+          <span className="text-blue-300">{displayName}</span>.
+        </h1>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 pb-20">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
+        {contactSupportForRoleUpgrade && (
+          <div className="mb-6">
+            <ContactSupportRoleBanner />
+          </div>
+        )}
         {hero && (
           <article className="mt-6 rounded-2xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur p-6 sm:p-8">
             {heroIsLive && (
@@ -79,7 +60,9 @@ export default function PlatformHomeHub({
             )}
             <h2 className="text-3xl sm:text-4xl font-extrabold mt-4 leading-tight">{hero.title}</h2>
             <p className="text-slate-300 text-sm mt-2">{formatEventLine(new Date(hero.starts_at))}</p>
-            <p className="text-xs text-blue-300/80 mt-1">{EVENT_LEVEL_LABELS[hero.event_level as EventLevel]}</p>
+            <p className="text-xs text-blue-300/80 mt-1">
+              {LIVE_EVENT_TIER_LABELS[hero.event_tier]}
+            </p>
             <div className="flex flex-wrap gap-3 mt-8 justify-end">
               <Link
                 href="/app/clases"
@@ -154,7 +137,6 @@ export default function PlatformHomeHub({
           </ul>
         </section>
 
-        {isPlatformAdmin && <PlatformHomeAdminSection initialEvents={adminEvents} />}
       </main>
     </div>
   );

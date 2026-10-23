@@ -173,6 +173,44 @@ export async function POST(req: NextRequest) {
       await client.query(`
         ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS zoom_url TEXT
       `);
+      await client.query(`
+        ALTER TABLE platform_calendar_events
+          ADD COLUMN IF NOT EXISTS event_kind VARCHAR(32) DEFAULT 'clase_en_vivo'
+      `);
+      await client.query(`
+        UPDATE platform_calendar_events SET event_kind = 'clase_en_vivo' WHERE event_kind IS NULL
+      `);
+      await client.query(`
+        ALTER TABLE platform_calendar_events
+          ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva'
+      `);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS platform_academy_modules (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          sort_order INT NOT NULL DEFAULT 0,
+          is_published BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS platform_academy_lessons (
+          id SERIAL PRIMARY KEY,
+          module_id INT NOT NULL REFERENCES platform_academy_modules(id) ON DELETE CASCADE,
+          lesson_code VARCHAR(32) NOT NULL DEFAULT '1.1',
+          title VARCHAR(255) NOT NULL,
+          lesson_type VARCHAR(16) NOT NULL CHECK (lesson_type IN ('video', 'pdf', 'link')),
+          file_url TEXT,
+          duration_label VARCHAR(32),
+          file_size_bytes BIGINT,
+          sort_order INT NOT NULL DEFAULT 0,
+          is_published BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
       console.log('✅ platform content tables ready');
 
       return NextResponse.json({

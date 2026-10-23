@@ -1,5 +1,13 @@
 import type { PlatformCalendarEventRow } from './platformContent';
-import type { EventLevel } from './platformRoles';
+import type { MemberAccessInfo } from './memberAccess';
+import { canAccessLiveEvent, tierFromLegacy } from './liveEventAccess';
+import {
+  parseEventKind,
+  parseLiveEventTier,
+  type EventKind,
+  type EventLevel,
+  type LiveEventTier,
+} from './platformRoles';
 
 const DISPLAY_TZ = 'America/New_York';
 
@@ -15,6 +23,23 @@ export function isEventUpcoming(event: PlatformCalendarEventRow, now = new Date(
   return new Date(event.starts_at) > now;
 }
 
+export function resolveEventTier(row: PlatformCalendarEventRow): LiveEventTier {
+  if (row.event_tier) return parseLiveEventTier(row.event_tier);
+  return tierFromLegacy(row.event_level, row.event_kind);
+}
+
+export function filterEventsByMemberAccess(
+  events: PlatformCalendarEventRow[],
+  access: Pick<MemberAccessInfo, 'hasAccess' | 'subscriptionActive' | 'permissions' | 'role'>,
+  options?: { adminSeeAll?: boolean }
+) {
+  return events.filter((e) => {
+    if (options?.adminSeeAll && access.role === 'admin') return true;
+    return canAccessLiveEvent(access, resolveEventTier(e));
+  });
+}
+
+/** @deprecated usar filterEventsByMemberAccess */
 export function filterEventsByAccess(
   events: PlatformCalendarEventRow[],
   canAccess: (level: EventLevel) => boolean
@@ -77,7 +102,9 @@ export type SerializedEvent = {
   title: string;
   description: string | null;
   zoom_url: string | null;
+  event_kind: EventKind;
   event_level: EventLevel;
+  event_tier: LiveEventTier;
   starts_at: string;
   ends_at: string | null;
   is_published: boolean;
@@ -129,7 +156,9 @@ export function serializeEvent(row: PlatformCalendarEventRow): SerializedEvent {
     title: row.title,
     description: row.description,
     zoom_url: row.zoom_url ?? null,
+    event_kind: parseEventKind(row.event_kind),
     event_level: row.event_level,
+    event_tier: resolveEventTier(row),
     starts_at: new Date(row.starts_at).toISOString(),
     ends_at: row.ends_at ? new Date(row.ends_at).toISOString() : null,
     is_published: row.is_published,

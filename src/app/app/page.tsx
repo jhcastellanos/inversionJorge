@@ -1,13 +1,11 @@
 import { requireMemberSession } from '../../lib/getCurrentMember';
 import PlatformHomeHub from '../../components/platform/PlatformHomeHub';
-import ContactSupportRoleBanner from '../../components/platform/ContactSupportRoleBanner';
 import { PlatformCalendarEvent } from '../../lib/platformContent';
 import {
-  filterEventsByAccess,
+  filterEventsByMemberAccess,
   serializeEvent,
   splitLiveAndUpcoming,
 } from '../../lib/platformEventDisplay';
-import type { EventLevel } from '../../lib/platformRoles';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,28 +27,18 @@ export default async function AppHomePage() {
     );
   }
 
-  const visible = filterEventsByAccess(rows, (level) =>
-    isPlatformAdmin ? true : access.contentAccess.events[level as EventLevel]
-  );
+  const visible = filterEventsByMemberAccess(rows, access, { adminSeeAll: isPlatformAdmin });
 
   const publishedVisible = isPlatformAdmin ? visible : visible.filter((e) => e.is_published);
 
   const { live, upcoming } = splitLiveAndUpcoming(publishedVisible);
 
   return (
-    <>
-      {access.contactSupportForRoleUpgrade && (
-        <div className="max-w-3xl mx-auto px-4 pt-6">
-          <ContactSupportRoleBanner />
-        </div>
-      )}
-      <PlatformHomeHub
-        user={{ full_name: user.full_name, email: user.email }}
-        isPlatformAdmin={isPlatformAdmin}
-        live={live.map(serializeEvent)}
-        upcoming={upcoming.map(serializeEvent)}
-        adminEvents={rows.map(serializeEvent)}
-      />
-    </>
+    <PlatformHomeHub
+      user={{ full_name: user.full_name, email: user.email }}
+      contactSupportForRoleUpgrade={access.contactSupportForRoleUpgrade}
+      live={live.map(serializeEvent)}
+      upcoming={upcoming.map(serializeEvent)}
+    />
   );
 }

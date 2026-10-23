@@ -1,5 +1,5 @@
 import { pool } from './db';
-import type { ClassLevel, EventLevel } from './platformRoles';
+import type { ClassLevel, EventKind, EventLevel, LiveEventTier } from './platformRoles';
 
 export type PlatformClassRow = {
   id: number;
@@ -19,7 +19,9 @@ export type PlatformCalendarEventRow = {
   title: string;
   description: string | null;
   zoom_url: string | null;
+  event_kind: EventKind;
   event_level: EventLevel;
+  event_tier: LiveEventTier | null;
   starts_at: Date;
   ends_at: Date | null;
   is_published: boolean;
@@ -179,7 +181,9 @@ export const PlatformCalendarEvent = {
     title: string;
     description?: string;
     zoom_url?: string | null;
+    event_kind?: EventKind;
     event_level: EventLevel;
+    event_tier?: LiveEventTier;
     starts_at: Date;
     ends_at?: Date | null;
     is_published?: boolean;
@@ -188,14 +192,16 @@ export const PlatformCalendarEvent = {
     try {
       const result = await client.query(
         `INSERT INTO platform_calendar_events
-         (title, description, zoom_url, event_level, starts_at, ends_at, is_published, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+         (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
          RETURNING *`,
         [
           data.title,
           data.description ?? null,
           data.zoom_url ?? null,
+          data.event_kind ?? 'clase_en_vivo',
           data.event_level,
+          data.event_tier ?? 'clase_retrospectiva',
           data.starts_at,
           data.ends_at ?? null,
           data.is_published ?? true,
@@ -213,7 +219,9 @@ export const PlatformCalendarEvent = {
       title: string;
       description: string | null;
       zoom_url: string | null;
+      event_kind: EventKind;
       event_level: EventLevel;
+      event_tier: LiveEventTier;
       starts_at: Date;
       ends_at: Date | null;
       is_published: boolean;

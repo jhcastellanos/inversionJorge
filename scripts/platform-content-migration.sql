@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS platform_calendar_events (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   zoom_url TEXT,
+  event_kind VARCHAR(32) NOT NULL DEFAULT 'clase_en_vivo'
+    CHECK (event_kind IN ('clase_en_vivo', 'operativa_en_vivo')),
   event_level VARCHAR(16) NOT NULL CHECK (event_level IN ('basico', 'medio', 'avanzado')),
   starts_at TIMESTAMPTZ NOT NULL,
   ends_at TIMESTAMPTZ,

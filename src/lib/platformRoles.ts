@@ -87,6 +87,62 @@ export function getPermissionsForRole(role: PlatformRole | null): PlatformPermis
 export type ClassLevel = 'basico' | 'avanzado';
 export type EventLevel = 'basico' | 'medio' | 'avanzado';
 
+/** Tipo de evento en vivo (reglas de membresía + rol) */
+export const LIVE_EVENT_TIERS = [
+  'clase_retrospectiva',
+  'operativa_trading',
+  'avanzado',
+] as const;
+export type LiveEventTier = (typeof LIVE_EVENT_TIERS)[number];
+
+export const LIVE_EVENT_TIER_LABELS: Record<LiveEventTier, string> = {
+  clase_retrospectiva: 'Clase en vivo / retrospectiva',
+  operativa_trading: 'Operativa de trading',
+  avanzado: 'Operativas y clases avanzadas',
+};
+
+export const LIVE_EVENT_TIER_AUDIENCE: Record<LiveEventTier, string> = {
+  clase_retrospectiva: 'Usuarios activos con rol Estudiante o superior',
+  operativa_trading: 'Membresía activa + rol Trader o Inversor',
+  avanzado: 'Membresía activa + rol Inversor',
+};
+
+export function parseLiveEventTier(value: unknown): LiveEventTier {
+  if (typeof value !== 'string') return 'clase_retrospectiva';
+  const n = value.trim().toLowerCase();
+  return LIVE_EVENT_TIERS.includes(n as LiveEventTier) ? (n as LiveEventTier) : 'clase_retrospectiva';
+}
+
+/** Formato del evento en calendario / inicio */
+export const EVENT_KINDS = ['clase_en_vivo', 'operativa_en_vivo'] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+
+export const EVENT_KIND_LABELS: Record<EventKind, string> = {
+  clase_en_vivo: 'Clase en vivo',
+  operativa_en_vivo: 'Operativa en vivo',
+};
+
+export function parseEventKind(value: unknown): EventKind {
+  if (typeof value !== 'string') return 'clase_en_vivo';
+  const normalized = value.trim().toLowerCase();
+  return EVENT_KINDS.includes(normalized as EventKind) ? (normalized as EventKind) : 'clase_en_vivo';
+}
+
+/** Sincroniza columnas legacy al guardar */
+export function legacyFieldsFromEventTier(tier: LiveEventTier): {
+  event_kind: EventKind;
+  event_level: EventLevel;
+} {
+  switch (tier) {
+    case 'operativa_trading':
+      return { event_kind: 'operativa_en_vivo', event_level: 'medio' };
+    case 'avanzado':
+      return { event_kind: 'operativa_en_vivo', event_level: 'avanzado' };
+    default:
+      return { event_kind: 'clase_en_vivo', event_level: 'basico' };
+  }
+}
+
 export const CLASS_LEVEL_LABELS: Record<ClassLevel, string> = {
   basico: 'Básicas',
   avanzado: 'Avanzadas',

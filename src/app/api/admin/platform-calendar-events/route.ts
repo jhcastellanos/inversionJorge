@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireStaffApi } from '../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../lib/platformContent';
-import type { EventLevel } from '../../../../lib/platformRoles';
+import {
+  legacyFieldsFromEventTier,
+  parseEventKind,
+  parseLiveEventTier,
+  type EventLevel,
+} from '../../../../lib/platformRoles';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,10 +29,12 @@ export async function POST(req: NextRequest) {
   if (staff instanceof NextResponse) return staff;
   const body = await req.json();
   const title = typeof body.title === 'string' ? body.title.trim() : '';
-  const event_level = parseEventLevel(body.event_level);
+  const event_tier = parseLiveEventTier(body.event_tier ?? body.event_level);
+  const legacy = legacyFieldsFromEventTier(event_tier);
+  const event_level = parseEventLevel(body.event_level) ?? legacy.event_level;
   const starts_at = body.starts_at ? new Date(body.starts_at) : null;
-  if (!title || !event_level || !starts_at || Number.isNaN(starts_at.getTime())) {
-    return NextResponse.json({ error: 'title, event_level y starts_at requeridos' }, { status: 400 });
+  if (!title || !starts_at || Number.isNaN(starts_at.getTime())) {
+    return NextResponse.json({ error: 'title, event_tier y starts_at requeridos' }, { status: 400 });
   }
   const ends_at = body.ends_at ? new Date(body.ends_at) : null;
   const zoom_url =
@@ -35,9 +42,13 @@ export async function POST(req: NextRequest) {
       ? body.zoom_url.trim()
       : null;
 
+  const event_kind = body.event_kind ? parseEventKind(body.event_kind) : legacy.event_kind;
+
   const row = await PlatformCalendarEvent.create({
     title,
-    event_level,
+    event_kind,
+    event_level: event_level ?? legacy.event_level,
+    event_tier,
     starts_at,
     ends_at: ends_at && !Number.isNaN(ends_at.getTime()) ? ends_at : null,
     description: typeof body.description === 'string' ? body.description : undefined,

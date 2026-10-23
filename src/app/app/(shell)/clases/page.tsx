@@ -1,11 +1,18 @@
 import Link from 'next/link';
 import { requireMemberSession } from '../../../../lib/getCurrentMember';
+import { PlatformAcademyModule } from '../../../../lib/platformAcademy';
 import { PlatformClass } from '../../../../lib/platformContent';
 import {
   CLASS_LEVEL_LABELS,
   PLATFORM_ROLE_LABELS,
   type ClassLevel,
 } from '../../../../lib/platformRoles';
+
+function lessonActionLabel(type: string) {
+  if (type === 'pdf') return 'Ver PDF';
+  if (type === 'video') return 'Ver video';
+  return 'Abrir enlace';
+}
 
 export default async function ClasesPage() {
   const { access } = await requireMemberSession();
@@ -15,7 +22,7 @@ export default async function ClasesPage() {
       <div className="max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 p-8">
         <h1 className="text-2xl font-bold text-amber-900">Clases y Entrenamientos</h1>
         <p className="mt-3 text-amber-800">
-          Necesitas una membresía activa en Stripe o un rol asignado para acceder a este contenido.
+          Necesitas un rol asignado (mínimo Estudiante) para acceder a la academia.
         </p>
         <Link
           href="/onboarding"
@@ -27,13 +34,20 @@ export default async function ClasesPage() {
     );
   }
 
-  const allClasses = await PlatformClass.findPublished();
   const roleLabel = access.effectiveRole ? PLATFORM_ROLE_LABELS[access.effectiveRole] : 'Miembro';
 
-  const visible = allClasses.filter((c) => access.contentAccess.classes[c.class_level as ClassLevel]);
-  const locked = allClasses.filter((c) => !access.contentAccess.classes[c.class_level as ClassLevel]);
+  let academyModules: Awaited<ReturnType<typeof PlatformAcademyModule.findPublishedWithLessons>> = [];
+  try {
+    academyModules = await PlatformAcademyModule.findPublishedWithLessons();
+  } catch {
+    academyModules = [];
+  }
 
-  const bySection = visible.reduce<Record<string, typeof visible>>((acc, row) => {
+  const allClasses = await PlatformClass.findPublished();
+  const visibleLegacy = allClasses.filter((c) => access.contentAccess.classes[c.class_level as ClassLevel]);
+  const lockedLegacy = allClasses.filter((c) => !access.contentAccess.classes[c.class_level as ClassLevel]);
+
+  const bySection = visibleLegacy.reduce<Record<string, typeof visibleLegacy>>((acc, row) => {
     const key = row.section_name || 'General';
     if (!acc[key]) acc[key] = [];
     acc[key].push(row);
@@ -44,43 +58,36 @@ export default async function ClasesPage() {
     <div className="max-w-3xl">
       <h1 className="text-3xl font-bold text-gray-900">Clases y Entrenamientos</h1>
       <p className="text-gray-600 mt-2">
-        Acceso ({roleLabel}):{' '}
-        {(Object.keys(CLASS_LEVEL_LABELS) as ClassLevel[])
-          .filter((k) => access.contentAccess.classes[k])
-          .map((k) => CLASS_LEVEL_LABELS[k])
-          .join(' y ') || 'sin clases'}
-        .
+        Academia para miembros activos ({roleLabel}). Módulos y lecciones publicados por el equipo.
       </p>
 
-      {Object.keys(bySection).length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
-          Aún no hay clases publicadas para tu nivel.
-        </div>
-      ) : (
+      {academyModules.length > 0 ? (
         <div className="mt-8 space-y-10">
-          {Object.entries(bySection).map(([section, items]) => (
-            <section key={section}>
-              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">{section}</h2>
-              <ul className="mt-4 space-y-4">
-                {items.map((c) => (
-                  <li key={c.id} className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
-                        {CLASS_LEVEL_LABELS[c.class_level]}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-lg text-gray-900 mt-2">{c.title}</h3>
-                    {c.description && (
-                      <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{c.description}</p>
-                    )}
-                    {c.video_url && (
+          {academyModules.map((mod, idx) => (
+            <section key={mod.id}>
+              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2 flex items-center gap-2">
+                <span className="text-sm font-bold text-blue-900 bg-blue-50 rounded-full w-7 h-7 inline-flex items-center justify-center">
+                  {idx + 1}
+                </span>
+                {mod.title}
+              </h2>
+              {mod.description && <p className="text-sm text-gray-600 mt-2">{mod.description}</p>}
+              <ul className="mt-4 space-y-3">
+                {mod.lessons.map((lesson) => (
+                  <li key={lesson.id} className="rounded-xl bg-white border border-gray-200 p-4 shadow-sm">
+                    <p className="font-semibold text-gray-900">{lesson.title}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {lesson.lesson_code}
+                      {lesson.duration_label ? ` · ${lesson.duration_label}` : ''}
+                    </p>
+                    {lesson.file_url && (
                       <a
-                        href={c.video_url}
+                        href={lesson.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block mt-3 text-sm font-medium text-blue-900 hover:underline"
                       >
-                        Ver video →
+                        {lessonActionLabel(lesson.lesson_type)} →
                       </a>
                     )}
                   </li>
@@ -89,13 +96,50 @@ export default async function ClasesPage() {
             </section>
           ))}
         </div>
+      ) : (
+        <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+          Aún no hay módulos en la academia. Revisa más tarde.
+        </div>
       )}
 
-      {locked.length > 0 && (
+      {Object.keys(bySection).length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-gray-800">Contenido adicional</h2>
+          <div className="mt-6 space-y-10">
+            {Object.entries(bySection).map(([section, items]) => (
+              <section key={section}>
+                <h3 className="text-md font-semibold text-gray-900 border-b pb-2">{section}</h3>
+                <ul className="mt-4 space-y-4">
+                  {items.map((c) => (
+                    <li key={c.id} className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
+                        {CLASS_LEVEL_LABELS[c.class_level]}
+                      </span>
+                      <h3 className="font-semibold text-lg text-gray-900 mt-2">{c.title}</h3>
+                      {c.video_url && (
+                        <a
+                          href={c.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-3 text-sm font-medium text-blue-900 hover:underline"
+                        >
+                          Ver video →
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lockedLegacy.length > 0 && (
         <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
           <h3 className="font-semibold text-slate-800">Clases avanzadas (requieren rol Inversor)</h3>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            {locked.map((c) => (
+            {lockedLegacy.map((c) => (
               <li key={c.id} className="opacity-75">
                 {c.title}
               </li>

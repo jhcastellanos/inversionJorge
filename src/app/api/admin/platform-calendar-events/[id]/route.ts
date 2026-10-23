@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireStaffApi } from '../../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../../lib/platformContent';
-import type { EventLevel } from '../../../../../lib/platformRoles';
+import {
+  legacyFieldsFromEventTier,
+  parseEventKind,
+  parseLiveEventTier,
+  type EventLevel,
+} from '../../../../../lib/platformRoles';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +28,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   else if (typeof body.zoom_url === 'string') patch.zoom_url = body.zoom_url.trim() || null;
   if (typeof body.event_level === 'string' && EVENT_LEVELS.includes(body.event_level as EventLevel)) {
     patch.event_level = body.event_level as EventLevel;
+  }
+  if (body.event_kind !== undefined) {
+    patch.event_kind = parseEventKind(body.event_kind);
+  }
+  if (body.event_tier !== undefined) {
+    const tier = parseLiveEventTier(body.event_tier);
+    patch.event_tier = tier;
+    const legacy = legacyFieldsFromEventTier(tier);
+    patch.event_kind = legacy.event_kind;
+    patch.event_level = legacy.event_level;
   }
   if (body.starts_at) {
     const d = new Date(body.starts_at);

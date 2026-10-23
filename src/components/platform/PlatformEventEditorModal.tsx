@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import {
-  EVENT_LEVEL_AUDIENCE,
-  EVENT_LEVEL_LABELS,
-  type EventLevel,
+  LIVE_EVENT_TIER_AUDIENCE,
+  LIVE_EVENT_TIER_LABELS,
+  LIVE_EVENT_TIERS,
+  type LiveEventTier,
 } from '../../lib/platformRoles';
-import { toDatetimeLocalValue, type SerializedEvent } from '../../lib/platformEventDisplay';
+import {
+  eventDurationMinutes,
+  toDatetimeLocalValue,
+  type SerializedEvent,
+} from '../../lib/platformEventDisplay';
 
 export type EventEditorPayload = {
   title: string;
   description: string;
   zoom_url: string;
-  event_level: EventLevel;
+  event_tier: LiveEventTier;
   starts_at: string;
-  ends_at: string;
+  duration_minutes: number;
   is_published: boolean;
 };
 
@@ -26,7 +31,24 @@ type Props = {
   onSave: (payload: EventEditorPayload) => Promise<void>;
 };
 
-const LEVELS: EventLevel[] = ['basico', 'medio', 'avanzado'];
+
+const labelClass = 'block text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase';
+const fieldClass =
+  'mt-2 w-full rounded-[10px] border border-white/10 bg-[#141820] px-3.5 py-3 text-sm text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none focus:ring-1 focus:ring-amber-500/30';
+
+function SaveIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M5 5h12v16H5V5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path d="M5 5h12v4H5V5Z" fill="currentColor" fillOpacity="0.35" />
+      <path d="M9 3h6v4H9V3Z" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
 
 export default function PlatformEventEditorModal({ open, mode, initial, onClose, onSave }: Props) {
   const [saving, setSaving] = useState(false);
@@ -35,9 +57,9 @@ export default function PlatformEventEditorModal({ open, mode, initial, onClose,
     title: '',
     description: '',
     zoom_url: '',
-    event_level: 'basico',
+    event_tier: 'clase_retrospectiva',
     starts_at: '',
-    ends_at: '',
+    duration_minutes: 60,
     is_published: true,
   });
 
@@ -45,13 +67,15 @@ export default function PlatformEventEditorModal({ open, mode, initial, onClose,
     if (!open) return;
     setError(null);
     if (mode === 'edit' && initial) {
+      const start = new Date(initial.starts_at);
+      const end = initial.ends_at ? new Date(initial.ends_at) : null;
       setForm({
         title: initial.title,
         description: initial.description ?? '',
         zoom_url: initial.zoom_url ?? '',
-        event_level: initial.event_level,
+        event_tier: initial.event_tier ?? 'clase_retrospectiva',
         starts_at: toDatetimeLocalValue(initial.starts_at),
-        ends_at: toDatetimeLocalValue(initial.ends_at),
+        duration_minutes: eventDurationMinutes(start, end),
         is_published: initial.is_published,
       });
     } else {
@@ -59,9 +83,9 @@ export default function PlatformEventEditorModal({ open, mode, initial, onClose,
         title: '',
         description: '',
         zoom_url: '',
-        event_level: 'basico',
+        event_tier: 'clase_retrospectiva',
         starts_at: '',
-        ends_at: '',
+        duration_minutes: 60,
         is_published: true,
       });
     }
@@ -84,140 +108,134 @@ export default function PlatformEventEditorModal({ open, mode, initial, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         aria-label="Cerrar"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#12151c] shadow-2xl text-white overflow-hidden">
-        <div className="border-b border-white/10 px-6 py-5">
-          <p className="text-[11px] font-bold tracking-[0.2em] text-amber-400/90 uppercase">
-            {mode === 'create' ? 'Nuevo evento' : 'Editar evento'}
-          </p>
-          <h2 className="text-xl font-bold mt-1">
-            {mode === 'create' ? 'Agregar clase en vivo' : initial?.title}
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            El tipo de evento define qué roles lo ven (Estudiante, Trader, Inversor).
-          </p>
-        </div>
-
-        <form onSubmit={submit} className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+      <div className="relative w-full max-w-xl rounded-2xl border border-white/10 bg-[#0a0c10] shadow-2xl text-white overflow-hidden">
+        <form onSubmit={submit} className="px-6 sm:px-8 py-7 sm:py-8 space-y-5 max-h-[90vh] overflow-y-auto">
           {error && (
-            <p className="text-sm text-red-400 bg-red-950/40 border border-red-500/30 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-300 bg-red-950/50 border border-red-500/30 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
 
           <label className="block">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Título</span>
+            <span className={labelClass}>Title</span>
             <input
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none"
-              placeholder="Retro Trading de Scalping"
+              className={fieldClass}
+              placeholder="Intradia Clases En Vivo"
             />
           </label>
 
           <label className="block">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Descripción</span>
+            <span className={labelClass}>Description</span>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none resize-y"
-              placeholder="Breve resumen de la sesión…"
+              rows={4}
+              className={`${fieldClass} resize-y min-h-[100px]`}
+              placeholder="Intradia Retro y Clases de la Estrategia en Vivo"
             />
           </label>
 
           <label className="block">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-              Enlace Zoom
-            </span>
+            <span className={labelClass}>Meeting link</span>
             <input
               type="url"
               value={form.zoom_url}
               onChange={(e) => setForm((f) => ({ ...f, zoom_url: e.target.value }))}
-              className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none"
+              className={fieldClass}
               placeholder="https://us06web.zoom.us/j/…"
             />
-            <p className="text-xs text-slate-500 mt-1">
-              Al hacer clic en &quot;Unirse&quot;, el usuario irá directo a esta URL.
-            </p>
           </label>
 
           <label className="block">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-              Tipo de evento
-            </span>
+            <span className={labelClass}>Tipo de evento en vivo</span>
             <select
-              value={form.event_level}
-              onChange={(e) => setForm((f) => ({ ...f, event_level: e.target.value as EventLevel }))}
-              className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none"
+              value={form.event_tier}
+              onChange={(e) => setForm((f) => ({ ...f, event_tier: e.target.value as LiveEventTier }))}
+              className={fieldClass}
             >
-              {LEVELS.map((k) => (
-                <option key={k} value={k}>
-                  {EVENT_LEVEL_LABELS[k]}
+              {LIVE_EVENT_TIERS.map((k) => (
+                <option key={k} value={k} className="bg-[#141820]">
+                  {LIVE_EVENT_TIER_LABELS[k]}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-amber-200/70 mt-1">{EVENT_LEVEL_AUDIENCE[form.event_level]}</p>
+            <p className="text-[11px] text-slate-500 mt-1.5">{LIVE_EVENT_TIER_AUDIENCE[form.event_tier]}</p>
           </label>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Inicio</span>
-              <input
-                required
-                type="datetime-local"
-                value={form.starts_at}
-                onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
-                className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Fin (opcional)</span>
-              <input
-                type="datetime-local"
-                value={form.ends_at}
-                onChange={(e) => setForm((f) => ({ ...f, ends_at: e.target.value }))}
-                className="mt-1.5 w-full rounded-lg bg-[#0a0c10] border border-white/10 px-3 py-2.5 text-sm focus:border-amber-500/50 focus:outline-none"
-              />
-            </label>
-          </div>
+          <label className="block sm:max-w-[200px]">
+            <span className={labelClass}>Duration (minutes)</span>
+            <input
+              type="number"
+              min={15}
+              max={480}
+              step={15}
+              required
+              value={form.duration_minutes}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  duration_minutes: Math.max(15, Number(e.target.value) || 60),
+                }))
+              }
+              className={fieldClass}
+            />
+          </label>
 
-          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-[#0a0c10] px-4 py-3">
-            <span>
-              <span className="block text-sm font-medium">Visible para usuarios</span>
-              <span className="block text-xs text-slate-500 mt-0.5">
-                Aparece en inicio y calendario según el tipo de evento
-              </span>
+          <label className="block">
+            <span className={`${labelClass} flex items-center gap-1.5`}>
+              <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              Scheduled date &amp; time (EST)
             </span>
+            <input
+              required
+              type="datetime-local"
+              value={form.starts_at}
+              onChange={(e) => setForm((f) => ({ ...f, starts_at: e.target.value }))}
+              className={`${fieldClass} [color-scheme:dark]`}
+            />
+          </label>
+
+          <label className="flex items-center gap-3 pt-1">
             <input
               type="checkbox"
               checked={form.is_published}
               onChange={(e) => setForm((f) => ({ ...f, is_published: e.target.checked }))}
-              className="h-5 w-5 rounded border-white/20 bg-slate-800 text-amber-500 focus:ring-amber-500/40"
+              className="h-4 w-4 rounded border-white/20 bg-[#141820] text-amber-500 focus:ring-amber-500/40"
             />
+            <span className="text-sm text-slate-400">Visible en inicio y calendario</span>
           </label>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-white/15 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/5"
-            >
-              Cancelar
-            </button>
+          <div className="flex flex-wrap items-center gap-3 pt-4">
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-amber-500 py-2.5 text-sm font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-b from-amber-400 to-amber-600 px-5 py-2.5 text-sm font-bold text-slate-950 hover:from-amber-300 hover:to-amber-500 disabled:opacity-50 shadow-lg shadow-amber-900/30"
             >
+              <SaveIcon />
               {saving ? 'Guardando…' : mode === 'create' ? 'Crear evento' : 'Guardar cambios'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 rounded-[10px] border border-white/20 bg-transparent px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/5"
+            >
+              <span className="text-slate-400" aria-hidden>
+                ✕
+              </span>
+              Cancelar
             </button>
           </div>
         </form>
