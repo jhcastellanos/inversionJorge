@@ -29,6 +29,7 @@ export type EventEditorPayload = {
   starts_at: string;
   duration_minutes: number;
   is_published: boolean;
+  force_live: boolean;
 };
 
 type Props = {
@@ -61,6 +62,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
     starts_at: '',
     duration_minutes: 60,
     is_published: true,
+    force_live: false,
   });
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
         starts_at: toDatetimeLocalValue(initial.starts_at),
         duration_minutes: eventDurationMinutes(start, end),
         is_published: initial.is_published,
+        force_live: initial.force_live ?? false,
       });
     } else {
       setForm({
@@ -86,6 +89,7 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
         starts_at: '',
         duration_minutes: 60,
         is_published: true,
+        force_live: false,
       });
     }
   }, [mode, initial]);
@@ -222,6 +226,18 @@ export default function PlatformEventEditorForm({ mode, initial, onCancel, onSav
             className={checkClass}
           />
           <span className={`text-sm ventic-muted`}>Visible en inicio y calendario</span>
+        </label>
+
+        <label className="flex items-center gap-3 pt-1">
+          <input
+            type="checkbox"
+            checked={form.force_live}
+            onChange={(e) => setForm((f) => ({ ...f, force_live: e.target.checked }))}
+            className={checkClass}
+          />
+          <span className="text-sm ventic-muted">
+            Marcar como <strong className="ventic-text">EN VIVO</strong> manualmente (ignora horario programado)
+          </span>
         </label>
 
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t ventic-border">

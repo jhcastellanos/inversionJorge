@@ -26,6 +26,7 @@ export type PlatformCalendarEventRow = {
   starts_at: Date;
   ends_at: Date | null;
   is_published: boolean;
+  force_live: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -188,14 +189,15 @@ export const PlatformCalendarEvent = {
     starts_at: Date;
     ends_at?: Date | null;
     is_published?: boolean;
+    force_live?: boolean;
   }) {
     await ensurePlatformCalendarEventSchema();
     const client = await pool.connect();
     try {
       const result = await client.query(
         `INSERT INTO platform_calendar_events
-         (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+         (title, description, zoom_url, event_kind, event_level, event_tier, starts_at, ends_at, is_published, force_live, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
          RETURNING *`,
         [
           data.title,
@@ -207,6 +209,7 @@ export const PlatformCalendarEvent = {
           data.starts_at,
           data.ends_at ?? null,
           data.is_published ?? true,
+          data.force_live ?? false,
         ]
       );
       return result.rows[0];
@@ -227,6 +230,7 @@ export const PlatformCalendarEvent = {
       starts_at: Date;
       ends_at: Date | null;
       is_published: boolean;
+      force_live: boolean;
     }>
   ) {
     await ensurePlatformCalendarEventSchema();

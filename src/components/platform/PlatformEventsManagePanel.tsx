@@ -78,6 +78,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
       starts_at: starts.toISOString(),
       ends_at: ends.toISOString(),
       is_published: form.is_published,
+      force_live: form.force_live,
     };
   };
 
@@ -105,6 +106,15 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
     await reload();
   };
 
+  const toggleForceLive = async (ev: SerializedEvent) => {
+    await fetch(`/api/admin/platform-calendar-events/${ev.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force_live: !ev.force_live }),
+    });
+    await reload();
+  };
+
   const togglePublished = async (ev: SerializedEvent) => {
     await fetch(`/api/admin/platform-calendar-events/${ev.id}`, {
       method: 'PATCH',
@@ -120,6 +130,7 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         is_published: false,
+        force_live: false,
         ends_at: ev.ends_at ?? new Date().toISOString(),
       }),
     });
@@ -196,6 +207,11 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                         {!ev.is_published && (
                           <span className="text-[10px] font-semibold uppercase text-amber-700">Oculto</span>
                         )}
+                        {ev.force_live && (
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-600 text-white">
+                            EN VIVO
+                          </span>
+                        )}
                       </div>
                       <h2 className={`text-lg sm:text-xl font-bold mt-2 leading-snug ${isDark ? 'text-white' : 'text-gray-900'}`}>{ev.title}</h2>
                       {ev.description && (
@@ -218,6 +234,22 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
                   </div>
 
                   <div className="mt-4 lg:mt-0 lg:w-52 shrink-0 flex flex-col gap-3">
+                    <label className={`flex items-center justify-between gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                      <span>En vivo (manual)</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={ev.force_live}
+                        onClick={() => toggleForceLive(ev)}
+                        className={`relative h-6 w-11 rounded-full transition-colors ${adminToggleTrack(ev.force_live, isDark)}`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                            ev.force_live ? 'translate-x-5' : ''
+                          }`}
+                        />
+                      </button>
+                    </label>
                     <label className={`flex items-center justify-between gap-2 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                       <span>Visible en inicio</span>
                       <button

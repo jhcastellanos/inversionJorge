@@ -33,6 +33,9 @@ export function ensurePlatformCalendarEventSchema(): Promise<void> {
         await client.query(
           `ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS event_tier VARCHAR(32) DEFAULT 'clase_retrospectiva'`
         );
+        await client.query(
+          `ALTER TABLE platform_calendar_events ADD COLUMN IF NOT EXISTS force_live BOOLEAN NOT NULL DEFAULT false`
+        );
         await client.query(`
           UPDATE platform_calendar_events SET event_tier = 'clase_retrospectiva'
           WHERE event_tier IS NULL OR event_tier = ''

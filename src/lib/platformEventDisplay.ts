@@ -12,6 +12,7 @@ import {
 const DISPLAY_TZ = 'America/New_York';
 
 export function isEventLive(event: PlatformCalendarEventRow, now = new Date()): boolean {
+  if (event.force_live) return true;
   const start = new Date(event.starts_at);
   const end = event.ends_at
     ? new Date(event.ends_at)
@@ -20,6 +21,7 @@ export function isEventLive(event: PlatformCalendarEventRow, now = new Date()): 
 }
 
 export function isEventUpcoming(event: PlatformCalendarEventRow, now = new Date()): boolean {
+  if (event.force_live) return false;
   return new Date(event.starts_at) > now;
 }
 
@@ -108,6 +110,7 @@ export type SerializedEvent = {
   starts_at: string;
   ends_at: string | null;
   is_published: boolean;
+  force_live: boolean;
 };
 
 export function getEventJoinUrl(ev: {
@@ -162,5 +165,6 @@ export function serializeEvent(row: PlatformCalendarEventRow): SerializedEvent {
     starts_at: new Date(row.starts_at).toISOString(),
     ends_at: row.ends_at ? new Date(row.ends_at).toISOString() : null,
     is_published: row.is_published,
+    force_live: Boolean(row.force_live),
   };
 }
