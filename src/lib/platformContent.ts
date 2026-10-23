@@ -1,4 +1,5 @@
 import { pool } from './db';
+import { ensurePlatformCalendarEventSchema } from './platformCalendarEventSchema';
 import type { ClassLevel, EventKind, EventLevel, LiveEventTier } from './platformRoles';
 
 export type PlatformClassRow = {
@@ -188,6 +189,7 @@ export const PlatformCalendarEvent = {
     ends_at?: Date | null;
     is_published?: boolean;
   }) {
+    await ensurePlatformCalendarEventSchema();
     const client = await pool.connect();
     try {
       const result = await client.query(
@@ -227,6 +229,7 @@ export const PlatformCalendarEvent = {
       is_published: boolean;
     }>
   ) {
+    await ensurePlatformCalendarEventSchema();
     const client = await pool.connect();
     try {
       const fields: string[] = [];

@@ -29,18 +29,20 @@ export default async function LandingPage({ searchParams }: PageProps) {
   const authMode = searchParams?.register === '1' ? 'register' : 'login';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-blue-300">Plataforma CRM</p>
-          <h1 className="text-xl sm:text-2xl font-bold">Inversión Real con Jorge y Guille</h1>
+    <div className="min-h-screen ventic-bg ventic-text">
+      <nav className="ventic-surface border-b ventic-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--ventic-accent-muted)]">Plataforma CRM</p>
+            <h1 className="text-xl sm:text-2xl font-bold ventic-text">Inversión Real con Jorge y Guille</h1>
+          </div>
+          <Link
+            href="/planes"
+            className="px-3 sm:px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"
+          >
+            Ver planes
+          </Link>
         </div>
-        <Link
-          href="/planes"
-          className="px-3 sm:px-4 py-2 rounded-lg border border-white/20 text-sm font-semibold hover:bg-white/10"
-        >
-          Ver planes
-        </Link>
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 lg:pb-24">
@@ -49,7 +51,7 @@ export default async function LandingPage({ searchParams }: PageProps) {
             <h2 className="text-4xl sm:text-5xl font-extrabold leading-tight">
               Tu academia de trading, en un solo lugar
             </h2>
-            <p className="mt-6 text-lg text-slate-300 leading-relaxed">
+            <p className="mt-6 text-lg ventic-muted leading-relaxed">
               Este es el punto de entrada: inicia sesión o crea cuenta para entrar al CRM (eventos en vivo,
               calendario y clases). Necesitas membresía Stripe o un rol asignado por el equipo.
             </p>
@@ -69,9 +71,9 @@ export default async function LandingPage({ searchParams }: PageProps) {
                   text: 'Calendario, clases en vivo y academia según tu nivel.',
                 },
               ].map((step) => (
-                <div key={step.title} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <h3 className="font-bold">{step.title}</h3>
-                  <p className="mt-1 text-sm text-slate-300">{step.text}</p>
+                <div key={step.title} className="rounded-xl border ventic-border ventic-surface p-4 shadow-sm">
+                  <h3 className="font-bold ventic-text">{step.title}</h3>
+                  <p className="mt-1 text-sm ventic-muted">{step.text}</p>
                 </div>
               ))}
             </section>
@@ -83,8 +85,8 @@ export default async function LandingPage({ searchParams }: PageProps) {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-400">
-        <Link href="/admin/login" className="hover:text-white">
+      <footer className="border-t ventic-border py-8 text-center text-sm ventic-muted">
+        <Link href="/admin/login" className="hover:text-[var(--ventic-accent)]">
           Admin legacy
         </Link>
         <span className="mx-2">·</span>

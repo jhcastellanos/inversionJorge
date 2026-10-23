@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireStaffApi } from '../../../../lib/staffAccess';
 import { PlatformCalendarEvent } from '../../../../lib/platformContent';
+import { ensurePlatformCalendarEventSchema } from '../../../../lib/platformCalendarEventSchema';
 import {
   legacyFieldsFromEventTier,
   parseEventKind,
@@ -20,6 +21,7 @@ function parseEventLevel(v: unknown): EventLevel | null {
 export async function GET(req: NextRequest) {
   const staff = await requireStaffApi(req, { requireManageContent: true });
   if (staff instanceof NextResponse) return staff;
+  await ensurePlatformCalendarEventSchema();
   const rows = await PlatformCalendarEvent.findAllAdmin();
   return NextResponse.json({ events: rows });
 }
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
   const event_kind = body.event_kind ? parseEventKind(body.event_kind) : legacy.event_kind;
 
   try {
+    await ensurePlatformCalendarEventSchema();
     const row = await PlatformCalendarEvent.create({
       title,
       event_kind,

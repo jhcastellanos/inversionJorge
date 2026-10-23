@@ -318,18 +318,22 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
 
       {/* Terms Modal */}
       {showTermsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            <div className="border-b p-6 sticky top-0 bg-white rounded-t-2xl">
-              <h2 className="text-2xl font-bold text-gray-900">Términos y Condiciones</h2>
-              <p className="text-gray-600 mt-1">{membership.Name}</p>
-              <div className="mt-3 pt-3 border-t space-y-1">
-                <p className="text-sm text-gray-600"><strong>Nombre:</strong> {customerName}</p>
-                <p className="text-sm text-gray-600"><strong>Email:</strong> {customerEmail}</p>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="ventic-surface ventic-text rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border ventic-border">
+            <div className="border-b ventic-border p-6 shrink-0 rounded-t-2xl">
+              <h2 className="text-2xl font-bold ventic-text">Términos y Condiciones</h2>
+              <p className="ventic-muted mt-1">{membership.Name}</p>
+              <div className="mt-3 pt-3 border-t ventic-border space-y-1">
+                <p className="text-sm ventic-muted">
+                  <strong>Nombre:</strong> {customerName}
+                </p>
+                <p className="text-sm ventic-muted">
+                  <strong>Email:</strong> {customerEmail}
+                </p>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex flex-col flex-1 min-h-0 p-6">
               <TermsAndConditionsModal
                 isOpen={true}
                 membershipName={membership.Name}

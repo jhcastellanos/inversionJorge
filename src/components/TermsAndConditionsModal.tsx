@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface TermsAndConditionsModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface TermsAndConditionsModalProps {
   onAccept: () => void;
   onCancel: () => void;
   isLoading?: boolean;
+  scrollHint?: string;
 }
 
 const TERMS_TEXT = `TÉRMINOS Y CONDICIONES
@@ -121,20 +122,71 @@ Al suscribirse, el usuario declara que:
 
 NOTA IMPORTANTE: Aunque se use el nombre de otra persona en la compra, es quien utilizaremos como firmante y responsable de este contrato. La persona que opere con ese pseudónimo no tiene derecho de reclamación al no tener nada firmado.`;
 
+function TermsBody() {
+  return (
+    <div className="prose prose-sm max-w-none">
+      {TERMS_TEXT.split('\n').map((line, idx) => {
+        if (!line.trim()) {
+          return <div key={idx} className="h-2" />;
+        }
+        if (line.match(/^\d+\./)) {
+          return (
+            <h3 key={idx} className="font-bold ventic-text mt-4 mb-2">
+              {line}
+            </h3>
+          );
+        }
+        if (line.startsWith('-')) {
+          return (
+            <li key={idx} className="ventic-muted ml-4 list-disc">
+              {line.replace(/^-\s*/, '')}
+            </li>
+          );
+        }
+        return (
+          <p key={idx} className="ventic-muted mb-2 text-sm leading-relaxed">
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function TermsAndConditionsModal({
   isOpen,
   membershipName,
-  email,
   includedFeatures = [],
   priceLabel,
   onAccept,
   onCancel,
   isLoading = false,
+  scrollHint = 'Desplázate hasta el final de los términos para continuar.',
 }: TermsAndConditionsModalProps) {
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const checkScrollEnd = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
+    if (atEnd) setScrolledToEnd(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setAccepted(false);
+    setScrolledToEnd(false);
+    requestAnimationFrame(() => {
+      checkScrollEnd();
+    });
+  }, [isOpen, membershipName, checkScrollEnd]);
 
   if (!isOpen) return null;
+
+  const actionsEnabled = scrolledToEnd;
 
   const handleAccept = async () => {
     setIsSubmitting(true);
@@ -146,91 +198,82 @@ export default function TermsAndConditionsModal({
   };
 
   return (
-    <>
-      {/* Resumen del plan seleccionado */}
-      <div className="mb-5 rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
-        <h3 className="font-bold text-blue-950 mb-1">Plan seleccionado: {membershipName}</h3>
+    <div className="flex flex-col min-h-0 flex-1">
+      <div className="mb-4 rounded-xl border ventic-border bg-ventic-accent-soft/40 p-4 shrink-0">
+        <h3 className="font-bold ventic-text mb-1">Plan seleccionado: {membershipName}</h3>
         {priceLabel && (
-          <p className="text-sm text-blue-900 mb-2"><strong>Precio:</strong> {priceLabel}</p>
+          <p className="text-sm ventic-muted mb-2">
+            <strong>Precio:</strong> {priceLabel}
+          </p>
         )}
         {includedFeatures.length > 0 && (
           <>
-            <p className="text-sm font-semibold text-blue-950 mb-1">Este plan incluye:</p>
+            <p className="text-sm font-semibold ventic-text mb-1">Este plan incluye:</p>
             <ul className="list-disc list-inside space-y-1 mb-2">
               {includedFeatures.map((feature, idx) => (
-                <li key={idx} className="text-sm text-blue-900">{feature}</li>
+                <li key={idx} className="text-sm ventic-muted">
+                  {feature}
+                </li>
               ))}
             </ul>
           </>
         )}
-        <p className="text-sm font-semibold text-red-700">
-          Ningún pago es reembolsable. Al continuar confirmas que has elegido este plan de forma
-          consciente y aceptas que no habrá reembolsos por ningún motivo.
+        <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+          Ningún pago es reembolsable. Al continuar confirmas que has elegido este plan de forma consciente y
+          aceptas que no habrá reembolsos por ningún motivo.
         </p>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto mb-6">
-        <div className="prose prose-sm max-w-none">
-          {TERMS_TEXT.split('\n').map((line, idx) => {
-            if (!line.trim()) {
-              return <div key={idx} className="h-2" />;
-            }
-            if (line.match(/^\d+\./)) {
-              return (
-                <h3 key={idx} className="font-bold text-gray-900 mt-4 mb-2">
-                  {line}
-                </h3>
-              );
-            }
-            if (line.startsWith('-')) {
-              return (
-                <li key={idx} className="text-gray-700 ml-4 list-disc">
-                  {line.replace(/^-\s*/, '')}
-                </li>
-              );
-            }
-            return (
-              <p key={idx} className="text-gray-700 mb-2 text-sm leading-relaxed">
-                {line}
-              </p>
-            );
-          })}
-        </div>
+      <div
+        ref={scrollRef}
+        onScroll={checkScrollEnd}
+        className="flex-1 min-h-[200px] max-h-[42vh] overflow-y-auto rounded-lg border ventic-border p-4 mb-3"
+      >
+        <TermsBody />
       </div>
 
-      {/* Footer */}
-      <div className="border-t pt-6">
+      {!scrolledToEnd && (
+        <p className="text-xs text-center ventic-muted mb-3 shrink-0">{scrollHint}</p>
+      )}
+
+      <div className="border-t ventic-border pt-4 shrink-0">
         <div className="flex items-start gap-3 mb-4">
           <input
             type="checkbox"
             id="terms-accepted"
             checked={accepted}
+            disabled={!actionsEnabled}
             onChange={(e) => setAccepted(e.target.checked)}
-            className="w-5 h-5 rounded border-gray-300 text-blue-900 mt-1 cursor-pointer"
+            className="h-5 w-5 rounded border-gray-300 text-[var(--ventic-accent)] mt-1 disabled:opacity-40"
           />
-          <label htmlFor="terms-accepted" className="text-sm text-gray-700 cursor-pointer">
-            Acepto los Términos y Condiciones del plan <strong>{membershipName}</strong>, entiendo los riesgos de operar en mercados financieros y confirmo que <strong>ningún pago es reembolsable</strong>. He leído y comprendido completamente este contrato.
+          <label
+            htmlFor="terms-accepted"
+            className={`text-sm ventic-muted ${actionsEnabled ? 'cursor-pointer' : 'opacity-60'}`}
+          >
+            Acepto los Términos y Condiciones del plan <strong>{membershipName}</strong>, entiendo los riesgos
+            de operar en mercados financieros y confirmo que <strong>ningún pago es reembolsable</strong>.
           </label>
         </div>
 
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
-            className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+            disabled={!actionsEnabled || isSubmitting || isLoading}
+            className="flex-1 rounded-lg border ventic-border px-4 py-2.5 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Volver
           </button>
           <button
+            type="button"
             onClick={handleAccept}
-            disabled={!accepted || isSubmitting || isLoading}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!actionsEnabled || !accepted || isSubmitting || isLoading}
+            className="flex-1 rounded-lg bg-[var(--ventic-accent)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--ventic-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isSubmitting || isLoading ? 'Procesando...' : 'Aceptar y Pagar'}
+            {isSubmitting || isLoading ? 'Procesando…' : 'Aceptar y Pagar'}
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -45,7 +45,7 @@ export default function PlatformMembershipPanel({
   membershipCatalog = [],
   monthlyBasePrice,
 }: Props) {
-  const { t } = usePlatformPreferences();
+  const { t, locale } = usePlatformPreferences();
   const primarySub = subscriptions[0];
   const matchedMembership = primarySub
     ? membershipCatalog.find((m) =>
@@ -133,10 +133,10 @@ export default function PlatformMembershipPanel({
           Ver o cambiar plan
         </Link>
         <Link
-          href="/subscription/manage"
+          href="/app/suscripciones"
           className="rounded-lg border ventic-border px-5 py-2.5 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft"
         >
-          Gestionar pago en Stripe
+          {locale === 'en' ? 'Manage subscriptions' : 'Gestionar suscripciones'}
         </Link>
       </div>
     </div>
