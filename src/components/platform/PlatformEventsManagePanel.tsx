@@ -158,7 +158,17 @@ function EventsList({ initialEvents }: { initialEvents: SerializedEvent[] }) {
 
   const remove = async (id: number) => {
     if (!confirm('¿Eliminar este evento?')) return;
-    await fetch(`/api/admin/platform-calendar-events/${id}`, { method: 'DELETE' });
+    setError(null);
+    const res = await fetch(`/api/admin/platform-calendar-events/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(typeof data.error === 'string' ? data.error : 'No se pudo eliminar el evento');
+      return;
+    }
+    setEvents((prev) => prev.filter((e) => e.id !== id));
     await reload();
   };
 

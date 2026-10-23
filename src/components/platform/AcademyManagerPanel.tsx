@@ -48,6 +48,12 @@ type LessonFormState = {
   lesson?: LessonRow;
 };
 
+function titleFromUploadFilename(name: string): string {
+  const base = name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+  if (!base) return '';
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
 function formatMb(bytes: number | null) {
   if (!bytes) return '';
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
@@ -233,6 +239,11 @@ function AcademyLessonForm({
       });
       setFileUrl(blob.url);
       setFileSize(file.size);
+      setTitle((prev) => {
+        if (prev.trim()) return prev;
+        const suggested = titleFromUploadFilename(file.name);
+        return suggested || prev;
+      });
     } catch (err) {
       const msg =
         err instanceof Error && err.message
@@ -247,7 +258,10 @@ function AcademyLessonForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setError('Escribe un título para la lección (campo obligatorio).');
+      return;
+    }
     if ((lessonType === 'video' || lessonType === 'pdf') && !fileUrl.trim()) {
       setError('Sube un archivo antes de guardar (video o PDF).');
       return;
@@ -281,7 +295,10 @@ function AcademyLessonForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('No se pudo crear');
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(typeof data.error === 'string' ? data.error : 'No se pudo crear la lección');
+        }
       }
       onSaved();
       onCancel();
@@ -321,7 +338,18 @@ function AcademyLessonForm({
           </label>
           <label className="sm:col-span-6 block">
             <span className={adminLabel(isDark)}>Título</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={adminField(isDark)} required />
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={adminField(isDark)}
+              placeholder="Ej. Video introductorio"
+              required
+            />
+            {!title.trim() && (
+              <p className={`text-[11px] mt-1 ${isDark ? 'text-amber-400/90' : 'text-amber-700'}`}>
+                Obligatorio: sin título no se puede crear la lección.
+              </p>
+            )}
           </label>
           <label className="sm:col-span-3 block">
             <span className={adminLabel(isDark)}>Tipo</span>
@@ -372,8 +400,8 @@ function AcademyLessonForm({
         <div className="flex flex-wrap gap-2 pt-2 border-t ventic-border">
           <button
             type="submit"
-            disabled={saving || uploading || !title.trim()}
-            className={adminPrimaryBtn(isDark)}
+            disabled={saving || uploading}
+            className={`${adminPrimaryBtn(isDark)} disabled:opacity-50`}
           >
             {saving ? 'Guardando…' : isEdit ? 'Guardar lección' : 'Crear lección'}
           </button>

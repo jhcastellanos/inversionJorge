@@ -13,10 +13,14 @@ export const dynamic = 'force-dynamic';
 
 const EVENT_LEVELS: EventLevel[] = ['basico', 'medio', 'avanzado'];
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
   const staff = await requireStaffApi(req, { requireManageContent: true });
   if (staff instanceof NextResponse) return staff;
-  const id = Number(params.id);
+  const { id: idParam } = await Promise.resolve(params);
+  const id = Number(idParam);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
   }
@@ -59,13 +63,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ event: row });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
   const staff = await requireStaffApi(req, { requireManageContent: true });
   if (staff instanceof NextResponse) return staff;
-  const id = Number(params.id);
+  const { id: idParam } = await Promise.resolve(params);
+  const id = Number(idParam);
   if (!Number.isFinite(id)) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
   }
-  await PlatformCalendarEvent.delete(id);
+  const deleted = await PlatformCalendarEvent.delete(id);
+  if (!deleted) {
+    return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }

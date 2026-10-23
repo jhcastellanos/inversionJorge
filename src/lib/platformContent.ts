@@ -281,10 +281,11 @@ export const PlatformCalendarEvent = {
     }
   },
 
-  async delete(id: number) {
+  async delete(id: number): Promise<boolean> {
     const client = await pool.connect();
     try {
-      await client.query('DELETE FROM platform_calendar_events WHERE id = $1', [id]);
+      const result = await client.query('DELETE FROM platform_calendar_events WHERE id = $1', [id]);
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }

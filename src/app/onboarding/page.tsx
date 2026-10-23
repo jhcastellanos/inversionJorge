@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import MarketingTopBar from '../../components/platform/MarketingTopBar';
+import OnboardingWizard from '../../components/platform/OnboardingWizard';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../../lib/memberAuth';
 import { PlatformUser } from '../../lib/platformUsers';
 import { getMemberAccess } from '../../lib/memberAccess';
 import { syncOnboardingIfHasAccess } from '../../lib/memberOnboarding';
-import OnboardingWizard from '../../components/platform/OnboardingWizard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,22 +25,16 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="max-w-3xl mx-auto px-4 py-8">
-        <Link href="/" className="text-sm font-semibold text-blue-900">
-          Inversión Real con Jorge y Guille
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mt-4">Configura tu acceso</h1>
-        <p className="text-gray-600 mt-2">
-          Paso a paso: elige una membresía o espera a que el admin vincule tu cuenta de Stripe si
-          ya pagaste antes.
+    <div className="min-h-screen ventic-bg ventic-text">
+      <MarketingTopBar ctaHref="/planes" ctaLabel="Ver membresías" />
+      <header className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
+        <h1 className="text-3xl sm:text-4xl font-bold ventic-text">Configura tu acceso</h1>
+        <p className="ventic-muted mt-3 text-sm sm:text-base leading-relaxed">
+          Para entrar al CRM necesitas una membresía activa. Paga tu plan y luego escribe a soporte para
+          que finalicen tu inscripción.
         </p>
       </header>
-      <OnboardingWizard
-        hasAccess={access.hasAccess}
-        subscriptionActive={access.subscriptionActive}
-        userId={user.id}
-      />
+      <OnboardingWizard subscriptionActive={access.subscriptionActive} userEmail={user.email} />
     </div>
   );
 }

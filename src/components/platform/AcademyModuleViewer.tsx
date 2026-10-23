@@ -57,14 +57,14 @@ function LessonStage({
   viewPdfLabel,
   openLinkLabel,
   noFileMessage,
-  onVideoEnded,
+  onEngaged,
 }: {
   lesson: AcademyViewerLesson;
   watchLabel: string;
   viewPdfLabel: string;
   openLinkLabel: string;
   noFileMessage: string;
-  onVideoEnded: () => void;
+  onEngaged: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -96,7 +96,7 @@ function LessonStage({
           preload="metadata"
           className="w-full aspect-video max-h-[min(72vh,640px)]"
           src={lesson.file_url}
-          onEnded={onVideoEnded}
+          onPlay={onEngaged}
         />
         <div className="px-4 py-2 border-t border-white/10 flex justify-end">
           <a
@@ -119,12 +119,14 @@ function LessonStage({
           title={lesson.title}
           src={lesson.file_url}
           className="w-full min-h-[min(72vh,640px)] bg-white"
+          onLoad={onEngaged}
         />
         <div className="px-4 py-2 border-t ventic-border">
           <a
             href={lesson.file_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onEngaged}
             className="text-sm font-medium text-[var(--ventic-accent)] hover:underline"
           >
             {viewPdfLabel} ↗
@@ -141,6 +143,7 @@ function LessonStage({
         href={lesson.file_url}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={onEngaged}
         className="inline-flex items-center gap-2 rounded-lg bg-[var(--ventic-accent)] px-6 py-3 text-sm font-bold text-white hover:bg-[var(--ventic-accent-hover)]"
       >
         {openLinkLabel} ↗
@@ -204,26 +207,21 @@ export default function AcademyModuleViewer({
     .replace('{done}', String(completedCount))
     .replace('{total}', String(lessons.length));
 
-  const markComplete = useCallback(
-    async (lessonId: number, advance = true) => {
-      setCompleted((prev) => {
-        const nextSet = new Set(Array.from(prev).concat(lessonId));
-        if (advance) {
-          const idx = lessons.findIndex((l) => l.id === lessonId);
-          const nextLesson = lessons.slice(idx + 1).find((l) => !nextSet.has(l.id));
-          if (nextLesson) setActiveId(nextLesson.id);
-        }
-        return nextSet;
-      });
-      await fetch('/api/member/academy-progress', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId }),
-      });
-    },
-    [lessons]
-  );
+  const markComplete = useCallback(async (lessonId: number) => {
+    let isNew = false;
+    setCompleted((prev) => {
+      if (prev.has(lessonId)) return prev;
+      isNew = true;
+      return new Set(Array.from(prev).concat(lessonId));
+    });
+    if (!isNew) return;
+    await fetch('/api/member/academy-progress', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lessonId }),
+    });
+  }, []);
 
   if (lessons.length === 0) {
     return (
@@ -245,7 +243,7 @@ export default function AcademyModuleViewer({
                 viewPdfLabel={t('classes.viewPdf')}
                 openLinkLabel={t('classes.openLink')}
                 noFileMessage={t('classes.noVideoFile')}
-                onVideoEnded={() => void markComplete(active.id)}
+                onEngaged={() => void markComplete(active.id)}
               />
               <div className="p-4 sm:p-5 border-t ventic-border">
                 <p className="text-xs ventic-muted uppercase tracking-wide">{active.lesson_code}</p>
@@ -253,16 +251,6 @@ export default function AcademyModuleViewer({
                 {active.duration_label ? (
                   <p className="text-sm ventic-muted mt-1">{active.duration_label}</p>
                 ) : null}
-                <div className="flex flex-wrap gap-3 mt-4">
-                  <button
-                    type="button"
-                    disabled={completed.has(active.id)}
-                    onClick={() => void markComplete(active.id)}
-                    className="rounded-lg bg-[var(--ventic-accent)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--ventic-accent-hover)] disabled:opacity-50 disabled:cursor-default"
-                  >
-                    {completed.has(active.id) ? t('classes.lessonCompleted') : t('classes.markComplete')}
-                  </button>
-                </div>
               </div>
             </>
           )}

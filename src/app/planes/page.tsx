@@ -18,7 +18,6 @@ export default async function PlanesPage() {
     if (user) {
       const access = await getMemberAccess(user);
       if (access.hasAccess) redirect('/app/planes');
-      redirect('/onboarding');
     }
   }
 
@@ -42,7 +41,8 @@ export default async function PlanesPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
         <h2 className="text-3xl sm:text-4xl font-extrabold ventic-text mb-4">Planes y cursos</h2>
         <p className="ventic-muted max-w-2xl mx-auto">
-          Elige tu membresía o curso. Después de pagar, crea tu cuenta o inicia sesión para acceder al CRM.
+          Elige tu membresía o curso. Tras pagar, contacta al equipo de soporte para completar tu
+          inscripción y activar el acceso al CRM.
         </p>
       </section>
 
