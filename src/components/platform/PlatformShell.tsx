@@ -179,13 +179,13 @@ export default function PlatformShell({
                   href="/app/academy-manager"
                   className={academyActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
                 >
-                  Academy
+                  {t('nav.academyManager')}
                 </Link>
                 <Link
                   href="/app/gestionar-eventos"
                   className={adminEventsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
                 >
-                  Events
+                  {t('nav.manageEvents')}
                 </Link>
               </>
             )}

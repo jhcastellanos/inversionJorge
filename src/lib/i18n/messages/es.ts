@@ -7,7 +7,7 @@ export const es = {
     membership: 'Mi membresía',
     plans: 'Ver planes',
     admin: 'Admin',
-    academyManager: 'Academy Manager',
+    academyManager: 'Gestor de academia',
     manageEvents: 'Gestionar eventos',
     logout: 'Cerrar sesión',
     logoutShort: 'Salir',
@@ -30,6 +30,14 @@ export const es = {
     join: 'Unirse',
     details: 'Detalles',
     calendar: 'Calendario',
+  },
+  classes: {
+    subtitle: 'Academia para miembros activos ({role}). Módulos y lecciones publicados por el equipo.',
+    emptyAcademy: 'Aún no hay módulos en la academia. Revisa más tarde.',
+    watchVideo: 'Ver video',
+    viewPdf: 'Ver PDF',
+    openLink: 'Abrir enlace',
+    additionalContent: 'Contenido adicional',
   },
   subscriptions: {
     title: 'Mis suscripciones',
@@ -56,9 +64,20 @@ export const es = {
   },
   admin: {
     academy: {
-      title: 'Academy Manager',
+      title: 'Gestor de academia',
       subtitle:
         'Gestiona módulos, lecciones y contenido. Visible para usuarios activos con rol Estudiante o superior.',
+      addModule: 'Agregar módulo',
+      addAnotherModule: 'Agregar otro módulo',
+      addLesson: 'Agregar lección',
+      statsModules: 'Módulos',
+      statsVideos: 'Videos',
+      statsPdfs: 'PDFs',
+      statsLinks: 'Enlaces',
+      published: 'Publicado',
+      lessons: 'lecciones',
+      lessonOne: 'lección',
+      noModules: 'No hay módulos. Usa «Agregar módulo» para crear el primero.',
     },
     events: {
       title: 'Gestionar eventos',
@@ -76,8 +95,30 @@ export type Messages = {
   shell: Record<string, string>;
   home: Record<string, string>;
   subscriptions: Record<string, string>;
+  classes: {
+    subtitle: string;
+    emptyAcademy: string;
+    watchVideo: string;
+    viewPdf: string;
+    openLink: string;
+    additionalContent: string;
+  };
   admin: {
-    academy: { title: string; subtitle: string };
+    academy: {
+      title: string;
+      subtitle: string;
+      addModule: string;
+      addAnotherModule: string;
+      addLesson: string;
+      statsModules: string;
+      statsVideos: string;
+      statsPdfs: string;
+      statsLinks: string;
+      published: string;
+      lessons: string;
+      lessonOne: string;
+      noModules: string;
+    };
     events: { title: string; subtitle: string; add: string };
     themeToggle: string;
   };

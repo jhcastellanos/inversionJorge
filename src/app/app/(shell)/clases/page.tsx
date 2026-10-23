@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ClasesAcademySection from '../../../../components/platform/ClasesAcademySection';
 import { requireMemberSession } from '../../../../lib/getCurrentMember';
 import { PlatformAcademyModule } from '../../../../lib/platformAcademy';
 import { PlatformClass } from '../../../../lib/platformContent';
@@ -7,12 +8,6 @@ import {
   PLATFORM_ROLE_LABELS,
   type ClassLevel,
 } from '../../../../lib/platformRoles';
-
-function lessonActionLabel(type: string) {
-  if (type === 'pdf') return 'Ver PDF';
-  if (type === 'video') return 'Ver video';
-  return 'Abrir enlace';
-}
 
 export default async function ClasesPage() {
   const { access } = await requireMemberSession();
@@ -57,50 +52,22 @@ export default async function ClasesPage() {
   return (
     <div className="max-w-3xl">
       <h1 className="text-3xl font-bold ventic-text">Clases y Entrenamientos</h1>
-      <p className="ventic-muted mt-2">
-        Academia para miembros activos ({roleLabel}). Módulos y lecciones publicados por el equipo.
-      </p>
-
-      {academyModules.length > 0 ? (
-        <div className="mt-8 space-y-10">
-          {academyModules.map((mod, idx) => (
-            <section key={mod.id}>
-              <h2 className="text-xl font-semibold ventic-text border-b ventic-border pb-2 flex items-center gap-2">
-                <span className="text-sm font-bold text-white bg-[var(--ventic-accent)] rounded-full w-7 h-7 inline-flex items-center justify-center">
-                  {idx + 1}
-                </span>
-                {mod.title}
-              </h2>
-              {mod.description && <p className="text-sm ventic-muted mt-2">{mod.description}</p>}
-              <ul className="mt-4 space-y-3">
-                {mod.lessons.map((lesson) => (
-                  <li key={lesson.id} className="rounded-xl ventic-surface border ventic-border p-4 shadow-sm">
-                    <p className="font-semibold ventic-text">{lesson.title}</p>
-                    <p className="text-xs ventic-muted mt-1">
-                      {lesson.lesson_code}
-                      {lesson.duration_label ? ` · ${lesson.duration_label}` : ''}
-                    </p>
-                    {lesson.file_url && (
-                      <a
-                        href={lesson.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-3 text-sm font-medium text-[var(--ventic-accent)] hover:underline"
-                      >
-                        {lessonActionLabel(lesson.lesson_type)} →
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-8 rounded-2xl border border-dashed ventic-border ventic-surface p-10 text-center ventic-muted">
-          Aún no hay módulos en la academia. Revisa más tarde.
-        </div>
-      )}
+      <ClasesAcademySection
+        roleLabel={roleLabel}
+        modules={academyModules.map((mod) => ({
+          id: mod.id,
+          title: mod.title,
+          description: mod.description,
+          lessons: mod.lessons.map((lesson) => ({
+            id: lesson.id,
+            title: lesson.title,
+            lesson_code: lesson.lesson_code,
+            lesson_type: lesson.lesson_type,
+            file_url: lesson.file_url,
+            duration_label: lesson.duration_label,
+          })),
+        }))}
+      />
 
       {Object.keys(bySection).length > 0 && (
         <div className="mt-12">

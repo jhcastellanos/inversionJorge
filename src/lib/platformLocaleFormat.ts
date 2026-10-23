@@ -1,4 +1,15 @@
 import type { Locale } from './i18n';
+import { LIVE_EVENT_TIER_LABELS, type LiveEventTier } from './platformRoles';
+
+const EN_LIVE_EVENT_TIER_LABELS: Record<LiveEventTier, string> = {
+  clase_retrospectiva: 'Live class / retrospective',
+  operativa_trading: 'Trading session',
+  avanzado: 'Advanced sessions',
+};
+
+export function liveEventTierLabelForLocale(locale: Locale, tier: LiveEventTier): string {
+  return locale === 'en' ? EN_LIVE_EVENT_TIER_LABELS[tier] : LIVE_EVENT_TIER_LABELS[tier];
+}
 
 const DISPLAY_TZ = 'America/New_York';
 

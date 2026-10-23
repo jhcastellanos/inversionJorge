@@ -371,6 +371,7 @@ function ModuleList({
   onEditLesson: (mod: ModuleRow, lesson: LessonRow, defaultCode: string) => void;
 }) {
   const { isDark } = useAdminPanelTheme();
+  const { t } = usePlatformPreferences();
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const removeModule = async (id: number) => {
@@ -391,7 +392,7 @@ function ModuleList({
         <li
           className={`rounded-2xl border border-dashed p-12 text-center text-sm ${isDark ? 'border-emerald-500/20 text-slate-500' : 'border-emerald-200 text-gray-500'}`}
         >
-          No hay módulos. Usa &quot;Agregar módulo&quot; para crear el primero.
+          {t('admin.academy.noModules')}
         </li>
       )}
       {modules.map((mod, idx) => {
@@ -417,10 +418,13 @@ function ModuleList({
                     <div className="flex flex-wrap gap-2 mt-2">
                       {mod.is_published && (
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                          Published
+                          {t('admin.academy.published')}
                         </span>
                       )}
-                      <span className={`text-[10px] uppercase ventic-muted`}>{mod.lessons.length} lessons</span>
+                      <span className={`text-[10px] uppercase ventic-muted`}>
+                        {mod.lessons.length}{' '}
+                        {mod.lessons.length === 1 ? t('admin.academy.lessonOne') : t('admin.academy.lessons')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -496,7 +500,7 @@ function ModuleList({
                   onClick={() => onAddLesson(mod, defaultCode)}
                   className={`mt-4 text-sm font-semibold ${adminLinkAccent(isDark)}`}
                 >
-                  + Agregar lección
+                  + {t('admin.academy.addLesson')}
                 </button>
               </div>
             )}
@@ -506,7 +510,7 @@ function ModuleList({
       {modules.length > 0 && (
         <li className="flex justify-center pt-2">
           <button type="button" onClick={onAddModule} className={adminGhostBtn(isDark)}>
-            + Agregar otro módulo
+            + {t('admin.academy.addAnotherModule')}
           </button>
         </li>
       )}
@@ -516,6 +520,7 @@ function ModuleList({
 
 function AcademyManagerInner({ initialModules }: { initialModules: ModuleRow[] }) {
   const { isDark } = useAdminPanelTheme();
+  const { t } = usePlatformPreferences();
   const [modules, setModules] = useState(initialModules);
   const [moduleForm, setModuleForm] = useState<ModuleFormState | null>(null);
   const [lessonForm, setLessonForm] = useState<LessonFormState | null>(null);
@@ -603,16 +608,16 @@ function AcademyManagerInner({ initialModules }: { initialModules: ModuleRow[] }
           onClick={openModuleCreate}
           className={`${adminPrimaryBtn(isDark)} disabled:opacity-50`}
         >
-          + Agregar módulo
+          + {t('admin.academy.addModule')}
         </button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         {(
           [
-            ['Modules', stats.modules],
-            ['Videos', stats.videos],
-            ['PDFs', stats.pdfs],
-            ['Links', stats.links],
+            [t('admin.academy.statsModules'), stats.modules],
+            [t('admin.academy.statsVideos'), stats.videos],
+            [t('admin.academy.statsPdfs'), stats.pdfs],
+            [t('admin.academy.statsLinks'), stats.links],
           ] as const
         ).map(([label, n]) => (
           <div key={label} className={adminStatCard(isDark)}>

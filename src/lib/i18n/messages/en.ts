@@ -33,6 +33,14 @@ export const en: Messages = {
     details: 'Details',
     calendar: 'Calendar',
   },
+  classes: {
+    subtitle: 'Academy for active members ({role}). Modules and lessons published by the team.',
+    emptyAcademy: 'No academy modules yet. Check back later.',
+    watchVideo: 'Watch video',
+    viewPdf: 'View PDF',
+    openLink: 'Open link',
+    additionalContent: 'Additional content',
+  },
   subscriptions: {
     title: 'My subscriptions',
     account: 'Account',
@@ -61,6 +69,17 @@ export const en: Messages = {
       title: 'Academy Manager',
       subtitle:
         'Manage modules, lessons, and content. Visible to active users with Student role or above.',
+      addModule: 'Add module',
+      addAnotherModule: 'Add another module',
+      addLesson: 'Add lesson',
+      statsModules: 'Modules',
+      statsVideos: 'Videos',
+      statsPdfs: 'PDFs',
+      statsLinks: 'Links',
+      published: 'Published',
+      lessons: 'lessons',
+      lessonOne: 'lesson',
+      noModules: 'No modules yet. Use “Add module” to create the first one.',
     },
     events: {
       title: 'Manage events',

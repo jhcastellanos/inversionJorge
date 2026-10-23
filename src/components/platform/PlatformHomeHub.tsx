@@ -8,9 +8,9 @@ import {
   formatEventLineForLocale,
   greetingForLocale,
   headerDateLineForLocale,
+  liveEventTierLabelForLocale,
 } from '../../lib/platformLocaleFormat';
 import { getEventJoinUrl, type SerializedEvent } from '../../lib/platformEventDisplay';
-import { LIVE_EVENT_TIER_LABELS } from '../../lib/platformRoles';
 
 type Props = {
   user: { full_name: string; email: string };
@@ -50,6 +50,9 @@ function EventListRow({
           <p className="font-semibold ventic-text leading-snug">{ev.title}</p>
         </div>
         <p className="text-sm ventic-muted mt-1">{formatEventLineForLocale(locale, d)}</p>
+        <p className="text-xs text-[var(--ventic-accent-muted)] mt-0.5">
+          {liveEventTierLabelForLocale(locale, ev.event_tier)}
+        </p>
       </div>
       {external ? (
         <a
@@ -84,14 +87,6 @@ export default function PlatformHomeHub({
   const displayName = user.full_name.split(' ')[0];
   const otherLive = heroIsLive ? live.filter((e) => e.id !== hero.id) : live;
   const listEvents = upcoming.filter((e) => !hero || e.id !== hero.id);
-  const tierLabels = locale === 'en'
-    ? {
-        clase_retrospectiva: 'Live class / retrospective',
-        operativa_trading: 'Trading session',
-        avanzado: 'Advanced sessions',
-      }
-    : LIVE_EVENT_TIER_LABELS;
-
   return (
     <div className="max-w-3xl mx-auto">
       <header className="mb-8">
@@ -125,7 +120,7 @@ export default function PlatformHomeHub({
           <h2 className="text-2xl sm:text-3xl font-extrabold mt-4 leading-tight ventic-text">{hero.title}</h2>
           <p className="ventic-muted text-sm mt-2">{formatEventLineForLocale(locale, new Date(hero.starts_at))}</p>
           <p className="text-xs text-[var(--ventic-accent-muted)] mt-1">
-            {tierLabels[hero.event_tier]}
+            {liveEventTierLabelForLocale(locale, hero.event_tier)}
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Link
