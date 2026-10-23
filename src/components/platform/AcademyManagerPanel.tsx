@@ -1,5 +1,6 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminPanelChrome from './admin/AdminPanelChrome';
 import { usePlatformPreferences } from './PlatformPreferencesProvider';
@@ -196,6 +197,7 @@ function AcademyLessonForm({
   const isEdit = Boolean(state.lesson);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lessonCode, setLessonCode] = useState(state.lesson?.lesson_code ?? state.defaultCode);
   const [title, setTitle] = useState(state.lesson?.title ?? '');
@@ -216,17 +218,30 @@ function AcademyLessonForm({
 
   const uploadFile = async (file: File) => {
     setUploading(true);
+    setUploadPct(0);
+    setError(null);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('kind', lessonType === 'pdf' ? 'pdf' : 'video');
-      const res = await fetch('/api/admin/academy-upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error('Error al subir');
-      const data = await res.json();
-      setFileUrl(data.url);
-      setFileSize(data.file_size_bytes ?? file.size);
+      const kind = lessonType === 'pdf' ? 'pdf' : 'video';
+      const ext = file.name.split('.').pop() ?? (kind === 'pdf' ? 'pdf' : 'mp4');
+      const pathname = `academy/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const blob = await upload(pathname, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/academy-upload',
+        clientPayload: kind,
+        multipart: file.size > 8 * 1024 * 1024,
+        onUploadProgress: ({ percentage }) => setUploadPct(Math.round(percentage)),
+      });
+      setFileUrl(blob.url);
+      setFileSize(file.size);
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Error al subir. Si el archivo es muy grande, comprueba BLOB_READ_WRITE_TOKEN en Vercel.';
+      setError(msg);
     } finally {
       setUploading(false);
+      setUploadPct(null);
     }
   };
 
@@ -338,9 +353,13 @@ function AcademyLessonForm({
                 }}
                 className={`${adminField(isDark)} file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1 file:text-xs file:font-bold file:text-white`}
               />
-              {fileUrl && (
+              {(uploading || fileUrl) && (
                 <p className={`text-xs mt-1 ventic-muted`}>
-                  {uploading ? 'Subiendo…' : `Archivo listo · ${formatMb(fileSize)}`}
+                  {uploading
+                    ? uploadPct != null
+                      ? `Subiendo… ${uploadPct}%`
+                      : 'Subiendo…'
+                    : `Archivo listo · ${formatMb(fileSize)}`}
                 </p>
               )}
             </label>
