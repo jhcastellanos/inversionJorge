@@ -3,10 +3,6 @@ import {
   syncAllPlatformMemberEntitlements,
   syncAllStripeLinkedMembers,
 } from '../../../../lib/membershipEntitlementSync';
-import {
-  getMiamiHourMinute,
-  isMiamiDailyMembershipAuditTime,
-} from '../../../../lib/membershipCronSchedule';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,22 +20,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const force = req.nextUrl.searchParams.get('force') === '1';
   const scope = req.nextUrl.searchParams.get('scope');
+  const fullPlatform =
+    scope !== 'linked';
 
-  if (!force && !isMiamiDailyMembershipAuditTime()) {
-    const miami = getMiamiHourMinute();
-    return NextResponse.json({
-      ok: true,
-      skipped: true,
-      reason: 'Fuera de la ventana diaria (19:00 America/New_York)',
-      miamiNow: `${miami.hour}:${String(miami.minute).padStart(2, '0')}`,
-    });
-  }
-
-  const fullNightly = scope === 'full' || force || isMiamiDailyMembershipAuditTime();
-
-  const results = fullNightly
+  const results = fullPlatform
     ? await syncAllPlatformMemberEntitlements({ enforceInactiveWithoutStripe: true })
     : await syncAllStripeLinkedMembers();
 
@@ -50,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    mode: fullNightly ? 'full_platform' : 'stripe_discord_linked',
+    mode: fullPlatform ? 'full_platform' : 'stripe_discord_linked',
     total: results.length,
     changed: changed.length,
     downgraded: downgraded.length,
