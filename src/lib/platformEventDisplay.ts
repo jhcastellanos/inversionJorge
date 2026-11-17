@@ -11,9 +11,15 @@ import {
 
 const DISPLAY_TZ = 'America/New_York';
 
-/** Ventana en vivo por defecto cuando no hay `ends_at` en base de datos. */
-export const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
-export const DEFAULT_EVENT_DURATION_MINUTES = 120;
+/** Ventana en vivo en inicio: desde `starts_at` hasta +3 h (también si no hay `ends_at` en BD). */
+export const EVENT_LIVE_WINDOW_MS = 3 * 60 * 60 * 1000;
+export const DEFAULT_EVENT_DURATION_MS = EVENT_LIVE_WINDOW_MS;
+export const DEFAULT_EVENT_DURATION_MINUTES = 180;
+
+/** Fin de ventana en vivo / visibilidad en inicio (siempre 3 h después del inicio). */
+export function eventLiveWindowEndFromStart(event: EventLiveTiming): Date {
+  return new Date(new Date(event.starts_at).getTime() + EVENT_LIVE_WINDOW_MS);
+}
 
 export type EventLiveTiming = {
   starts_at: Date | string;
@@ -28,16 +34,22 @@ export function resolveEventEndsAt(event: EventLiveTiming): Date {
   return new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
 }
 
+export function isEventVisibleOnHome(event: EventLiveTiming, now = new Date()): boolean {
+  const start = new Date(event.starts_at);
+  if (start > now) return true;
+  return now <= eventLiveWindowEndFromStart(event);
+}
+
 export function isEventLiveBySchedule(event: EventLiveTiming, now = new Date()): boolean {
   const start = new Date(event.starts_at);
-  const end = resolveEventEndsAt(event);
+  const end = eventLiveWindowEndFromStart(event);
   return start <= now && now <= end;
 }
 
-/** En vivo en inicio/CRM: horario, manual (force_live) o no si suppress_live. Siempre termina al llegar `ends_at`. */
+/** En vivo en inicio/CRM: horario, manual (force_live) o no si suppress_live. Corta a las 3 h desde el inicio. */
 export function isEventLive(event: EventLiveTiming, now = new Date()): boolean {
   if (event.suppress_live) return false;
-  const end = resolveEventEndsAt(event);
+  const end = eventLiveWindowEndFromStart(event);
   if (now > end) return false;
   if (event.force_live) return true;
   return isEventLiveBySchedule(event, now);

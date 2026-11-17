@@ -14,6 +14,13 @@ import {
 
 export type { ContentAccess };
 
+/** Portal CRM: solo con rol asignado en plataforma (no basta con suscripción sin rol). */
+export function canEnterMemberPortal(role: PlatformRole | null): boolean {
+  if (!role) return false;
+  const permissions = getPermissionsForRole(role);
+  return permissions.alumno || permissions.admin || permissions.soporte;
+}
+
 export type MemberAccessInfo = {
   hasAccess: boolean;
   subscriptions: Array<{
@@ -38,10 +45,9 @@ export async function getMemberAccess(user: PlatformUserRow): Promise<MemberAcce
   const role = parsePlatformRole(userSynced.platform_role);
   const permissions = getPermissionsForRole(role);
 
-  const hasRoleAccess =
-    role !== null && (permissions.alumno || permissions.admin || permissions.soporte);
+  const hasRoleAccess = canEnterMemberPortal(role);
 
-  /** Sin rol y sin suscripción activa → onboarding */
+  /** Sin rol asignado → onboarding (la suscripción sola no abre el CRM) */
   const hasAccess = hasRoleAccess;
 
   let source: MemberAccessInfo['source'] = 'none';

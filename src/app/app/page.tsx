@@ -3,6 +3,7 @@ import PlatformHomeHub from '../../components/platform/PlatformHomeHub';
 import { PlatformCalendarEvent } from '../../lib/platformContent';
 import {
   filterEventsByMemberAccess,
+  isEventVisibleOnHome,
   serializeEvent,
   splitLiveAndUpcoming,
 } from '../../lib/platformEventDisplay';
@@ -14,6 +15,8 @@ export default async function AppHomePage() {
   const { user, access } = await requireMemberSession();
 
   const isPlatformAdmin = access.role === 'admin';
+
+  await PlatformCalendarEvent.autoExpireHomeEvents();
 
   let rows = isPlatformAdmin
     ? await PlatformCalendarEvent.findAllAdmin()
@@ -29,9 +32,12 @@ export default async function AppHomePage() {
 
   const visible = filterEventsByMemberAccess(rows, access, { adminSeeAll: isPlatformAdmin });
 
-  const publishedVisible = isPlatformAdmin ? visible : visible.filter((e) => e.is_published);
+  const now = new Date();
+  const publishedVisible = (isPlatformAdmin ? visible : visible.filter((e) => e.is_published)).filter(
+    (e) => isEventVisibleOnHome(e, now)
+  );
 
-  const { live, upcoming } = splitLiveAndUpcoming(publishedVisible);
+  const { live, upcoming } = splitLiveAndUpcoming(publishedVisible, now);
 
   return (
     <PlatformHomeHub

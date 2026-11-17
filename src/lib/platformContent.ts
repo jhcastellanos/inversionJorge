@@ -155,15 +155,36 @@ export const PlatformCalendarEvent = {
     }
   },
 
-  /** Ventana para inicio: eventos en vivo recientes + próximos */
+  /** Desactiva eventos cuya ventana de inicio (3 h) ya pasó: ocultos en inicio y sin EN VIVO forzado. */
+  async autoExpireHomeEvents(): Promise<number> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE platform_calendar_events
+         SET force_live = false,
+             suppress_live = true,
+             is_published = false,
+             ends_at = COALESCE(ends_at, starts_at + INTERVAL '3 hours'),
+             updated_at = NOW()
+         WHERE (is_published = true OR force_live = true)
+           AND NOW() > starts_at + INTERVAL '3 hours'
+         RETURNING id`
+      );
+      return result.rowCount ?? 0;
+    } finally {
+      client.release();
+    }
+  },
+
+  /** Ventana para inicio: próximos o dentro de las 3 h desde `starts_at` */
   async findPublishedForHome(): Promise<PlatformCalendarEventRow[]> {
     const client = await pool.connect();
     try {
       const result = await client.query(
         `SELECT * FROM platform_calendar_events
          WHERE is_published = true
-           AND starts_at >= NOW() - INTERVAL '2 days'
            AND starts_at <= NOW() + INTERVAL '120 days'
+           AND starts_at + INTERVAL '3 hours' >= NOW()
          ORDER BY starts_at ASC`
       );
       return result.rows;

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMemberFromRequest } from '../../../../../lib/memberAuth';
 import { PlatformUser } from '../../../../../lib/platformUsers';
-import { getMemberAccess } from '../../../../../lib/memberAccess';
+import { canEnterMemberPortal, getMemberAccess } from '../../../../../lib/memberAccess';
+import { parsePlatformRole } from '../../../../../lib/platformRoles';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,10 +18,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
   }
 
+  if (!canEnterMemberPortal(parsePlatformRole(user.platform_role))) {
+    return NextResponse.json(
+      { error: 'Necesitas que soporte te asigne un rol en la plataforma' },
+      { status: 403 }
+    );
+  }
+
   const access = await getMemberAccess(user);
   if (!access.hasAccess) {
     return NextResponse.json(
-      { error: 'Necesitas una membresía activa para continuar' },
+      { error: 'Necesitas que soporte te asigne un rol en la plataforma' },
       { status: 403 }
     );
   }
