@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LandingAuthPanel from '../components/platform/LandingAuthPanel';
+import DiscordJoinButton from '../components/platform/DiscordJoinButton';
 import MarketingTopBar from '../components/platform/MarketingTopBar';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../lib/memberAuth';
 import { PlatformUser } from '../lib/platformUsers';
@@ -43,6 +44,10 @@ export default async function LandingPage({ searchParams }: PageProps) {
               Este es el punto de entrada: inicia sesión o crea cuenta para entrar al CRM (eventos en vivo,
               calendario y clases). Necesitas membresía Stripe o un rol asignado por el equipo.
             </p>
+
+            <div className="mt-8">
+              <DiscordJoinButton variant="primary" className="px-5 py-3" />
+            </div>
 
             <section className="mt-12 grid sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-4">
               {[

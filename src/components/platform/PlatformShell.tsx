@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePlatformPreferences } from './PlatformPreferencesProvider';
+import DiscordJoinButton from './DiscordJoinButton';
 import PlatformPreferencesBar from './PlatformPreferencesBar';
 
 function ShieldIcon({ className }: { className?: string }) {
@@ -146,7 +147,8 @@ export default function PlatformShell({
             </div>
           )}
         </nav>
-        <div className="p-4 border-t ventic-border shrink-0 ventic-surface">
+        <div className="p-4 border-t ventic-border shrink-0 ventic-surface space-y-2">
+          <DiscordJoinButton variant="primary" className="w-full justify-center" />
           <button type="button" onClick={logout} className={`w-full ${logoutButtonClass}`}>
             {t('nav.logout')}
           </button>
@@ -158,6 +160,7 @@ export default function PlatformShell({
           <p className="text-sm font-medium ventic-muted">{t('shell.platform')}</p>
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <PlatformPreferencesBar userName={userName} />
+            <DiscordJoinButton variant="primary" />
             <button type="button" onClick={logout} className={logoutButtonClass}>
               {t('nav.logout')}
             </button>
@@ -173,6 +176,7 @@ export default function PlatformShell({
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlatformPreferencesBar />
+            <DiscordJoinButton variant="primary" />
             {showAdminNav && (
               <>
                 <Link

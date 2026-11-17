@@ -2,6 +2,9 @@ import type { Messages } from './es';
 
 export const en: Messages = {
   localeName: 'English',
+  marketing: {
+    joinDiscord: 'Join Discord',
+  },
   nav: {
     home: 'Home',
     classes: 'Classes & Training',

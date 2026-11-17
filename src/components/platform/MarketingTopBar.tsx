@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import DiscordJoinButton from './DiscordJoinButton';
 import PlatformPreferencesBar from './PlatformPreferencesBar';
 
 type Props = {
@@ -21,6 +22,7 @@ export default function MarketingTopBar({
         </Link>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <PlatformPreferencesBar />
+          <DiscordJoinButton variant="primary" />
           <Link
             href={ctaHref}
             className="px-3 sm:px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"

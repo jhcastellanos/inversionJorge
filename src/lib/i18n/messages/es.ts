@@ -1,5 +1,8 @@
 export const es = {
   localeName: 'Español',
+  marketing: {
+    joinDiscord: 'Entrar al Discord',
+  },
   nav: {
     home: 'Inicio',
     classes: 'Clases y Entrenamientos',
@@ -98,6 +101,9 @@ export const es = {
 
 export type Messages = {
   localeName: string;
+  marketing: {
+    joinDiscord: string;
+  };
   nav: Record<string, string>;
   shell: Record<string, string>;
   home: Record<string, string>;
