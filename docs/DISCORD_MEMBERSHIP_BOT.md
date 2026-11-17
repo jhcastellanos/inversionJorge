@@ -52,7 +52,9 @@ npm run membership:sync
 ## Disparadores automáticos en producción
 
 - Webhook Stripe: `customer.subscription.updated`, `customer.subscription.deleted`, y tras `invoice.payment_succeeded` de membresía.
-- Cron (opcional en Vercel): `GET /api/cron/sync-memberships` cada 15–60 min.
+- **Cron en Vercel** (`vercel.json`, cada hora en punto UTC): solo ejecuta la auditoría completa a las **19:00 hora Miami** (7 pm, `America/New_York`). Recorre **todos** los `platform_users`, consulta Stripe y deja en `visitante` + quita Trader en Discord a quien no tenga membresía activa. Admin/soporte no se tocan.
+  - Define `CRON_SECRET` en Vercel (Vercel envía `Authorization: Bearer …` en los cron jobs).
+  - Prueba manual: `curl -H "Authorization: Bearer $CRON_SECRET" "https://TU_DOMINIO/api/cron/sync-memberships?force=1"`.
 
 ## Rol `visitante`
 

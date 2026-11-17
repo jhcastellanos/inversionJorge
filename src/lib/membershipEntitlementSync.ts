@@ -57,7 +57,15 @@ export async function isStripeMembershipActiveForUser(user: PlatformUserRow): Pr
   }
 }
 
-export async function syncMemberEntitlementsForUser(userId: number): Promise<EntitlementSyncResult | null> {
+type SyncMemberOptions = {
+  /** Auditoría nocturna: sin Stripe activo → visitante aunque no tengan Discord vinculado. */
+  enforceInactiveWithoutStripe?: boolean;
+};
+
+export async function syncMemberEntitlementsForUser(
+  userId: number,
+  options?: SyncMemberOptions
+): Promise<EntitlementSyncResult | null> {
   await ensurePlatformUserDiscordSchema();
   const user = await PlatformUser.findById(userId);
   if (!user) return null;
@@ -75,7 +83,7 @@ export async function syncMemberEntitlementsForUser(userId: number): Promise<Ent
     };
   }
 
-  if (!user.stripe_customer_id && !user.discord_user_id) {
+  if (!user.stripe_customer_id && !user.discord_user_id && !options?.enforceInactiveWithoutStripe) {
     return {
       userId: user.id,
       email: user.email,
@@ -165,6 +173,18 @@ export async function syncAllStripeLinkedMembers() {
   const results: EntitlementSyncResult[] = [];
   for (const u of users) {
     const r = await syncMemberEntitlementsForUser(u.id);
+    if (r) results.push(r);
+  }
+  return results;
+}
+
+/** Recorre todos los usuarios de plataforma (admin/soporte no se modifican). */
+export async function syncAllPlatformMemberEntitlements(options?: SyncMemberOptions) {
+  await ensurePlatformUserDiscordSchema();
+  const users = await PlatformUser.findAll();
+  const results: EntitlementSyncResult[] = [];
+  for (const u of users) {
+    const r = await syncMemberEntitlementsForUser(u.id, options);
     if (r) results.push(r);
   }
   return results;
