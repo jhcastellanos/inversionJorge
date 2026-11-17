@@ -3,6 +3,8 @@ import { comparePassword } from '../../../../lib/auth';
 import { PlatformUser } from '../../../../lib/platformUsers';
 import { getMemberAccess } from '../../../../lib/memberAccess';
 import { signMemberJwt, MEMBER_COOKIE, memberCookieOptions } from '../../../../lib/memberAuth';
+import { ensurePlatformUserDiscordSchema } from '../../../../lib/platformUserDiscordSchema';
+import { userHasDiscordLinked } from '../../../../lib/memberDiscordGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,12 +29,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
     }
 
-    const access = await getMemberAccess(user);
-    const token = signMemberJwt({ userId: user.id, email: user.email });
+    await ensurePlatformUserDiscordSchema();
+    const fresh = (await PlatformUser.findById(user.id)) ?? user;
+    const access = await getMemberAccess(fresh);
+    const token = signMemberJwt({ userId: fresh.id, email: fresh.email });
     const res = NextResponse.json({
       success: true,
-      user: { id: user.id, email: user.email, full_name: user.full_name },
+      user: { id: fresh.id, email: fresh.email, full_name: fresh.full_name },
       access,
+      discordLinked: userHasDiscordLinked(fresh),
     });
     res.cookies.set(MEMBER_COOKIE, token, memberCookieOptions());
     return res;

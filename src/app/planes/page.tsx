@@ -16,7 +16,14 @@ export default async function PlanesPage() {
   if (session) {
     const user = await PlatformUser.findById(session.userId);
     if (user) {
-      const access = await getMemberAccess(user);
+      const { ensurePlatformUserDiscordSchema } = await import('../../lib/platformUserDiscordSchema');
+      const { userHasDiscordLinked } = await import('../../lib/memberDiscordGate');
+      await ensurePlatformUserDiscordSchema();
+      const fresh = (await PlatformUser.findById(user.id)) ?? user;
+      if (!userHasDiscordLinked(fresh)) {
+        redirect('/conectar-discord');
+      }
+      const access = await getMemberAccess(fresh);
       if (access.hasAccess) redirect('/app/planes');
     }
   }

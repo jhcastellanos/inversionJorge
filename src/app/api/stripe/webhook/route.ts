@@ -3,6 +3,8 @@ import Stripe from 'stripe';
 import { Customer, Order, Subscription, Membership } from '../../../../lib/models';
 import { processTermsAfterPayment } from '../../../../lib/terms';
 import { recordReferralConversionIfEligible } from '../../../../lib/referrals';
+import { syncMemberEntitlementsByStripeCustomerId } from '../../../../lib/membershipEntitlementSync';
+import { PlatformUser } from '../../../../lib/platformUsers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -155,6 +157,14 @@ export async function POST(req: NextRequest) {
         } else {
           console.warn(`⚠️ Missing name or email for terms processing on subscription ${invoice.subscription}`);
         }
+
+        const u = await PlatformUser.findByEmail(email);
+        if (u && !u.stripe_customer_id) {
+          await PlatformUser.linkStripeCustomer(u.id, customerId);
+        }
+        await syncMemberEntitlementsByStripeCustomerId(customerId).catch((e) =>
+          console.warn('Entitlement sync after invoice:', e)
+        );
       } catch (error) {
         console.error('❌ Error creating subscription from invoice:', error);
       }
@@ -168,10 +178,21 @@ export async function POST(req: NextRequest) {
     const subscription = event.data.object as Stripe.Subscription;
     
     try {
-      // Update subscription status in database
-      await Subscription.updateStatus(subscription.id, subscription.status);
-      
-      console.log(`✅ Subscription ${subscription.id} status updated to: ${subscription.status}`);
+      await Subscription.updateStatus(
+        subscription.id,
+        subscription.status,
+        Boolean(subscription.cancel_at_period_end)
+      );
+
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer.id;
+
+      await syncMemberEntitlementsByStripeCustomerId(customerId);
+      console.log(
+        `✅ Subscription ${subscription.id} → ${subscription.status}; entitlements synced for ${customerId}`
+      );
     } catch (error) {
       console.error('Error handling subscription update:', error);
     }

@@ -7,6 +7,7 @@ export type PlatformUserRow = {
   full_name: string;
   google_id: string | null;
   stripe_customer_id: string | null;
+  discord_user_id: string | null;
   platform_role: string | null;
   onboarding_completed: boolean;
   created_at: Date;
@@ -139,6 +140,47 @@ export const PlatformUser = {
         'SELECT * FROM platform_users ORDER BY created_at DESC'
       );
       return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async listForMembershipSync(): Promise<PlatformUserRow[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM platform_users
+         WHERE stripe_customer_id IS NOT NULL
+            OR discord_user_id IS NOT NULL
+         ORDER BY id ASC`
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  },
+
+  async setDiscordUserId(id: number, discordUserId: string | null) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE platform_users SET discord_user_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [discordUserId, id]
+      );
+      return result.rows[0] ?? null;
+    } finally {
+      client.release();
+    }
+  },
+
+  async linkStripeCustomer(id: number, stripeCustomerId: string) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE platform_users SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [stripeCustomerId, id]
+      );
+      return result.rows[0] ?? null;
     } finally {
       client.release();
     }

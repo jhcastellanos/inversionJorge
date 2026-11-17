@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
     const user = await PlatformUser.create({ email, full_name: fullName, password_hash });
 
     const token = signMemberJwt({ userId: user.id, email: user.email });
-    const res = NextResponse.json({ success: true, user: { id: user.id, email: user.email, full_name: user.full_name } });
+    const res = NextResponse.json({
+      success: true,
+      user: { id: user.id, email: user.email, full_name: user.full_name },
+      discordLinked: false,
+    });
     res.cookies.set(MEMBER_COOKIE, token, memberCookieOptions());
     return res;
   } catch (error) {

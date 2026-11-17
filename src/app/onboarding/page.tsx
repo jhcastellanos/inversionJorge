@@ -18,9 +18,17 @@ export default async function OnboardingPage() {
   const user = await PlatformUser.findById(session.userId);
   if (!user) redirect('/');
 
-  const access = await getMemberAccess(user);
+  const { ensurePlatformUserDiscordSchema } = await import('../../lib/platformUserDiscordSchema');
+  const { userHasDiscordLinked } = await import('../../lib/memberDiscordGate');
+  await ensurePlatformUserDiscordSchema();
+  const freshUser = (await PlatformUser.findById(user.id)) ?? user;
+  if (!userHasDiscordLinked(freshUser)) {
+    redirect('/conectar-discord');
+  }
+
+  const access = await getMemberAccess(freshUser);
   if (access.hasAccess) {
-    await syncOnboardingIfHasAccess(user, access);
+    await syncOnboardingIfHasAccess(freshUser, access);
     redirect('/app');
   }
 
@@ -34,7 +42,7 @@ export default async function OnboardingPage() {
           que finalicen tu inscripción.
         </p>
       </header>
-      <OnboardingWizard subscriptionActive={access.subscriptionActive} userEmail={user.email} />
+      <OnboardingWizard subscriptionActive={access.subscriptionActive} userEmail={freshUser.email} />
     </div>
   );
 }

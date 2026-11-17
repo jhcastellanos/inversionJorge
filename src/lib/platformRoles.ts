@@ -1,4 +1,4 @@
-export const PLATFORM_ROLES = ['admin', 'soporte', 'inversor', 'trader', 'alumno'] as const;
+export const PLATFORM_ROLES = ['admin', 'soporte', 'inversor', 'trader', 'alumno', 'visitante'] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
 export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
@@ -7,7 +7,13 @@ export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
   inversor: 'Inversor',
   trader: 'Trader',
   alumno: 'Estudiante',
+  visitante: 'Visitante',
 };
+
+/** Rol cuando la membresía Stripe no está activa (sin acceso al CRM). */
+export const MEMBERSHIP_INACTIVE_PLATFORM_ROLE: PlatformRole = 'visitante';
+/** Rol de plataforma ligado a membresía Stripe activa (sincronizado con Discord Trader). */
+export const MEMBERSHIP_ACTIVE_PLATFORM_ROLE: PlatformRole = 'trader';
 
 export type PlatformPermissions = {
   /** Panel /admin y gestión total */
@@ -73,6 +79,8 @@ export function getPermissionsForRole(role: PlatformRole | null): PlatformPermis
       return { admin: false, soporte: false, inversor: false, trader: true, alumno: true };
     case 'alumno':
       return { admin: false, soporte: false, inversor: false, trader: false, alumno: true };
+    case 'visitante':
+      return { admin: false, soporte: false, inversor: false, trader: false, alumno: false };
     default:
       return {
         admin: false,
@@ -192,6 +200,11 @@ export function getContentAccessForRole(role: PlatformRole | null): ContentAcces
       return {
         classes: { basico: true, avanzado: false },
         events: { basico: true, medio: false, avanzado: false },
+      };
+    case 'visitante':
+      return {
+        classes: { basico: false, avanzado: false },
+        events: { basico: false, medio: false, avanzado: false },
       };
     default:
       return {

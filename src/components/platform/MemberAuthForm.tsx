@@ -53,7 +53,9 @@ export default function MemberAuthForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error');
 
-      if (data.access?.hasAccess) {
+      if (!data.discordLinked) {
+        router.push('/conectar-discord');
+      } else if (data.access?.hasAccess) {
         router.push('/app');
       } else {
         router.push('/onboarding');

@@ -2,7 +2,12 @@ import Stripe from 'stripe';
 import { Subscription } from './models';
 import type { PlatformUserRow } from './platformUsers';
 import { PlatformUser } from './platformUsers';
-import { parsePlatformRole, type PlatformRole } from './platformRoles';
+import {
+  MEMBERSHIP_INACTIVE_PLATFORM_ROLE,
+  parsePlatformRole,
+  type PlatformRole,
+  isPlatformStaffRole,
+} from './platformRoles';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
@@ -69,14 +74,24 @@ export async function getActiveSubscriptionInfo(
 }
 
 /**
- * Inversor/Trader sin suscripción activa → Estudiante (alumno). Admin y Soporte no se tocan.
+ * Usuarios con Stripe: sin suscripción activa → visitante (sin CRM).
+ * Sin Stripe: inversor/trader sin sub → alumno (comportamiento anterior).
+ * Admin y soporte no se tocan.
  */
 export async function syncPlatformRoleWithSubscription(
   user: PlatformUserRow,
   subscriptionActive: boolean
 ): Promise<PlatformUserRow> {
   const role = parsePlatformRole(user.platform_role);
-  if (!role || role === 'admin' || role === 'soporte') {
+  if (!role || isPlatformStaffRole(role)) {
+    return user;
+  }
+
+  if (user.stripe_customer_id) {
+    if (!subscriptionActive && user.platform_role !== MEMBERSHIP_INACTIVE_PLATFORM_ROLE) {
+      const updated = await PlatformUser.updatePlatformRole(user.id, MEMBERSHIP_INACTIVE_PLATFORM_ROLE);
+      return updated ?? { ...user, platform_role: MEMBERSHIP_INACTIVE_PLATFORM_ROLE };
+    }
     return user;
   }
 

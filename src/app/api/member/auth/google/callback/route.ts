@@ -3,6 +3,8 @@ import { getSiteBaseUrl } from '../../../../../../lib/siteUrl';
 import { PlatformUser } from '../../../../../../lib/platformUsers';
 import { getMemberAccess } from '../../../../../../lib/memberAccess';
 import { syncOnboardingIfHasAccess } from '../../../../../../lib/memberOnboarding';
+import { ensurePlatformUserDiscordSchema } from '../../../../../../lib/platformUserDiscordSchema';
+import { postDiscordLinkDestination, userHasDiscordLinked } from '../../../../../../lib/memberDiscordGate';
 import { signMemberJwt, MEMBER_COOKIE, memberCookieOptions } from '../../../../../../lib/memberAuth';
 
 export const runtime = 'nodejs';
@@ -88,7 +90,11 @@ export async function GET(req: NextRequest) {
   }
   const token = signMemberJwt({ userId: user.id, email: user.email });
 
-  const destination = access.hasAccess ? `${baseUrl}/app` : `${baseUrl}/onboarding`;
+  await ensurePlatformUserDiscordSchema();
+  const fresh = (await PlatformUser.findById(user.id)) ?? user;
+  const destination = userHasDiscordLinked(fresh)
+    ? `${baseUrl}${await postDiscordLinkDestination(user.id)}`
+    : `${baseUrl}/conectar-discord`;
 
   const res = NextResponse.redirect(destination);
   res.cookies.set(MEMBER_COOKIE, token, memberCookieOptions());
