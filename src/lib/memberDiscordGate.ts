@@ -20,7 +20,22 @@ export async function redirectIfDiscordRequired(
   }
 }
 
-export async function postDiscordLinkDestination(userId: number): Promise<string> {
+export function safeMemberNextPath(next: string | null | undefined): string | null {
+  if (!next?.trim()) return null;
+  const path = next.trim();
+  if (!path.startsWith('/') || path.startsWith('//')) return null;
+  const pathname = path.split('?')[0] ?? path;
+  if (pathname.startsWith('/api') || pathname.startsWith('/admin')) return null;
+  return path;
+}
+
+export async function postDiscordLinkDestination(
+  userId: number,
+  next?: string | null
+): Promise<string> {
+  const safeNext = safeMemberNextPath(next);
+  if (safeNext) return safeNext;
+
   const user = await PlatformUser.findById(userId);
   if (!user) return '/';
   const access = await getMemberAccess(user);

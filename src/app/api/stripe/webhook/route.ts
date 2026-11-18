@@ -4,7 +4,7 @@ import { Customer, Order, Subscription, Membership } from '../../../../lib/model
 import { processTermsAfterPayment } from '../../../../lib/terms';
 import { recordReferralConversionIfEligible } from '../../../../lib/referrals';
 import { syncMemberEntitlementsByStripeCustomerId } from '../../../../lib/membershipEntitlementSync';
-import { PlatformUser } from '../../../../lib/platformUsers';
+import { linkPlatformUserToStripeCustomerAndSync } from '../../../../lib/linkPlatformUserStripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -31,10 +31,25 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session;
     
     // Check if this is a subscription (has subscription field)
-    if (session.subscription) {
-      // Subscription checkout completed - no additional processing needed
-      // The subscription is already active in Stripe
-      console.log('✅ Subscription created:', session.subscription);
+    if (session.mode === 'subscription' && session.subscription) {
+      console.log('✅ Subscription checkout completed:', session.subscription);
+      const customerId =
+        typeof session.customer === 'string' ? session.customer : session.customer?.id;
+      const email =
+        session.metadata?.customerEmail?.trim() ||
+        session.customer_details?.email?.trim() ||
+        '';
+      const platformUserId = session.metadata?.platformUserId
+        ? Number.parseInt(session.metadata.platformUserId, 10)
+        : undefined;
+
+      if (customerId && email) {
+        await linkPlatformUserToStripeCustomerAndSync(customerId, email, {
+          platformUserId: Number.isFinite(platformUserId) ? platformUserId : undefined,
+        });
+      } else {
+        console.warn('⚠️ Checkout subscription sin customer/email para vincular platform_user');
+      }
     }
     
     // Handle one-time course purchases (no subscription)
@@ -69,10 +84,17 @@ export async function POST(req: NextRequest) {
       hasMembershipId: !!invoice.metadata?.membershipId,
     });
     
-    // Only process if this is a subscription invoice with metadata
-    if (invoice.subscription && invoice.metadata?.membershipId) {
+    if (invoice.subscription) {
       try {
-        const membershipId = parseInt(invoice.metadata.membershipId);
+        const stripeSubscription = await stripe.subscriptions.retrieve(
+          invoice.subscription as string
+        );
+        const membershipIdRaw =
+          invoice.metadata?.membershipId || stripeSubscription.metadata?.membershipId;
+        if (!membershipIdRaw) {
+          console.log('ℹ️ Invoice de suscripción sin membershipId, omitiendo');
+        } else {
+        const membershipId = parseInt(membershipIdRaw, 10);
         const customerId = invoice.customer as string;
         
         // Use invoice customer_email and customer_name as primary source
@@ -84,15 +106,19 @@ export async function POST(req: NextRequest) {
         if (!email && invoice.metadata?.customerEmail) {
           email = invoice.metadata.customerEmail;
         }
+        if (!email && stripeSubscription.metadata?.customerEmail) {
+          email = stripeSubscription.metadata.customerEmail;
+        }
         if (!name && invoice.metadata?.customerName) {
           name = invoice.metadata.customerName;
+        }
+        if (!name && stripeSubscription.metadata?.customerName) {
+          name = stripeSubscription.metadata.customerName;
         }
         
         if (!email) {
           console.error('❌ Missing customer email in invoice');
-          return NextResponse.json({ received: true });
-        }
-
+        } else {
         // Ensure the subscription exists in the database (it may have been
         // created already by the success page; create it here otherwise).
         const existingSubscription = await Subscription.findByStripeId(invoice.subscription as string);
@@ -112,9 +138,6 @@ export async function POST(req: NextRequest) {
           console.log(`ℹ️ Subscription already exists in DB: ${invoice.subscription}`);
         }
 
-        const stripeSubscription = await stripe.subscriptions.retrieve(
-          invoice.subscription as string
-        );
         const referralCode =
           stripeSubscription.metadata?.referralCode ||
           invoice.metadata?.referralCode ||
@@ -158,18 +181,17 @@ export async function POST(req: NextRequest) {
           console.warn(`⚠️ Missing name or email for terms processing on subscription ${invoice.subscription}`);
         }
 
-        const u = await PlatformUser.findByEmail(email);
-        if (u && !u.stripe_customer_id) {
-          await PlatformUser.linkStripeCustomer(u.id, customerId);
+        const platformUserId = stripeSubscription.metadata?.platformUserId
+          ? Number.parseInt(stripeSubscription.metadata.platformUserId, 10)
+          : undefined;
+        await linkPlatformUserToStripeCustomerAndSync(customerId, email, {
+          platformUserId: Number.isFinite(platformUserId) ? platformUserId : undefined,
+        });
         }
-        await syncMemberEntitlementsByStripeCustomerId(customerId).catch((e) =>
-          console.warn('Entitlement sync after invoice:', e)
-        );
+        }
       } catch (error) {
         console.error('❌ Error creating subscription from invoice:', error);
       }
-    } else {
-      console.log('ℹ️ Not a membership subscription, skipping invoice processing');
     }
   }
 

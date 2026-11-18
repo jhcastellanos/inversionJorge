@@ -1,8 +1,20 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { Subscription, Membership } from '../../../lib/models';
 import { processTermsAfterPayment } from '../../../lib/terms';
 import { recordReferralConversionIfEligible } from '../../../lib/referrals';
+import { linkPlatformUserToStripeCustomerAndSync } from '../../../lib/linkPlatformUserStripe';
+import { MEMBER_COOKIE, verifyMemberJwt } from '../../../lib/memberAuth';
+import { PlatformUser } from '../../../lib/platformUsers';
+import { ensurePlatformUserDiscordSchema } from '../../../lib/platformUserDiscordSchema';
+import { userHasDiscordLinked } from '../../../lib/memberDiscordGate';
+import { getMemberAccess } from '../../../lib/memberAccess';
+import {
+  discordLinkDestination,
+  postAuthDestination,
+  signupUrlForEnrollment,
+} from '../../../lib/memberEnrollmentFlow';
 import Link from 'next/link';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
@@ -114,6 +126,37 @@ export default async function SubscriptionSuccessPage({
         console.error('❌ Error processing terms on success page:', termsError);
       }
     }
+
+    const stripeCustomerId =
+      typeof stripeSubscription.customer === 'string'
+        ? stripeSubscription.customer
+        : stripeSubscription.customer.id;
+    const platformUserId = session.metadata?.platformUserId
+      ? Number.parseInt(session.metadata.platformUserId, 10)
+      : undefined;
+
+    if (customerEmail && stripeCustomerId) {
+      await linkPlatformUserToStripeCustomerAndSync(stripeCustomerId, customerEmail, {
+        platformUserId: Number.isFinite(platformUserId) ? platformUserId : undefined,
+      });
+    }
+
+    const token = cookies().get(MEMBER_COOKIE)?.value;
+    const memberSession = token ? verifyMemberJwt(token) : null;
+    if (memberSession) {
+      await ensurePlatformUserDiscordSchema();
+      const user = await PlatformUser.findById(memberSession.userId);
+      if (user) {
+        const fresh = (await PlatformUser.findById(user.id)) ?? user;
+        if (!userHasDiscordLinked(fresh)) {
+          redirect(discordLinkDestination('/onboarding'));
+        }
+        const access = await getMemberAccess(fresh);
+        if (access.hasAccess) redirect('/app');
+        redirect(postAuthDestination(null));
+      }
+    }
+    redirect(signupUrlForEnrollment('/conectar-discord?next=/onboarding'));
 
     const periodEnd = new Date(stripeSubscription.current_period_end * 1000);
 

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Membership } from '../../../../lib/models';
+import { getMemberFromRequest } from '../../../../lib/memberAuth';
+import { PlatformUser } from '../../../../lib/platformUsers';
+import { ensurePlatformUserDiscordSchema } from '../../../../lib/platformUserDiscordSchema';
+import { userHasDiscordLinked } from '../../../../lib/memberDiscordGate';
 import { getPlanDurationMonths } from '../../../../lib/membershipPlans';
 import { ReferralTrader } from '../../../../lib/referrals';
 import {
@@ -15,8 +19,40 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10
 
 export async function POST(req: NextRequest) {
   try {
-    const { membershipId, customerName, customerEmail, referralCode } = await req.json();
+    const member = getMemberFromRequest(req);
+    if (!member) {
+      return NextResponse.json(
+        {
+          error: 'Crea tu cuenta e inicia sesión antes de suscribirte.',
+          code: 'AUTH_REQUIRED',
+        },
+        { status: 401 }
+      );
+    }
+
+    const platformUser = await PlatformUser.findById(member.userId);
+    if (!platformUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+
+    await ensurePlatformUserDiscordSchema();
+    const freshUser = (await PlatformUser.findById(platformUser.id)) ?? platformUser;
+    if (!userHasDiscordLinked(freshUser)) {
+      return NextResponse.json(
+        {
+          error: 'Debes vincular Discord antes de pagar la membresía.',
+          code: 'DISCORD_REQUIRED',
+          redirect: '/conectar-discord?next=/planes',
+        },
+        { status: 403 }
+      );
+    }
+
+    const { membershipId, referralCode } = await req.json();
     if (!membershipId) return NextResponse.json({ error: 'Missing membershipId' }, { status: 400 });
+
+    const customerName = freshUser.full_name;
+    const customerEmail = freshUser.email;
 
     const membership = await Membership.findById(parseInt(membershipId));
     
@@ -97,7 +133,8 @@ export async function POST(req: NextRequest) {
       membershipId: membership.Id.toString(),
       type: 'membership',
       customerName: customerName || '',
-      customerEmail: customerEmail || '',
+      customerEmail: customerEmail,
+      platformUserId: String(freshUser.id),
     };
     if (validatedReferralCode) {
       sessionMetadata.referralCode = validatedReferralCode;
@@ -111,6 +148,7 @@ export async function POST(req: NextRequest) {
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer_email: customerEmail,
       line_items: [
         {
           price_data: {

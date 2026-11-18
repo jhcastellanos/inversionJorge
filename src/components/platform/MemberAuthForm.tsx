@@ -3,15 +3,19 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { discordLinkDestination, postAuthDestination } from '../../lib/memberEnrollmentFlow';
 
 type Mode = 'login' | 'register';
 
 export default function MemberAuthForm({
   mode,
   variant = 'default',
+  returnTo,
 }: {
   mode: Mode;
   variant?: 'default' | 'dark' | 'landing';
+  /** Ruta interna tras login/registro (p. ej. /planes) */
+  returnTo?: string;
 }) {
   const onLanding = variant === 'landing';
   const onDark = variant === 'dark';
@@ -54,7 +58,9 @@ export default function MemberAuthForm({
       if (!res.ok) throw new Error(data.error || 'Error');
 
       if (!data.discordLinked) {
-        router.push('/conectar-discord');
+        router.push(discordLinkDestination(returnTo));
+      } else if (returnTo) {
+        router.push(postAuthDestination(returnTo));
       } else if (data.access?.hasAccess) {
         router.push('/app');
       } else {
@@ -138,7 +144,11 @@ export default function MemberAuthForm({
             </div>
           </div>
           <a
-            href="/api/member/auth/google"
+            href={
+              returnTo
+                ? `/api/member/auth/google?next=${encodeURIComponent(returnTo)}`
+                : '/api/member/auth/google'
+            }
             className={
               onLanding || onDark
                 ? 'flex w-full items-center justify-center gap-2 rounded-lg border ventic-border ventic-surface py-3 font-medium ventic-text hover:bg-ventic-accent-soft'

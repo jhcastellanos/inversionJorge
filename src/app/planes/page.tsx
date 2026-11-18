@@ -7,12 +7,17 @@ import MarketingTopBar from '../../components/platform/MarketingTopBar';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../../lib/memberAuth';
 import { PlatformUser } from '../../lib/platformUsers';
 import { getMemberAccess } from '../../lib/memberAccess';
+import { discordLinkDestination, signupUrlForEnrollment } from '../../lib/memberEnrollmentFlow';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PlanesPage() {
   const token = cookies().get(MEMBER_COOKIE)?.value;
   const session = token ? verifyMemberJwt(token) : null;
+  if (!session) {
+    redirect(signupUrlForEnrollment('/planes'));
+  }
+
   if (session) {
     const user = await PlatformUser.findById(session.userId);
     if (user) {
@@ -21,7 +26,7 @@ export default async function PlanesPage() {
       await ensurePlatformUserDiscordSchema();
       const fresh = (await PlatformUser.findById(user.id)) ?? user;
       if (!userHasDiscordLinked(fresh)) {
-        redirect('/conectar-discord');
+        redirect(discordLinkDestination('/planes'));
       }
       const access = await getMemberAccess(fresh);
       if (access.hasAccess) redirect('/app/planes');
@@ -48,8 +53,9 @@ export default async function PlanesPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
         <h2 className="text-3xl sm:text-4xl font-extrabold ventic-text mb-4">Planes y cursos</h2>
         <p className="ventic-muted max-w-2xl mx-auto">
-          Elige tu membresía o curso. Tras pagar, contacta al equipo de soporte para completar tu
-          inscripción y activar el acceso al CRM.
+          Para suscribirte necesitas <strong className="ventic-text">cuenta</strong>,{' '}
+          <strong className="ventic-text">Discord vinculado</strong> y luego el pago en Stripe. El acceso al CRM
+          se activa automáticamente tras el pago.
         </p>
       </section>
 

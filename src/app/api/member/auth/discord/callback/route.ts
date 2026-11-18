@@ -9,13 +9,14 @@ import {
 } from '../../../../../../lib/discordOAuth';
 import { PlatformUser } from '../../../../../../lib/platformUsers';
 import { ensurePlatformUserDiscordSchema } from '../../../../../../lib/platformUserDiscordSchema';
-import { postDiscordLinkDestination } from '../../../../../../lib/memberDiscordGate';
+import { postDiscordLinkDestination, safeMemberNextPath } from '../../../../../../lib/memberDiscordGate';
 import { syncMemberEntitlementsByEmail } from '../../../../../../lib/membershipEntitlementSync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const STATE_COOKIE = 'discord_oauth_state';
+const NEXT_COOKIE = 'discord_oauth_next';
 
 export async function GET(req: NextRequest) {
   const host = req.headers.get('host');
@@ -52,9 +53,11 @@ export async function GET(req: NextRequest) {
 
     await syncMemberEntitlementsByEmail(session.email).catch(() => null);
 
-    const next = await postDiscordLinkDestination(session.userId);
+    const nextCookie = req.cookies.get(NEXT_COOKIE)?.value;
+    const next = await postDiscordLinkDestination(session.userId, safeMemberNextPath(nextCookie));
     const res = NextResponse.redirect(new URL(next, baseUrl));
     res.cookies.delete(STATE_COOKIE);
+    res.cookies.delete(NEXT_COOKIE);
     return res;
   } catch (e) {
     console.error('Discord OAuth callback:', e);

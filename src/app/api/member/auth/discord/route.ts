@@ -6,11 +6,13 @@ import {
   discordRedirectUri,
   getDiscordOAuthConfig,
 } from '../../../../../lib/discordOAuth';
+import { safeMemberNextPath } from '../../../../../lib/memberDiscordGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const STATE_COOKIE = 'discord_oauth_state';
+const NEXT_COOKIE = 'discord_oauth_next';
 
 export async function GET(req: NextRequest) {
   const session = getMemberFromRequest(req);
@@ -41,5 +43,17 @@ export async function GET(req: NextRequest) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   });
+
+  const next = safeMemberNextPath(req.nextUrl.searchParams.get('next'));
+  if (next) {
+    res.cookies.set(NEXT_COOKIE, next, {
+      httpOnly: true,
+      path: '/',
+      maxAge: 600,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+  }
+
   return res;
 }

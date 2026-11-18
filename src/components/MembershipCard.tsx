@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import TermsAndConditionsModal from './TermsAndConditionsModal';
 import { getMembershipPresentation } from '../lib/membershipPlans';
+import { signupUrlForEnrollment } from '../lib/memberEnrollmentFlow';
 import { getStoredReferralCode } from '../lib/referralStorage';
 
 interface MembershipCardProps {
@@ -41,6 +42,38 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/member/me');
+        if (!res.ok) {
+          if (!cancelled) setIsLoggedIn(false);
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && data?.user) {
+          setIsLoggedIn(true);
+          setCustomerName(data.user.full_name ?? '');
+          setCustomerEmail(data.user.email ?? '');
+        }
+      } catch {
+        if (!cancelled) setIsLoggedIn(false);
+      } finally {
+        if (!cancelled) setSessionLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const goToSignup = () => {
+    window.location.href = signupUrlForEnrollment('/planes');
+  };
 
   const plan = getMembershipPresentation(membership, monthlyBasePrice);
   const includedFeatures = plan.features.filter(f => f.included).map(f => f.label);
@@ -48,6 +81,11 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
   const intervalLabel = plan.durationMonths === 1 ? '/mes' : `cada ${plan.durationMonths} meses`;
 
   const handleSubscribeClick = () => {
+    if (!sessionLoaded) return;
+    if (!isLoggedIn) {
+      goToSignup();
+      return;
+    }
     setShowPaymentForm(true);
   };
 
@@ -87,13 +125,20 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           membershipId: membership.Id,
-          customerName,
-          customerEmail,
           ...(referralCode ? { referralCode } : {}),
         }),
       });
 
       const data = await res.json();
+
+      if (res.status === 401 && data.code === 'AUTH_REQUIRED') {
+        goToSignup();
+        return;
+      }
+      if (res.status === 403 && data.code === 'DISCORD_REQUIRED' && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
 
       if (data.url) {
         window.location.href = data.url;
@@ -255,8 +300,11 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
             <div className="border-b p-6">
-              <h2 className="text-2xl font-bold text-gray-900">Completar Suscripción</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Confirmar suscripción</h2>
               <p className="text-gray-600 mt-1">{membership.Name}</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Pago con tu cuenta de la plataforma. Stripe usará el email registrado.
+              </p>
             </div>
 
             <div className="p-6">
@@ -276,23 +324,21 @@ export default function MembershipCard({ membership, monthlyBasePrice, accent = 
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Nombre Completo</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Nombre</label>
                   <input
                     type="text"
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Tu nombre"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none"
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Email de la cuenta</label>
                   <input
                     type="email"
                     value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none"
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700"
                   />
                 </div>
               </div>

@@ -5,7 +5,11 @@ import MarketingTopBar from '../../components/platform/MarketingTopBar';
 import { MEMBER_COOKIE, verifyMemberJwt } from '../../lib/memberAuth';
 import { PlatformUser } from '../../lib/platformUsers';
 import { ensurePlatformUserDiscordSchema } from '../../lib/platformUserDiscordSchema';
-import { userHasDiscordLinked, postDiscordLinkDestination } from '../../lib/memberDiscordGate';
+import {
+  userHasDiscordLinked,
+  postDiscordLinkDestination,
+  safeMemberNextPath,
+} from '../../lib/memberDiscordGate';
 import { DISCORD_INVITE_URL } from '../../lib/communityLinks';
 
 export const runtime = 'nodejs';
@@ -19,7 +23,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   discord_callback: 'Error al conectar con Discord. Intenta otra vez.',
 };
 
-type PageProps = { searchParams?: { error?: string } };
+type PageProps = { searchParams?: { error?: string; next?: string } };
 
 export default async function ConectarDiscordPage({ searchParams }: PageProps) {
   const token = cookies().get(MEMBER_COOKIE)?.value;
@@ -30,9 +34,15 @@ export default async function ConectarDiscordPage({ searchParams }: PageProps) {
   const user = await PlatformUser.findById(session.userId);
   if (!user) redirect('/');
 
+  const nextPath = safeMemberNextPath(searchParams?.next);
+
   if (userHasDiscordLinked(user)) {
-    redirect(await postDiscordLinkDestination(user.id));
+    redirect(await postDiscordLinkDestination(user.id, nextPath));
   }
+
+  const discordAuthHref = nextPath
+    ? `/api/member/auth/discord?next=${encodeURIComponent(nextPath)}`
+    : '/api/member/auth/discord';
 
   const errKey = searchParams?.error;
   const errMsg = errKey ? ERROR_MESSAGES[errKey] ?? 'Error desconocido' : null;
@@ -59,7 +69,7 @@ export default async function ConectarDiscordPage({ searchParams }: PageProps) {
           ) : null}
 
           <a
-            href="/api/member/auth/discord"
+            href={discordAuthHref}
             className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#5865F2] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#4752C4]"
           >
             Conectar con Discord

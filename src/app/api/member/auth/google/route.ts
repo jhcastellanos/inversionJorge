@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSiteBaseUrl } from '../../../../../lib/siteUrl';
+import { MEMBER_AUTH_NEXT_COOKIE } from '../../../../../lib/memberEnrollmentFlow';
+import { safeMemberNextPath } from '../../../../../lib/memberDiscordGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,5 +26,20 @@ export async function GET(req: NextRequest) {
     prompt: 'select_account',
   });
 
-  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+  const res = NextResponse.redirect(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  );
+
+  const next = safeMemberNextPath(req.nextUrl.searchParams.get('next'));
+  if (next) {
+    res.cookies.set(MEMBER_AUTH_NEXT_COOKIE, next, {
+      httpOnly: true,
+      path: '/',
+      maxAge: 600,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+  }
+
+  return res;
 }

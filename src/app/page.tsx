@@ -7,17 +7,21 @@ import MarketingTopBar from '../components/platform/MarketingTopBar';
 import { verifyMemberJwt, MEMBER_COOKIE } from '../lib/memberAuth';
 import { PlatformUser } from '../lib/platformUsers';
 import { getMemberAccess } from '../lib/memberAccess';
+import { postAuthDestination, discordLinkDestination } from '../lib/memberEnrollmentFlow';
+import { safeMemberNextPath } from '../lib/memberDiscordGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type PageProps = {
-  searchParams?: { register?: string };
+  searchParams?: { register?: string; returnTo?: string };
 };
 
 export default async function LandingPage({ searchParams }: PageProps) {
   const token = cookies().get(MEMBER_COOKIE)?.value;
   const session = token ? verifyMemberJwt(token) : null;
+
+  const returnTo = safeMemberNextPath(searchParams?.returnTo);
 
   if (session) {
     const user = await PlatformUser.findById(session.userId);
@@ -27,7 +31,10 @@ export default async function LandingPage({ searchParams }: PageProps) {
       await ensurePlatformUserDiscordSchema();
       const fresh = (await PlatformUser.findById(user.id)) ?? user;
       if (!userHasDiscordLinked(fresh)) {
-        redirect('/conectar-discord');
+        redirect(discordLinkDestination(returnTo));
+      }
+      if (returnTo) {
+        redirect(returnTo);
       }
       const access = await getMemberAccess(fresh);
       if (access.hasAccess) redirect('/app');
@@ -80,7 +87,15 @@ export default async function LandingPage({ searchParams }: PageProps) {
           </div>
 
           <div className="lg:sticky lg:top-8">
-            <LandingAuthPanel initialMode={authMode} />
+            <LandingAuthPanel
+              initialMode={authMode}
+              returnTo={returnTo ?? undefined}
+              headline={
+                returnTo === '/planes'
+                  ? 'Paso 1: cuenta en la plataforma'
+                  : undefined
+              }
+            />
           </div>
         </div>
       </main>

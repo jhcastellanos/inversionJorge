@@ -5,8 +5,12 @@ import MemberAuthForm from './MemberAuthForm';
 
 export default function LandingAuthPanel({
   initialMode = 'login',
+  returnTo,
+  headline,
 }: {
   initialMode?: 'login' | 'register';
+  returnTo?: string;
+  headline?: string;
 }) {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
 
@@ -30,14 +34,16 @@ export default function LandingAuthPanel({
           </button>
         </div>
         <h2 className="text-xl font-bold ventic-text mb-1">
-          {mode === 'login' ? 'Entra a la plataforma' : 'Regístrate gratis'}
+          {headline ?? (mode === 'login' ? 'Entra a la plataforma' : 'Regístrate gratis')}
         </h2>
         <p className="text-sm ventic-muted mb-6">
-          {mode === 'login'
-            ? 'Con rol o membresía activa irás directo al calendario y clases en vivo.'
-            : 'Después activa Stripe o pide a un admin que te asigne rol.'}
+          {returnTo
+            ? 'Primero crea tu cuenta (o inicia sesión), vincula Discord y después podrás pagar tu membresía.'
+            : mode === 'login'
+              ? 'Con rol o membresía activa irás directo al calendario y clases en vivo.'
+              : 'Después activa Discord y completa tu membresía en Stripe.'}
         </p>
-        <MemberAuthForm mode={mode} variant="landing" />
+        <MemberAuthForm mode={mode} variant="landing" returnTo={returnTo} />
       </div>
     </div>
   );
