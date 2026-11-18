@@ -9,12 +9,40 @@ export type R2Config = {
   publicBaseUrl: string;
 };
 
+/** Solo el account ID (32 hex), no la URL S3 completa. */
+export function normalizeR2AccountId(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const fromHost = trimmed.match(/([a-f0-9]{32})\.r2\.cloudflarestorage\.com/i);
+  if (fromHost) return fromHost[1].toLowerCase();
+
+  const bare = trimmed.replace(/^https?:\/\//i, '').split('/')[0] ?? '';
+  if (/^[a-f0-9]{32}$/i.test(bare)) return bare.toLowerCase();
+
+  const firstLabel = bare.split('.')[0] ?? '';
+  if (/^[a-f0-9]{32}$/i.test(firstLabel)) return firstLabel.toLowerCase();
+
+  return null;
+}
+
+export function normalizeR2PublicBaseUrl(raw: string): string | null {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 export function getR2Config(): R2Config | null {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_BUCKET_NAME;
-  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
+  const accountId = process.env.R2_ACCOUNT_ID
+    ? normalizeR2AccountId(process.env.R2_ACCOUNT_ID)
+    : null;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  const bucket = process.env.R2_BUCKET_NAME?.trim();
+  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL
+    ? normalizeR2PublicBaseUrl(process.env.R2_PUBLIC_BASE_URL)
+    : null;
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicBaseUrl) {
     return null;
   }
@@ -33,6 +61,7 @@ function createR2Client(cfg: R2Config) {
   return new S3Client({
     region: 'auto',
     endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+    forcePathStyle: true,
     credentials: {
       accessKeyId: cfg.accessKeyId,
       secretAccessKey: cfg.secretAccessKey,
@@ -84,5 +113,9 @@ export async function createPresignedPutUrl(
     ContentType: contentType,
   });
   const uploadUrl = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+  if (!uploadUrl.includes('r2.cloudflarestorage.com') || uploadUrl.includes('.https://')) {
+    console.error('R2 presigned URL inválida; revisa R2_ACCOUNT_ID (solo 32 caracteres hex)');
+    throw new Error('Configuración R2_ACCOUNT_ID inválida');
+  }
   return { uploadUrl, fileUrl: publicObjectUrl(key, cfg), key };
 }
