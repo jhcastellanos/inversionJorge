@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword } from '../../../../lib/auth';
 import { PlatformUser } from '../../../../lib/platformUsers';
 import { signMemberJwt, MEMBER_COOKIE, memberCookieOptions } from '../../../../lib/memberAuth';
+import { sendMemberWelcomeEmail } from '../../../../lib/memberEmails';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,10 @@ export async function POST(req: NextRequest) {
 
     const password_hash = await hashPassword(password);
     const user = await PlatformUser.create({ email, full_name: fullName, password_hash });
+
+    void sendMemberWelcomeEmail(user.email, user.full_name).catch((err) =>
+      console.error('Welcome email error:', err)
+    );
 
     const token = signMemberJwt({ userId: user.id, email: user.email });
     const res = NextResponse.json({

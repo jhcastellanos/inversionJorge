@@ -2,6 +2,7 @@ import { requireMemberSession } from '../../lib/getCurrentMember';
 import { redirect } from 'next/navigation';
 import { syncOnboardingIfHasAccess } from '../../lib/memberOnboarding';
 import PlatformShell from '../../components/platform/PlatformShell';
+import { isPlatformStaffRole } from '../../lib/platformRoles';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,12 @@ export default async function MemberAppLayout({ children }: { children: React.Re
   await syncOnboardingIfHasAccess(user, access);
 
   return (
-    <PlatformShell userName={user.full_name.split(' ')[0]} showAdminNav={access.role === 'admin'}>
+    <PlatformShell
+      userName={user.full_name.split(' ')[0]}
+      showAdminNav={access.role === 'admin'}
+      showSupportAlertsNav={isPlatformStaffRole(access.role)}
+      showOneOnOneNav={access.role !== 'admin'}
+    >
       {children}
     </PlatformShell>
   );

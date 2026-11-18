@@ -35,6 +35,11 @@ function roleAccessSummary(role: PlatformRole | null, subscriptionActive: boolea
       ? `${label}: operativa de trading en vivo, clases y academia básica.`
       : `${label} (rol asignado). Membresía activa requerida para operativas en vivo.`;
   }
+  if (role === 'trader_alumno') {
+    return subscriptionActive
+      ? `${label}: trading en vivo + paquete estudiante vigente.`
+      : `${label}: sin membresía trading activa; conservas acceso de estudiante si tu paquete sigue vigente.`;
+  }
   return `${label}: clases grabadas, retrospectivas y contenido según tu plan.`;
 }
 

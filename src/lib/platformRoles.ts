@@ -1,4 +1,12 @@
-export const PLATFORM_ROLES = ['admin', 'soporte', 'inversor', 'trader', 'alumno', 'visitante'] as const;
+export const PLATFORM_ROLES = [
+  'admin',
+  'soporte',
+  'inversor',
+  'trader',
+  'trader_alumno',
+  'alumno',
+  'visitante',
+] as const;
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
 export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
@@ -6,6 +14,7 @@ export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
   soporte: 'Soporte',
   inversor: 'Inversor',
   trader: 'Trader',
+  trader_alumno: 'Trader + Estudiante',
   alumno: 'Estudiante',
   visitante: 'Visitante',
 };
@@ -76,6 +85,8 @@ export function getPermissionsForRole(role: PlatformRole | null): PlatformPermis
     case 'inversor':
       return { admin: false, soporte: false, inversor: true, trader: true, alumno: true };
     case 'trader':
+      return { admin: false, soporte: false, inversor: false, trader: true, alumno: true };
+    case 'trader_alumno':
       return { admin: false, soporte: false, inversor: false, trader: true, alumno: true };
     case 'alumno':
       return { admin: false, soporte: false, inversor: false, trader: false, alumno: true };
@@ -192,6 +203,7 @@ export function getContentAccessForRole(role: PlatformRole | null): ContentAcces
         events: { basico: true, medio: true, avanzado: true },
       };
     case 'trader':
+    case 'trader_alumno':
       return {
         classes: { basico: true, avanzado: false },
         events: { basico: true, medio: true, avanzado: false },

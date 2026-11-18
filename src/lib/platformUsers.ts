@@ -9,6 +9,7 @@ export type PlatformUserRow = {
   stripe_customer_id: string | null;
   discord_user_id: string | null;
   platform_role: string | null;
+  alumno_access_until: Date | null;
   onboarding_completed: boolean;
   created_at: Date;
   updated_at: Date;
@@ -60,8 +61,8 @@ export const PlatformUser = {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO platform_users (email, full_name, password_hash, google_id, created_at, updated_at)
-         VALUES (LOWER($1), $2, $3, $4, NOW(), NOW())
+        `INSERT INTO platform_users (email, full_name, password_hash, google_id, platform_role, created_at, updated_at)
+         VALUES (LOWER($1), $2, $3, $4, 'visitante', NOW(), NOW())
          RETURNING *`,
         [data.email.trim(), data.full_name.trim(), data.password_hash ?? null, data.google_id ?? null]
       );
@@ -103,6 +104,19 @@ export const PlatformUser = {
       const result = await client.query(
         `UPDATE platform_users SET platform_role = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
         [role, id]
+      );
+      return result.rows[0] ?? null;
+    } finally {
+      client.release();
+    }
+  },
+
+  async updateAlumnoAccessUntil(id: number, accessUntil: Date | null) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE platform_users SET alumno_access_until = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [accessUntil, id]
       );
       return result.rows[0] ?? null;
     } finally {
@@ -152,6 +166,7 @@ export const PlatformUser = {
         `SELECT * FROM platform_users
          WHERE stripe_customer_id IS NOT NULL
             OR discord_user_id IS NOT NULL
+            OR (alumno_access_until IS NOT NULL AND alumno_access_until > NOW())
          ORDER BY id ASC`
       );
       return result.rows;

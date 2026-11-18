@@ -11,6 +11,7 @@ import {
   safeMemberNextPath,
 } from '../../lib/memberDiscordGate';
 import { DISCORD_INVITE_URL } from '../../lib/communityLinks';
+import { canMemberRequestOneOnOne } from '../../lib/oneOnOneAccess';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -86,6 +87,22 @@ export default async function ConectarDiscordPage({ searchParams }: PageProps) {
               invitación a Discord
             </a>
             . La vinculación con OAuth sigue siendo obligatoria.
+          </p>
+
+          <p className="mt-6 text-sm ventic-muted">
+            Mientras conectas Discord:{' '}
+            <Link href="/dudas" className="text-[var(--ventic-accent)] font-semibold hover:underline">
+              Dudas e inquietudes
+            </Link>
+            {canMemberRequestOneOnOne(user.platform_role) && (
+              <>
+                {' '}
+                ·{' '}
+                <Link href="/reunion-1a1" className="text-[var(--ventic-accent)] font-semibold hover:underline">
+                  Reunión 1-a-1
+                </Link>
+              </>
+            )}
           </p>
 
           <p className="mt-8 text-xs ventic-muted">

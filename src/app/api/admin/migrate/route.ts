@@ -136,6 +136,16 @@ export async function POST(req: NextRequest) {
       `);
       console.log('✅ platform_users.platform_role column ready');
 
+      await client.query(`
+        ALTER TABLE platform_users
+          ADD COLUMN IF NOT EXISTS alumno_access_until TIMESTAMPTZ
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_platform_users_alumno_until
+          ON platform_users (alumno_access_until)
+      `);
+      console.log('✅ platform_users.alumno_access_until column ready');
+
       console.log('🔄 Running migration: platform content...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS platform_classes (
@@ -219,6 +229,64 @@ export async function POST(req: NextRequest) {
         )
       `);
       console.log('✅ platform content tables ready');
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS member_support_tickets (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL REFERENCES platform_users(id) ON DELETE CASCADE,
+          title VARCHAR(200),
+          body TEXT NOT NULL,
+          is_anonymous BOOLEAN NOT NULL DEFAULT false,
+          status VARCHAR(20) NOT NULL DEFAULT 'open'
+            CHECK (status IN ('open', 'read', 'answered', 'closed')),
+          admin_response TEXT,
+          read_at TIMESTAMPTZ,
+          answered_at TIMESTAMPTZ,
+          answered_by_user_id INT REFERENCES platform_users(id) ON DELETE SET NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON member_support_tickets(user_id)
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON member_support_tickets(status)
+      `);
+      console.log('✅ member_support_tickets ready');
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS member_one_on_one_requests (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL REFERENCES platform_users(id) ON DELETE CASCADE,
+          status VARCHAR(32) NOT NULL DEFAULT 'pending_admin',
+          meeting_start_at TIMESTAMPTZ NOT NULL,
+          duration_minutes INT NOT NULL DEFAULT 40,
+          note TEXT NOT NULL,
+          price_cents INT NOT NULL DEFAULT 10000,
+          alternative_slots JSONB,
+          admin_message TEXT,
+          stripe_checkout_session_id VARCHAR(255),
+          stripe_payment_intent_id VARCHAR(255),
+          payment_deadline_at TIMESTAMPTZ,
+          paid_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log('✅ member_one_on_one_requests ready');
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS alumno_package_purchases (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL REFERENCES platform_users(id) ON DELETE CASCADE,
+          stripe_checkout_session_id VARCHAR(255) NOT NULL UNIQUE,
+          purchased_at TIMESTAMPTZ NOT NULL,
+          access_until TIMESTAMPTZ NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log('✅ alumno_package_purchases ready');
 
       return NextResponse.json({
         success: true,

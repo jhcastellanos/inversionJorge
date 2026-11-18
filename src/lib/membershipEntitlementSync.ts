@@ -2,13 +2,10 @@ import Stripe from 'stripe';
 import { syncDiscordTraderRole } from './discordGuild';
 import { Subscription } from './models';
 import { getActiveSubscriptionInfo } from './memberSubscriptionSync';
-import {
-  MEMBERSHIP_ACTIVE_PLATFORM_ROLE,
-  MEMBERSHIP_INACTIVE_PLATFORM_ROLE,
-  isPlatformStaffRole,
-  parsePlatformRole,
-  type PlatformRole,
-} from './platformRoles';
+import { isPlatformStaffRole, parsePlatformRole, type PlatformRole } from './platformRoles';
+import { resolveAutomatedMembershipRole } from './resolveMemberPlatformRole';
+import { userHasActiveAlumnoAccess } from './memberAlumnoAccess';
+import { ensurePlatformUserAlumnoSchema } from './platformUserAlumnoSchema';
 import { PlatformUser, type PlatformUserRow } from './platformUsers';
 import { ensurePlatformUserDiscordSchema } from './platformUserDiscordSchema';
 
@@ -30,7 +27,13 @@ export type EntitlementSyncResult = {
 function roleManagedByStripeMembership(role: PlatformRole | null): boolean {
   if (!role) return true;
   if (isPlatformStaffRole(role)) return false;
-  return role === 'trader' || role === 'inversor' || role === 'visitante' || role === 'alumno';
+  return (
+    role === 'trader' ||
+    role === 'trader_alumno' ||
+    role === 'inversor' ||
+    role === 'visitante' ||
+    role === 'alumno'
+  );
 }
 
 export async function isStripeMembershipActiveForUser(user: PlatformUserRow): Promise<boolean> {
@@ -67,6 +70,7 @@ export async function syncMemberEntitlementsForUser(
   options?: SyncMemberOptions
 ): Promise<EntitlementSyncResult | null> {
   await ensurePlatformUserDiscordSchema();
+  await ensurePlatformUserAlumnoSchema();
   const user = await PlatformUser.findById(userId);
   if (!user) return null;
 
@@ -83,7 +87,13 @@ export async function syncMemberEntitlementsForUser(
     };
   }
 
-  if (!user.stripe_customer_id && !user.discord_user_id && !options?.enforceInactiveWithoutStripe) {
+  const alumnoAccessActiveEarly = userHasActiveAlumnoAccess(user);
+  if (
+    !user.stripe_customer_id &&
+    !user.discord_user_id &&
+    !alumnoAccessActiveEarly &&
+    !options?.enforceInactiveWithoutStripe
+  ) {
     return {
       userId: user.id,
       email: user.email,
@@ -99,9 +109,11 @@ export async function syncMemberEntitlementsForUser(
     ? await isStripeMembershipActiveForUser(user)
     : false;
 
-  const targetRole: PlatformRole = subscriptionActive
-    ? MEMBERSHIP_ACTIVE_PLATFORM_ROLE
-    : MEMBERSHIP_INACTIVE_PLATFORM_ROLE;
+  const alumnoAccessActive = userHasActiveAlumnoAccess(user);
+  const targetRole: PlatformRole = resolveAutomatedMembershipRole(
+    subscriptionActive,
+    alumnoAccessActive
+  );
 
   let currentUser = user;
   let changed = false;

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import CourseCard from './CourseCard';
+import AlumnoPackageCard from './AlumnoPackageCard';
 import MembershipCard from './MembershipCard';
 import { getMonthlyBasePrice, sortMembershipsByPlanOrder } from '../lib/membershipPlans';
 
@@ -160,8 +161,13 @@ export default function ResponsiveLanding({
         <section className="animate-fadeIn">
           <div className="mx-auto mb-8 max-w-3xl text-center">
             <h2 className={`text-3xl font-extrabold sm:text-4xl ${headingClass}`}>Cursos y Clases Grabadas</h2>
-            <p className={`mt-3 ${subClass}`}>Pago único · Acceso de por vida al contenido.</p>
+            <p className={`mt-3 ${subClass}`}>
+              <strong>Paquete Cursos (Stripe):</strong> 1 año de rol Estudiante desde la compra. Otros cursos:
+              pago único según cada producto.
+            </p>
           </div>
+
+          <AlumnoPackageCard />
 
           {courses.length === 0 ? (
             <div className={emptyWrap}>

@@ -2,18 +2,16 @@ import Stripe from 'stripe';
 import { Subscription } from './models';
 import type { PlatformUserRow } from './platformUsers';
 import { PlatformUser } from './platformUsers';
-import {
-  MEMBERSHIP_INACTIVE_PLATFORM_ROLE,
-  parsePlatformRole,
-  type PlatformRole,
-  isPlatformStaffRole,
-} from './platformRoles';
+import { parsePlatformRole, type PlatformRole, isPlatformStaffRole } from './platformRoles';
+import { resolveAutomatedMembershipRole } from './resolveMemberPlatformRole';
+import { userHasActiveAlumnoAccess } from './memberAlumnoAccess';
+import { ensurePlatformUserAlumnoSchema } from './platformUserAlumnoSchema';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
   : null;
 
-const ROLES_DOWNGRADE_WITHOUT_ACTIVE_SUB: PlatformRole[] = ['inversor', 'trader'];
+const ROLES_DOWNGRADE_WITHOUT_ACTIVE_SUB: PlatformRole[] = ['inversor', 'trader', 'trader_alumno'];
 
 export type ActiveSubscriptionInfo = {
   active: boolean;
@@ -82,15 +80,19 @@ export async function syncPlatformRoleWithSubscription(
   user: PlatformUserRow,
   subscriptionActive: boolean
 ): Promise<PlatformUserRow> {
+  await ensurePlatformUserAlumnoSchema();
   const role = parsePlatformRole(user.platform_role);
   if (!role || isPlatformStaffRole(role)) {
     return user;
   }
 
-  if (user.stripe_customer_id) {
-    if (!subscriptionActive && user.platform_role !== MEMBERSHIP_INACTIVE_PLATFORM_ROLE) {
-      const updated = await PlatformUser.updatePlatformRole(user.id, MEMBERSHIP_INACTIVE_PLATFORM_ROLE);
-      return updated ?? { ...user, platform_role: MEMBERSHIP_INACTIVE_PLATFORM_ROLE };
+  const alumnoAccessActive = userHasActiveAlumnoAccess(user);
+  const targetRole = resolveAutomatedMembershipRole(subscriptionActive, alumnoAccessActive);
+
+  if (user.stripe_customer_id || alumnoAccessActive) {
+    if (user.platform_role !== targetRole) {
+      const updated = await PlatformUser.updatePlatformRole(user.id, targetRole);
+      return updated ?? { ...user, platform_role: targetRole };
     }
     return user;
   }
@@ -98,10 +100,11 @@ export async function syncPlatformRoleWithSubscription(
   if (
     ROLES_DOWNGRADE_WITHOUT_ACTIVE_SUB.includes(role) &&
     !subscriptionActive &&
-    user.platform_role !== 'alumno'
+    !alumnoAccessActive &&
+    user.platform_role !== targetRole
   ) {
-    const updated = await PlatformUser.updatePlatformRole(user.id, 'alumno');
-    return updated ?? { ...user, platform_role: 'alumno' };
+    const updated = await PlatformUser.updatePlatformRole(user.id, targetRole);
+    return updated ?? { ...user, platform_role: targetRole };
   }
 
   return user;

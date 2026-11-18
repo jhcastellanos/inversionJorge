@@ -7,7 +7,9 @@ type AdminNavActive =
   | 'subscriptions'
   | 'referrals'
   | 'platform-users'
-  | 'platform-content';
+  | 'platform-content'
+  | 'support-tickets'
+  | 'one-on-one';
 
 export default async function AdminPageWrapper({
   active,

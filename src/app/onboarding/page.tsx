@@ -39,7 +39,11 @@ export default async function OnboardingPage() {
         <h1 className="text-3xl sm:text-4xl font-bold ventic-text">Configura tu acceso</h1>
         <p className="ventic-muted mt-3 text-sm sm:text-base leading-relaxed">
           Para entrar al CRM necesitas una membresía activa. Paga tu plan y luego escribe a soporte para
-          que finalicen tu inscripción.
+          que finalicen tu inscripción. También puedes usar{' '}
+          <a href="/dudas" className="text-[var(--ventic-accent)] font-semibold hover:underline">
+            Dudas e inquietudes
+          </a>{' '}
+          en cualquier momento.
         </p>
       </header>
       <OnboardingWizard subscriptionActive={access.subscriptionActive} userEmail={freshUser.email} />

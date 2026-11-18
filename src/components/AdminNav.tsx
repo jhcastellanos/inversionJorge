@@ -7,7 +7,9 @@ type AdminNavProps = {
     | 'subscriptions'
     | 'referrals'
     | 'platform-users'
-    | 'platform-content';
+    | 'platform-content'
+    | 'support-tickets'
+    | 'one-on-one';
   /** false para rol Soporte (sin CRUD clases/calendario) */
   showPlatformContent?: boolean;
 };
@@ -37,6 +39,12 @@ export default function AdminNav({ active, showPlatformContent = true }: AdminNa
               </Link>
               <Link href="/admin/platform-users" className={linkClass(active === 'platform-users')}>
                 Usuarios plataforma
+              </Link>
+              <Link href="/admin/support-tickets" className={linkClass(active === 'support-tickets')}>
+                💬 Dudas
+              </Link>
+              <Link href="/admin/reuniones-1a1" className={linkClass(active === 'one-on-one')}>
+                1-a-1
               </Link>
               {showPlatformContent && (
                 <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>

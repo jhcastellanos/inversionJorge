@@ -60,20 +60,45 @@ function AdminNavLink({
   );
 }
 
+function ChatAlertIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M7.5 8.5h9M7.5 12h6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 20v-4.2c-3.5-.4-5-2.5-5-5.3V9c0-4 2.5-6 7-6h5c4.5 0 7 2 7 6v5.5c0 3.3-2 5.5-6 5.5H11l-6 4Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function PlatformShell({
   children,
   userName,
   showAdminNav,
+  showSupportAlertsNav,
+  showOneOnOneNav = true,
 }: {
   children: React.ReactNode;
   userName: string;
   showAdminNav?: boolean;
+  showSupportAlertsNav?: boolean;
+  /** false para rol Admin (gestiona 1-a-1 en /admin) */
+  showOneOnOneNav?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
   const academyActive = pathname === '/app/academy-manager';
+  const supportAlertsActive = pathname === '/admin/support-tickets';
 
   const navItems = [
     { href: '/app', label: t('nav.home') },
@@ -81,6 +106,8 @@ export default function PlatformShell({
     { href: '/app/calendario', label: t('nav.calendar') },
     { href: '/app/membresia', label: t('nav.membership') },
     { href: '/app/planes', label: t('nav.plans') },
+    { href: '/app/dudas', label: t('nav.support') },
+    ...(showOneOnOneNav ? [{ href: '/reunion-1a1', label: t('nav.oneOnOne') }] : []),
   ];
 
   const logout = async () => {
@@ -125,24 +152,36 @@ export default function PlatformShell({
             </Link>
           ))}
 
-          {showAdminNav && (
+          {(showAdminNav || showSupportAlertsNav) && (
             <div className="pt-4 mt-4 border-t ventic-border">
               <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider ventic-muted">
                 {t('nav.admin')}
               </p>
               <div className="space-y-1.5">
-                <AdminNavLink
-                  href="/app/academy-manager"
-                  active={academyActive}
-                  label={t('nav.academyManager')}
-                  icon={<BookIcon className="w-4 h-4" />}
-                />
-                <AdminNavLink
-                  href="/app/gestionar-eventos"
-                  active={adminEventsActive}
-                  label={t('nav.manageEvents')}
-                  icon={<ShieldIcon className="w-4 h-4" />}
-                />
+                {showSupportAlertsNav && (
+                  <AdminNavLink
+                    href="/admin/support-tickets"
+                    active={supportAlertsActive}
+                    label={t('nav.supportAlerts')}
+                    icon={<ChatAlertIcon className="w-4 h-4" />}
+                  />
+                )}
+                {showAdminNav && (
+                  <>
+                    <AdminNavLink
+                      href="/app/academy-manager"
+                      active={academyActive}
+                      label={t('nav.academyManager')}
+                      icon={<BookIcon className="w-4 h-4" />}
+                    />
+                    <AdminNavLink
+                      href="/app/gestionar-eventos"
+                      active={adminEventsActive}
+                      label={t('nav.manageEvents')}
+                      icon={<ShieldIcon className="w-4 h-4" />}
+                    />
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -177,20 +216,32 @@ export default function PlatformShell({
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlatformPreferencesBar />
             <DiscordJoinButton variant="primary" />
-            {showAdminNav && (
+            {(showAdminNav || showSupportAlertsNav) && (
               <>
-                <Link
-                  href="/app/academy-manager"
-                  className={academyActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
-                >
-                  {t('nav.academyManager')}
-                </Link>
-                <Link
-                  href="/app/gestionar-eventos"
-                  className={adminEventsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
-                >
-                  {t('nav.manageEvents')}
-                </Link>
+                {showSupportAlertsNav && (
+                  <Link
+                    href="/admin/support-tickets"
+                    className={supportAlertsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
+                  >
+                    {t('nav.supportAlerts')}
+                  </Link>
+                )}
+                {showAdminNav && (
+                  <>
+                    <Link
+                      href="/app/academy-manager"
+                      className={academyActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
+                    >
+                      {t('nav.academyManager')}
+                    </Link>
+                    <Link
+                      href="/app/gestionar-eventos"
+                      className={adminEventsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
+                    >
+                      {t('nav.manageEvents')}
+                    </Link>
+                  </>
+                )}
               </>
             )}
           </div>

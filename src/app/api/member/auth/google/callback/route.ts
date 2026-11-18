@@ -11,6 +11,7 @@ import {
 } from '../../../../../../lib/memberEnrollmentFlow';
 import { safeMemberNextPath } from '../../../../../../lib/memberDiscordGate';
 import { signMemberJwt, MEMBER_COOKIE, memberCookieOptions } from '../../../../../../lib/memberAuth';
+import { sendMemberWelcomeEmail } from '../../../../../../lib/memberEmails';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,12 +75,14 @@ export async function GET(req: NextRequest) {
     (await PlatformUser.findByGoogleId(profile.sub)) ??
     (await PlatformUser.findByEmail(profile.email));
 
+  let createdNewUser = false;
   if (!user) {
     user = await PlatformUser.create({
       email: profile.email,
       full_name: profile.name || profile.email.split('@')[0],
       google_id: profile.sub,
     });
+    createdNewUser = true;
   } else if (!user.google_id) {
     const linked = await PlatformUser.linkGoogleId(user.id, profile.sub);
     user = linked ?? (await PlatformUser.findById(user.id));
@@ -87,6 +90,12 @@ export async function GET(req: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(new URL('/login?error=google_user_failed', baseUrl));
+  }
+
+  if (createdNewUser) {
+    void sendMemberWelcomeEmail(user.email, user.full_name).catch((err) =>
+      console.error('Welcome email error:', err)
+    );
   }
 
   const access = await getMemberAccess(user);

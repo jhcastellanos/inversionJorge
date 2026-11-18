@@ -5,6 +5,13 @@ import { processTermsAfterPayment } from '../../../../lib/terms';
 import { recordReferralConversionIfEligible } from '../../../../lib/referrals';
 import { syncMemberEntitlementsByStripeCustomerId } from '../../../../lib/membershipEntitlementSync';
 import { linkPlatformUserToStripeCustomerAndSync } from '../../../../lib/linkPlatformUserStripe';
+import { sendMemberSubscriptionThankYouEmail } from '../../../../lib/memberEmails';
+import { Course } from '../../../../lib/models';
+import { grantAlumnoPackageFromPurchase, isAlumnoPackageCourseId } from '../../../../lib/memberAlumnoAccess';
+import { PlatformUser } from '../../../../lib/platformUsers';
+import { syncMemberEntitlementsByEmail } from '../../../../lib/membershipEntitlementSync';
+import { markOneOnOnePaidFromSession } from '../../../../lib/oneOnOneStripe';
+import { fulfillAlumnoPackageFromCheckoutSession } from '../../../../lib/alumnoPackageStripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -29,6 +36,24 @@ export async function POST(req: NextRequest) {
   // Handle checkout session completed (one-time course purchases and subscriptions)
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+
+    if (session.metadata?.type === 'one_on_one') {
+      try {
+        await markOneOnOnePaidFromSession(session);
+        console.log('✅ One-on-one meeting payment recorded');
+      } catch (err) {
+        console.error('❌ One-on-one payment error:', err);
+      }
+    }
+
+    if (session.metadata?.type === 'alumno_package') {
+      try {
+        await fulfillAlumnoPackageFromCheckoutSession(session);
+        console.log('✅ Paquete cursos (estudiante 1 año) activado');
+      } catch (err) {
+        console.error('❌ alumno_package fulfillment error:', err);
+      }
+    }
     
     // Check if this is a subscription (has subscription field)
     if (session.mode === 'subscription' && session.subscription) {
@@ -71,6 +96,23 @@ export async function POST(req: NextRequest) {
         customer_email: email,
         customer_name: name
       });
+
+      const numericCourseId = Number(courseId);
+      if (Number.isFinite(numericCourseId) && isAlumnoPackageCourseId(numericCourseId)) {
+        try {
+          const course = await Course.findById(numericCourseId);
+          if (course) {
+            const platformUser = await PlatformUser.findByEmail(email);
+            if (platformUser) {
+              await grantAlumnoPackageFromPurchase(platformUser.id, new Date());
+              await syncMemberEntitlementsByEmail(email);
+              console.log(`✅ Alumno package (legacy course) 1y for ${email}`);
+            }
+          }
+        } catch (alumnoErr) {
+          console.error('❌ Error granting alumno access from course:', alumnoErr);
+        }
+      }
     }
   }
 
@@ -176,6 +218,12 @@ export async function POST(req: NextRequest) {
           } catch (termsError) {
             console.error('❌ Error processing terms:', termsError);
             // Don't fail the webhook on terms error
+          }
+
+          if (!existingSubscription && amountPaid > 0) {
+            void sendMemberSubscriptionThankYouEmail(email, name, membershipName).catch((err) =>
+              console.error('Subscription thank-you email error:', err)
+            );
           }
         } else {
           console.warn(`⚠️ Missing name or email for terms processing on subscription ${invoice.subscription}`);
