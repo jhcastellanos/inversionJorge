@@ -9,7 +9,12 @@ const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 const PDF_TYPES = new Set(['application/pdf']);
 
 const MAX_PDF_BYTES = 30 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+/** Vídeos hasta 1 GB (R2 free ~10 GB total en el bucket). */
+const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
+
+function formatMb(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+}
 
 async function requireAcademyUploadStaff(req: NextRequest) {
   const staff = await getStaffFromRequest(req);
@@ -48,19 +53,42 @@ export async function POST(req: NextRequest) {
 
   const kind = body.kind === 'pdf' ? 'pdf' : 'video';
   const contentType = typeof body.contentType === 'string' ? body.contentType : '';
-  const fileSize = typeof body.fileSize === 'number' ? body.fileSize : 0;
+  const fileSize =
+    typeof body.fileSize === 'number'
+      ? body.fileSize
+      : typeof body.fileSize === 'string'
+        ? Number.parseInt(body.fileSize, 10) || 0
+        : 0;
 
   if (kind === 'pdf' && !PDF_TYPES.has(contentType)) {
     return NextResponse.json({ error: 'Tipo PDF no permitido' }, { status: 400 });
   }
-  if (kind === 'video' && !VIDEO_TYPES.has(contentType)) {
-    return NextResponse.json({ error: 'Tipo de video no permitido' }, { status: 400 });
+  const videoTypeOk =
+    VIDEO_TYPES.has(contentType) ||
+    (kind === 'video' && (!contentType || contentType === 'application/octet-stream'));
+  if (kind === 'video' && !videoTypeOk) {
+    return NextResponse.json(
+      { error: 'Tipo de video no permitido. Usa MP4, WebM o MOV.' },
+      { status: 400 }
+    );
   }
 
   const maxSize = kind === 'pdf' ? MAX_PDF_BYTES : MAX_VIDEO_BYTES;
   if (fileSize > maxSize) {
-    return NextResponse.json({ error: 'Archivo demasiado grande' }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: `Archivo demasiado grande (${formatMb(fileSize)}). Máximo vídeo: ${formatMb(maxSize)}.`,
+      },
+      { status: 400 }
+    );
   }
+
+  const resolvedContentType =
+    kind === 'pdf'
+      ? contentType || 'application/pdf'
+      : contentType && contentType !== 'application/octet-stream'
+        ? contentType
+        : 'video/quicktime';
 
   const pathname = typeof body.pathname === 'string' ? body.pathname : '';
   const key = sanitizeStorageKey('academy', pathname);
@@ -69,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { uploadUrl, fileUrl } = await createPresignedPutUrl(key, contentType);
+    const { uploadUrl, fileUrl } = await createPresignedPutUrl(key, resolvedContentType);
     return NextResponse.json({ uploadUrl, fileUrl, key });
   } catch (error) {
     console.error('Academy R2 presign error:', error);

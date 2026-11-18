@@ -228,14 +228,24 @@ function AcademyLessonForm({
     setError(null);
     try {
       const kind = lessonType === 'pdf' ? 'pdf' : 'video';
-      const ext = file.name.split('.').pop() ?? (kind === 'pdf' ? 'pdf' : 'mp4');
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? (kind === 'pdf' ? 'pdf' : 'mp4');
+      const maxBytes = kind === 'pdf' ? 30 * 1024 * 1024 : 1024 * 1024 * 1024;
+      if (file.size > maxBytes) {
+        const mb = (file.size / (1024 * 1024)).toFixed(0);
+        const maxMb = (maxBytes / (1024 * 1024)).toFixed(0);
+        throw new Error(`El archivo pesa ${mb} MB; el máximo es ${maxMb} MB. Comprime el video o sube MP4 más ligero.`);
+      }
+      let contentType = file.type;
+      if (kind === 'video' && !contentType) {
+        contentType = ext === 'mp4' ? 'video/mp4' : ext === 'webm' ? 'video/webm' : 'video/quicktime';
+      }
       const pathname = `academy/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const prep = await fetch('/api/admin/academy-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pathname,
-          contentType: file.type,
+          contentType,
           kind,
           fileSize: file.size,
         }),
