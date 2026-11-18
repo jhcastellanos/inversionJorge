@@ -1,6 +1,6 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
+import { uploadFileViaPresignedPut } from '../../lib/uploadViaPresignedPut';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminPanelChrome from './admin/AdminPanelChrome';
 import { usePlatformPreferences } from './PlatformPreferencesProvider';
@@ -230,14 +230,22 @@ function AcademyLessonForm({
       const kind = lessonType === 'pdf' ? 'pdf' : 'video';
       const ext = file.name.split('.').pop() ?? (kind === 'pdf' ? 'pdf' : 'mp4');
       const pathname = `academy/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const blob = await upload(pathname, file, {
-        access: 'public',
-        handleUploadUrl: '/api/admin/academy-upload',
-        clientPayload: kind,
-        multipart: file.size > 8 * 1024 * 1024,
-        onUploadProgress: ({ percentage }) => setUploadPct(Math.round(percentage)),
+      const prep = await fetch('/api/admin/academy-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pathname,
+          contentType: file.type,
+          kind,
+          fileSize: file.size,
+        }),
       });
-      setFileUrl(blob.url);
+      const prepData = await prep.json();
+      if (!prep.ok) {
+        throw new Error(prepData.error || 'No se pudo preparar la subida a R2');
+      }
+      await uploadFileViaPresignedPut(prepData.uploadUrl, file, (pct) => setUploadPct(pct));
+      setFileUrl(prepData.fileUrl);
       setFileSize(file.size);
       setTitle((prev) => {
         if (prev.trim()) return prev;
@@ -248,7 +256,7 @@ function AcademyLessonForm({
       const msg =
         err instanceof Error && err.message
           ? err.message
-          : 'Error al subir. Si el archivo es muy grande, comprueba BLOB_READ_WRITE_TOKEN en Vercel.';
+          : 'Error al subir. Revisa R2 en Vercel y CORS del bucket en Cloudflare.';
       setError(msg);
     } finally {
       setUploading(false);

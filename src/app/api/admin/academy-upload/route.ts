@@ -1,12 +1,15 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { getStaffFromRequest } from '../../../../lib/staffAccess';
+import { createPresignedPutUrl, getR2Config, sanitizeStorageKey } from '../../../../lib/r2Storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
-const PDF_TYPES = ['application/pdf'];
+const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
+const PDF_TYPES = new Set(['application/pdf']);
+
+const MAX_PDF_BYTES = 30 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 
 async function requireAcademyUploadStaff(req: NextRequest) {
   const staff = await getStaffFromRequest(req);
@@ -19,47 +22,57 @@ async function requireAcademyUploadStaff(req: NextRequest) {
   return staff;
 }
 
-/** Client upload token + completion (evita límite ~4.5MB del body en serverless). */
+/** Devuelve URL firmada PUT para subida directa del navegador a Cloudflare R2. */
 export async function POST(req: NextRequest) {
   const staff = await requireAcademyUploadStaff(req);
   if (staff instanceof NextResponse) return staff;
 
-  const contentType = req.headers.get('content-type') ?? '';
-  if (contentType.includes('multipart/form-data')) {
+  if (!getR2Config()) {
     return NextResponse.json(
-      {
-        error:
-          'Subida directa deshabilitada para archivos grandes. Recarga la página e intenta de nuevo (subida desde el navegador).',
-      },
-      { status: 400 }
+      { error: 'Almacenamiento R2 no configurado en el servidor' },
+      { status: 503 }
     );
   }
 
-  let body: HandleUploadBody;
+  let body: {
+    pathname?: string;
+    contentType?: string;
+    kind?: string;
+    fileSize?: number;
+  };
   try {
-    body = (await req.json()) as HandleUploadBody;
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Cuerpo JSON inválido' }, { status: 400 });
   }
 
+  const kind = body.kind === 'pdf' ? 'pdf' : 'video';
+  const contentType = typeof body.contentType === 'string' ? body.contentType : '';
+  const fileSize = typeof body.fileSize === 'number' ? body.fileSize : 0;
+
+  if (kind === 'pdf' && !PDF_TYPES.has(contentType)) {
+    return NextResponse.json({ error: 'Tipo PDF no permitido' }, { status: 400 });
+  }
+  if (kind === 'video' && !VIDEO_TYPES.has(contentType)) {
+    return NextResponse.json({ error: 'Tipo de video no permitido' }, { status: 400 });
+  }
+
+  const maxSize = kind === 'pdf' ? MAX_PDF_BYTES : MAX_VIDEO_BYTES;
+  if (fileSize > maxSize) {
+    return NextResponse.json({ error: 'Archivo demasiado grande' }, { status: 400 });
+  }
+
+  const pathname = typeof body.pathname === 'string' ? body.pathname : '';
+  const key = sanitizeStorageKey('academy', pathname);
+  if (!key) {
+    return NextResponse.json({ error: 'Ruta de archivo inválida' }, { status: 400 });
+  }
+
   try {
-    const jsonResponse = await handleUpload({
-      body,
-      request: req,
-      onBeforeGenerateToken: async (_pathname, clientPayload) => {
-        const kind = clientPayload === 'pdf' ? 'pdf' : 'video';
-        const maximumSizeInBytes = kind === 'pdf' ? 30 * 1024 * 1024 : 200 * 1024 * 1024;
-        return {
-          allowedContentTypes: kind === 'pdf' ? PDF_TYPES : VIDEO_TYPES,
-          maximumSizeInBytes,
-          addRandomSuffix: true,
-          tokenPayload: clientPayload,
-        };
-      },
-    });
-    return NextResponse.json(jsonResponse);
+    const { uploadUrl, fileUrl } = await createPresignedPutUrl(key, contentType);
+    return NextResponse.json({ uploadUrl, fileUrl, key });
   } catch (error) {
-    console.error('Academy client upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    console.error('Academy R2 presign error:', error);
+    return NextResponse.json({ error: 'No se pudo preparar la subida' }, { status: 500 });
   }
 }

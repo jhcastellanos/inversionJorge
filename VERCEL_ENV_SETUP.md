@@ -48,13 +48,12 @@ https://vercel.com/dashboard
 - **Value**: `https://tu-dominio.vercel.app` (cámbialo por tu dominio real de Vercel)
 - **Environments**: ✅ Production, ✅ Preview, ✅ Development
 
-#### Variable 6: BLOB_READ_WRITE_TOKEN
-- **Key**: `BLOB_READ_WRITE_TOKEN`
-- **Value**: Se genera automáticamente al habilitar Vercel Blob
+#### Variables 6–10: Cloudflare R2 (archivos academia y cursos)
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`
+- Guía: `docs/CLOUDFLARE_R2.md`
 - **Environments**: ✅ Production, ✅ Preview, ✅ Development
-- **Nota**: Esta variable se crea automáticamente cuando habilitas Vercel Blob Storage
 
-#### Variable 7: JWT_SECRET
+#### Variable 11: JWT_SECRET
 - **Key**: `JWT_SECRET`
 - **Value**: `your-super-secret-jwt-key-change-this-in-production`
 - **Environments**: ✅ Production, ✅ Preview, ✅ Development
@@ -62,20 +61,9 @@ https://vercel.com/dashboard
 
 ---
 
-## 4.5. Habilitar Vercel Blob Storage
+## 4.5. Cloudflare R2 (en lugar de Vercel Blob)
 
-Para que las imágenes se guarden persistentemente:
-
-1. En tu proyecto de Vercel, ve a **Storage**
-2. Click en **Create Database**
-3. Selecciona **Blob Storage**
-4. Click **Continue**
-5. Acepta los términos y click **Create**
-6. La variable `BLOB_READ_WRITE_TOKEN` se creará automáticamente
-
-**Plan gratuito incluye:**
-- ✅ 1GB de almacenamiento
-- ✅ Perfecto para imágenes de cursos
+Los archivos se guardan en **Cloudflare R2** (~10 GB gratis). Configura el bucket y las variables en la sección 6 arriba. No hace falta Vercel Blob Storage.
 
 ---
 
