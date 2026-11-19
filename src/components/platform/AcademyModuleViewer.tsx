@@ -157,11 +157,14 @@ export default function AcademyModuleViewer({
   moduleTitle,
   moduleDescription,
   lessons,
+  embedded = false,
 }: {
   moduleId: number;
   moduleTitle: string;
   moduleDescription: string | null;
   lessons: AcademyViewerLesson[];
+  /** Sin borde exterior cuando va dentro de ClasesAcademySection */
+  embedded?: boolean;
 }) {
   const { t } = usePlatformPreferences();
   const [activeId, setActiveId] = useState(lessons[0]?.id ?? 0);
@@ -231,8 +234,12 @@ export default function AcademyModuleViewer({
     );
   }
 
+  const shellClass = embedded
+    ? 'overflow-hidden'
+    : 'mt-4 rounded-2xl border ventic-border ventic-surface overflow-hidden shadow-sm';
+
   return (
-    <div className="mt-4 rounded-2xl border ventic-border ventic-surface overflow-hidden shadow-sm">
+    <div className={shellClass}>
       <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
           {active && (

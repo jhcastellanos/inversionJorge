@@ -47,6 +47,7 @@ export const en: Messages = {
     openLink: 'Open link',
     additionalContent: 'Additional content',
     moduleMaterials: 'Module materials',
+    academyModules: 'Academy modules',
     progressSummary: '{done} of {total} lessons complete',
     markComplete: 'Mark as complete',
     lessonCompleted: 'Completed',

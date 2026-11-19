@@ -45,6 +45,7 @@ export const es = {
     openLink: 'Abrir enlace',
     additionalContent: 'Contenido adicional',
     moduleMaterials: 'Materiales del módulo',
+    academyModules: 'Módulos de la academia',
     progressSummary: '{done} de {total} lecciones completadas',
     markComplete: 'Marcar como completada',
     lessonCompleted: 'Completada',
@@ -119,6 +120,7 @@ export type Messages = {
     openLink: string;
     additionalContent: string;
     moduleMaterials: string;
+    academyModules: string;
     progressSummary: string;
     markComplete: string;
     lessonCompleted: string;
