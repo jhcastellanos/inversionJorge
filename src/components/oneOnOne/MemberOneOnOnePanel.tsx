@@ -14,6 +14,13 @@ import {
 } from '../../lib/oneOnOneMeetings.constants';
 import OneOnOneSlotPicker from './OneOnOneSlotPicker';
 
+const btnPrimary =
+  'w-full rounded-xl bg-[var(--ventic-accent)] text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-[var(--ventic-accent-hover)] transition-colors disabled:opacity-50';
+const btnSecondary =
+  'w-full rounded-xl border-2 border-[var(--ventic-accent)] text-[var(--ventic-accent)] bg-transparent px-4 py-3 text-sm font-semibold hover:bg-ventic-accent-soft transition-colors disabled:opacity-50';
+const btnAcceptSlot =
+  'w-full rounded-xl border-2 border-[var(--ventic-accent)] bg-[var(--ventic-accent)]/15 px-4 py-3.5 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft transition-colors text-center disabled:opacity-50';
+
 type Slot = { startAt: string; label: string };
 type RequestRow = {
   id: number;
@@ -274,7 +281,7 @@ export default function MemberOneOnOnePanel({
                   type="button"
                   disabled={sending}
                   onClick={() => void cancelRequest(blockingRequest.id)}
-                  className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                  className="shrink-0 rounded-lg border border-red-500/50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-50"
                 >
                   Cancelar solicitud
                 </button>
@@ -313,9 +320,9 @@ export default function MemberOneOnOnePanel({
                         type="button"
                         disabled={sending}
                         onClick={() => void pickAlternative(blockingRequest.id, slot)}
-                        className="w-full text-left rounded-lg border-2 border-[var(--ventic-accent)]/40 bg-black/10 px-4 py-3 text-sm font-medium hover:bg-ventic-accent-soft"
+                        className={btnAcceptSlot}
                       >
-                        Aceptar:{' '}
+                        ✓ Aceptar{' '}
                         {formatOneOnOneDateTime(slot, { dateStyle: 'full', timeStyle: 'short' })}
                       </button>
                     </li>
@@ -336,9 +343,9 @@ export default function MemberOneOnOnePanel({
                     type="button"
                     disabled={sending || !counterSlot}
                     onClick={() => void submitCounter(blockingRequest.id)}
-                    className="rounded-lg border ventic-border px-4 py-2 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft disabled:opacity-50"
+                    className={btnSecondary}
                   >
-                    Enviar contrapropuesta al equipo
+                    Enviar otro horario al equipo
                   </button>
                 </div>
               </div>
@@ -346,27 +353,27 @@ export default function MemberOneOnOnePanel({
 
             {blockingRequest.status === 'awaiting_payment' && (
               <div className="space-y-4 border-t ventic-border pt-4">
-                <p className="text-sm ventic-muted">
-                  El equipo aprobó este horario. <strong className="ventic-text">Acepta</strong> pagando USD{' '}
-                  {ONE_ON_ONE_PRICE_USD}, o <strong className="ventic-text">propón otro horario</strong> antes de
-                  pagar (sin cancelar la solicitud).
+                <p className="text-sm ventic-muted text-center sm:text-left">
+                  El equipo aprobó este horario. Elige una opción:
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void startPay(blockingRequest.id)}
-                  className="rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
-                >
-                  Aceptar horario — pagar USD {ONE_ON_ONE_PRICE_USD}
-                </button>
                 {!showRenegotiate ? (
-                  <button
-                    type="button"
-                    disabled={sending}
-                    onClick={() => setShowRenegotiate(true)}
-                    className="text-sm font-semibold text-[var(--ventic-accent)] hover:underline"
-                  >
-                    Este horario no me sirve — solicitar otro
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void startPay(blockingRequest.id)}
+                      className={btnPrimary}
+                    >
+                      Aceptar horario — pagar USD {ONE_ON_ONE_PRICE_USD}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={sending}
+                      onClick={() => setShowRenegotiate(true)}
+                      className={btnSecondary}
+                    >
+                      Este horario no me sirve — solicitar otro
+                    </button>
+                  </div>
                 ) : (
                   <div className="rounded-xl border ventic-border bg-black/10 p-3 space-y-3">
                     <p className="text-sm font-medium ventic-text">Nuevo horario propuesto</p>
@@ -382,12 +389,12 @@ export default function MemberOneOnOnePanel({
                       className="w-full rounded-lg border ventic-border px-3 py-2 text-sm ventic-text ventic-surface"
                       placeholder="Comentario opcional"
                     />
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col gap-2">
                       <button
                         type="button"
                         disabled={sending || !renegotiateSlot}
                         onClick={() => void submitRenegotiate(blockingRequest.id)}
-                        className="rounded-lg border ventic-border px-4 py-2 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft disabled:opacity-50"
+                        className={btnPrimary}
                       >
                         Enviar nuevo horario al equipo
                       </button>
@@ -399,9 +406,9 @@ export default function MemberOneOnOnePanel({
                           setRenegotiateSlot('');
                           setRenegotiateMessage('');
                         }}
-                        className="text-sm ventic-muted hover:underline"
+                        className={btnSecondary}
                       >
-                        Cerrar
+                        Volver a las opciones anteriores
                       </button>
                     </div>
                   </div>
@@ -468,13 +475,11 @@ export default function MemberOneOnOnePanel({
                   </p>
                 )}
                 {r.status === 'awaiting_payment' && (
-                  <button
-                    type="button"
-                    onClick={() => void startPay(r.id)}
-                    className="mt-3 rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
-                  >
-                    Aceptar y pagar USD {ONE_ON_ONE_PRICE_USD}
-                  </button>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <button type="button" onClick={() => void startPay(r.id)} className={btnPrimary}>
+                      Aceptar y pagar USD {ONE_ON_ONE_PRICE_USD}
+                    </button>
+                  </div>
                 )}
               </li>
             ))}
