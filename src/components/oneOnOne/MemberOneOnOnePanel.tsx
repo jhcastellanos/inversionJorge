@@ -43,6 +43,9 @@ export default function MemberOneOnOnePanel({
   const [success, setSuccess] = useState<string | null>(null);
   const [counterSlot, setCounterSlot] = useState('');
   const [counterMessage, setCounterMessage] = useState('');
+  const [showRenegotiate, setShowRenegotiate] = useState(false);
+  const [renegotiateSlot, setRenegotiateSlot] = useState('');
+  const [renegotiateMessage, setRenegotiateMessage] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,7 +60,9 @@ export default function MemberOneOnOnePanel({
       const hasOpen = nextRequests.some((r) =>
         oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)
       );
-      const needsCounterSlots = nextRequests.some((r) => r.status === 'awaiting_client_slot');
+      const needsCounterSlots = nextRequests.some(
+        (r) => r.status === 'awaiting_client_slot' || r.status === 'awaiting_payment'
+      );
       if (hasOpen && !needsCounterSlots) {
         setSlots([]);
         setSelectedSlot('');
@@ -155,6 +160,34 @@ export default function MemberOneOnOnePanel({
       setSuccess('Solicitud cancelada. Puedes pedir una nueva reunión cuando quieras.');
       setCounterSlot('');
       setCounterMessage('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const submitRenegotiate = async (requestId: number) => {
+    if (!renegotiateSlot) return;
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch(`/api/member/one-on-one/requests/${requestId}/renegotiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meeting_start_at: renegotiateSlot,
+          client_message: renegotiateMessage.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo enviar');
+      setRenegotiateSlot('');
+      setRenegotiateMessage('');
+      setShowRenegotiate(false);
+      setSuccess('Enviamos tu nueva propuesta de horario. El equipo la revisará antes del pago.');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error');
@@ -312,17 +345,67 @@ export default function MemberOneOnOnePanel({
             )}
 
             {blockingRequest.status === 'awaiting_payment' && (
-              <div className="space-y-2">
+              <div className="space-y-4 border-t ventic-border pt-4">
                 <p className="text-sm ventic-muted">
-                  Horario acordado. Completa el pago para confirmar la reunión.
+                  El equipo aprobó este horario. <strong className="ventic-text">Acepta</strong> pagando USD{' '}
+                  {ONE_ON_ONE_PRICE_USD}, o <strong className="ventic-text">propón otro horario</strong> antes de
+                  pagar (sin cancelar la solicitud).
                 </p>
                 <button
                   type="button"
                   onClick={() => void startPay(blockingRequest.id)}
                   className="rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
                 >
-                  Pagar USD {ONE_ON_ONE_PRICE_USD} y confirmar
+                  Aceptar horario — pagar USD {ONE_ON_ONE_PRICE_USD}
                 </button>
+                {!showRenegotiate ? (
+                  <button
+                    type="button"
+                    disabled={sending}
+                    onClick={() => setShowRenegotiate(true)}
+                    className="text-sm font-semibold text-[var(--ventic-accent)] hover:underline"
+                  >
+                    Este horario no me sirve — solicitar otro
+                  </button>
+                ) : (
+                  <div className="rounded-xl border ventic-border bg-black/10 p-3 space-y-3">
+                    <p className="text-sm font-medium ventic-text">Nuevo horario propuesto</p>
+                    <OneOnOneSlotPicker
+                      slots={slots}
+                      selected={renegotiateSlot}
+                      onSelect={setRenegotiateSlot}
+                    />
+                    <textarea
+                      value={renegotiateMessage}
+                      onChange={(e) => setRenegotiateMessage(e.target.value)}
+                      rows={2}
+                      className="w-full rounded-lg border ventic-border px-3 py-2 text-sm ventic-text ventic-surface"
+                      placeholder="Comentario opcional"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={sending || !renegotiateSlot}
+                        onClick={() => void submitRenegotiate(blockingRequest.id)}
+                        className="rounded-lg border ventic-border px-4 py-2 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft disabled:opacity-50"
+                      >
+                        Enviar nuevo horario al equipo
+                      </button>
+                      <button
+                        type="button"
+                        disabled={sending}
+                        onClick={() => {
+                          setShowRenegotiate(false);
+                          setRenegotiateSlot('');
+                          setRenegotiateMessage('');
+                        }}
+                        className="text-sm ventic-muted hover:underline"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -390,7 +473,7 @@ export default function MemberOneOnOnePanel({
                     onClick={() => void startPay(r.id)}
                     className="mt-3 rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
                   >
-                    Pagar USD {ONE_ON_ONE_PRICE_USD} y confirmar
+                    Aceptar y pagar USD {ONE_ON_ONE_PRICE_USD}
                   </button>
                 )}
               </li>
