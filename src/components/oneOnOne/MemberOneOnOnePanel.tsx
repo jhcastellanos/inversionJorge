@@ -1,7 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { oneOnOneStatusLabel, type OneOnOneStatus } from '../../lib/oneOnOneTypes';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  oneOnOneRequestBlocksNewBooking,
+  oneOnOneStatusLabel,
+  type OneOnOneStatus,
+} from '../../lib/oneOnOneTypes';
 import {
   ONE_ON_ONE_DURATION_MINUTES,
   ONE_ON_ONE_PRICE_USD,
@@ -41,16 +45,25 @@ export default function MemberOneOnOnePanel({
     setLoading(true);
     setError(null);
     try {
-      const [sRes, rRes] = await Promise.all([
-        fetch('/api/member/one-on-one/slots'),
-        fetch('/api/member/one-on-one/requests'),
-      ]);
-      const sData = await sRes.json();
+      const rRes = await fetch('/api/member/one-on-one/requests');
       const rData = await rRes.json();
-      if (!sRes.ok) throw new Error(sData.error || 'Error slots');
       if (!rRes.ok) throw new Error(rData.error || 'Error solicitudes');
-      setSlots(sData.slots ?? []);
-      setRequests(rData.requests ?? []);
+      const nextRequests: RequestRow[] = rData.requests ?? [];
+      setRequests(nextRequests);
+
+      const hasOpen = nextRequests.some((r) =>
+        oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)
+      );
+      if (hasOpen) {
+        setSlots([]);
+        setSelectedSlot('');
+        setNote('');
+      } else {
+        const sRes = await fetch('/api/member/one-on-one/slots');
+        const sData = await sRes.json();
+        if (!sRes.ok) throw new Error(sData.error || 'Error slots');
+        setSlots(sData.slots ?? []);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar');
     } finally {
@@ -131,6 +144,11 @@ export default function MemberOneOnOnePanel({
     ? requests.find((r) => r.id === initialPickId)
     : requests.find((r) => r.status === 'awaiting_client_slot');
 
+  const blockingRequest = useMemo(
+    () => requests.find((r) => oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)),
+    [requests]
+  );
+
   return (
     <div className="space-y-8 max-w-3xl">
       <section className="ventic-surface border ventic-border rounded-2xl p-6">
@@ -155,8 +173,40 @@ export default function MemberOneOnOnePanel({
           </p>
         </div>
 
+        {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
+        {success && <p className="text-sm text-emerald-700 mt-4">{success}</p>}
+
         {loading ? (
-          <p className="text-sm ventic-muted mt-4">Cargando calendario…</p>
+          <p className="text-sm ventic-muted mt-4">Cargando…</p>
+        ) : blockingRequest ? (
+          <div className="mt-5 rounded-xl border ventic-border bg-black/15 px-4 py-4 space-y-2">
+            <p className="text-sm font-medium ventic-text">Tienes una solicitud en curso</p>
+            <p className="text-sm ventic-muted leading-relaxed">
+              Estado: <strong className="ventic-text">{oneOnOneStatusLabel(blockingRequest.status)}</strong>.
+              Horario solicitado:{' '}
+              <strong className="ventic-text">
+                {formatOneOnOneDateTime(blockingRequest.meeting_start_at, {
+                  dateStyle: 'full',
+                  timeStyle: 'short',
+                })}
+              </strong>
+              .
+            </p>
+            <p className="text-sm ventic-muted leading-relaxed">
+              El calendario volverá a mostrarse cuando esta solicitud se cierre (rechazada o vencida) o cuando haya
+              pasado la sesión confirmada. Mientras tanto, revisa el detalle en{' '}
+              <strong className="ventic-text">Mis solicitudes</strong> más abajo.
+            </p>
+            {blockingRequest.status === 'awaiting_payment' && (
+              <button
+                type="button"
+                onClick={() => void startPay(blockingRequest.id)}
+                className="mt-2 rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
+              >
+                Pagar USD {ONE_ON_ONE_PRICE_USD} y confirmar
+              </button>
+            )}
+          </div>
         ) : (
           <form onSubmit={submit} className="mt-5 space-y-4">
             <OneOnOneSlotPicker slots={slots} selected={selectedSlot} onSelect={setSelectedSlot} />
@@ -179,8 +229,6 @@ export default function MemberOneOnOnePanel({
                 placeholder="Ej.: 1) Cómo estructurar mi portafolio actual… 2) Duda sobre comisiones en IBKR… 3) Revisar mi plan de salidas…"
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            {success && <p className="text-sm text-emerald-700">{success}</p>}
             <button
               type="submit"
               disabled={sending || !selectedSlot}

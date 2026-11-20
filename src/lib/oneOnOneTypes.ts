@@ -1,3 +1,5 @@
+import { ONE_ON_ONE_DURATION_MINUTES } from './oneOnOneMeetings.constants';
+
 export type OneOnOneStatus =
   | 'pending_admin'
   | 'awaiting_payment'
@@ -6,6 +8,22 @@ export type OneOnOneStatus =
   | 'declined'
   | 'expired'
   | 'cancelled';
+
+/** Mientras sea true, el miembro no puede abrir otra solicitud nueva. */
+export function oneOnOneRequestBlocksNewBooking(
+  status: OneOnOneStatus,
+  meetingStartAt: string | Date
+): boolean {
+  if (status === 'declined' || status === 'expired' || status === 'cancelled') {
+    return false;
+  }
+  if (status === 'paid') {
+    const start = new Date(meetingStartAt).getTime();
+    const sessionEnd = start + ONE_ON_ONE_DURATION_MINUTES * 60 * 1000;
+    return Date.now() < sessionEnd;
+  }
+  return true;
+}
 
 export function oneOnOneStatusLabel(status: OneOnOneStatus): string {
   const labels: Record<OneOnOneStatus, string> = {

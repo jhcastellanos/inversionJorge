@@ -11,6 +11,7 @@ import {
   sendOneOnOneRequestReceivedToMember,
 } from '../../../../../lib/oneOnOneMeetingEmails';
 import { assertMemberCanRequestOneOnOne } from '../../../../../lib/oneOnOneAccess';
+import { oneOnOneRequestBlocksNewBooking } from '../../../../../lib/oneOnOneTypes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,20 @@ export async function POST(req: NextRequest) {
   }
 
   await ensureOneOnOneSchema();
+  const existing = await OneOnOneRequest.listByUserId(user.id);
+  const open = existing.find((r) =>
+    oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)
+  );
+  if (open) {
+    return NextResponse.json(
+      {
+        error:
+          'Ya tienes una solicitud en curso. Espera a que se revise, completes el pago o finalice la sesión antes de pedir otra.',
+      },
+      { status: 409 }
+    );
+  }
+
   if (await OneOnOneRequest.isSlotTaken(start)) {
     return NextResponse.json({ error: 'Ese horario ya no está disponible' }, { status: 409 });
   }
