@@ -44,7 +44,7 @@ export default function AdminNav({ active, showPlatformContent = true }: AdminNa
                 💬 Dudas
               </Link>
               <Link href="/admin/reuniones-1a1" className={linkClass(active === 'one-on-one')}>
-                1-a-1
+                1-1
               </Link>
               {showPlatformContent && (
                 <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>

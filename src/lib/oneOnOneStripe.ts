@@ -1,12 +1,6 @@
 import Stripe from 'stripe';
 import { getSiteBaseUrl } from './siteUrl';
-import {
-  ONE_ON_ONE_PRICE_CENTS,
-  ONE_ON_ONE_PRICE_USD,
-  ONE_ON_ONE_DURATION_MINUTES,
-  OneOnOneRequest,
-  canCompletePaymentNow,
-} from './oneOnOneMeetings';
+import { ONE_ON_ONE_DURATION_MINUTES, OneOnOneRequest, canCompletePaymentNow } from './oneOnOneMeetings';
 import { PlatformUser } from './platformUsers';
 
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -32,6 +26,10 @@ export async function createOneOnOneCheckoutSession(
   const user = await PlatformUser.findById(userId);
   const baseUrl = getSiteBaseUrl(host, protocol);
 
+  const priceCents = request.price_cents;
+  const durationMin = request.duration_minutes || ONE_ON_ONE_DURATION_MINUTES;
+  const priceUsd = priceCents / 100;
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     customer_email: user?.email,
@@ -40,10 +38,10 @@ export async function createOneOnOneCheckoutSession(
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Reunión 1-a-1 con la academia',
-            description: `Sesión de ${ONE_ON_ONE_DURATION_MINUTES} minutos (USD ${ONE_ON_ONE_PRICE_USD})`,
+            name: 'Reunión 1-1 con la academia',
+            description: `Sesión de ${durationMin} minutos (USD ${priceUsd})`,
           },
-          unit_amount: ONE_ON_ONE_PRICE_CENTS,
+          unit_amount: priceCents,
         },
         quantity: 1,
       },

@@ -69,6 +69,7 @@ export async function sendOneOnOneRequestReceivedToMember(
     <p><strong>Tema / nota:</strong></p>
     <p style="background:#f1f5f9;padding:12px;border-radius:8px;">${safeNote}</p>
     <p>El equipo revisará tu solicitud y te responderá en breve. Precio de la sesión: <strong>USD ${ONE_ON_ONE_PRICE_USD}</strong> (se pagará solo después de la aprobación).</p>
+    <p><strong>Recuerda:</strong> la sesión dura ${ONE_ON_ONE_DURATION_MINUTES} minutos. Ven con tus dudas claras y priorizadas para aprovechar el tiempo al máximo.</p>
     <p><a href="${requestsUrl}">Ver mis solicitudes</a></p>`
   );
 }
@@ -146,6 +147,7 @@ export async function sendOneOnOnePaidConfirmation(toEmail: string, fullName: st
     'Reunión 1-a-1 confirmada y pagada',
     `<p>Hola <strong>${name}</strong>,</p>
     <p>¡Gracias! Tu pago fue recibido. Reunión confirmada para <strong>${escapeHtml(formatMeetingWhen(meetingStartIso))}</strong> (${ONE_ON_ONE_DURATION_MINUTES} min).</p>
+    <p>Prepara tus dudas con antelación y priorízalas: solo tenemos ${ONE_ON_ONE_DURATION_MINUTES} minutos y así aprovechamos cada minuto.</p>
     <p>Te contactaremos con el enlace de Zoom antes de la sesión.</p>`
   );
 }

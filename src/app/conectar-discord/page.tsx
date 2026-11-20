@@ -99,7 +99,7 @@ export default async function ConectarDiscordPage({ searchParams }: PageProps) {
                 {' '}
                 ·{' '}
                 <Link href="/reunion-1a1" className="text-[var(--ventic-accent)] font-semibold hover:underline">
-                  Reunión 1-a-1
+                  Reunión 1-1
                 </Link>
               </>
             )}

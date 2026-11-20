@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { requireMemberSession } from '../../lib/getCurrentMember';
 import MarketingTopBar from '../../components/platform/MarketingTopBar';
 import { canMemberRequestOneOnOne } from '../../lib/oneOnOneAccess';
+import { ONE_ON_ONE_DURATION_MINUTES } from '../../lib/oneOnOneMeetings.constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,9 +20,10 @@ export default async function ReunionOneOnOneLayout({ children }: { children: Re
       <MarketingTopBar ctaHref="/planes" ctaLabel="Ver membresías" />
       <header className="max-w-3xl mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold ventic-text">Reunión 1-a-1 con la academia</h1>
+          <h1 className="text-2xl font-bold ventic-text">Reunión 1-1 con la academia</h1>
           <p className="text-sm ventic-muted mt-1">
-            Para visitantes y miembros: entrenamiento, dudas y acompañamiento personalizado.
+            Para visitantes y miembros: entrenamiento, dudas y acompañamiento personalizado. Cada sesión dura{' '}
+            {ONE_ON_ONE_DURATION_MINUTES} minutos — conviene llegar con las dudas claras.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm font-semibold">

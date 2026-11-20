@@ -10,7 +10,7 @@ export const es = {
     membership: 'Mi membresía',
     plans: 'Ver planes',
     support: 'Dudas e inquietudes',
-    oneOnOne: 'Reunión 1-a-1',
+    oneOnOne: 'Reunión 1-1',
     supportAlerts: 'Alertas de consultas',
     admin: 'Admin',
     academyManager: 'Gestor de academia',

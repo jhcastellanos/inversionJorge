@@ -12,7 +12,7 @@ export const en: Messages = {
     membership: 'My membership',
     plans: 'View plans',
     support: 'Questions & support',
-    oneOnOne: '1-on-1 meeting',
+    oneOnOne: '1-1 meeting',
     supportAlerts: 'Support alerts',
     admin: 'Admin',
     academyManager: 'Academy Manager',

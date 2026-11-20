@@ -21,7 +21,7 @@ export default async function DudasLayout({ children }: { children: React.ReactN
         <nav className="flex flex-wrap gap-3 text-sm font-semibold">
           {showOneOnOne && (
             <Link href="/reunion-1a1" className="text-[var(--ventic-accent)] hover:underline">
-              Reunión 1-a-1
+              Reunión 1-1
             </Link>
           )}
           {access.hasAccess ? (

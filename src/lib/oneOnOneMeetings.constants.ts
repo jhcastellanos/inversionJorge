@@ -1,6 +1,6 @@
 /** Límite típico de reuniones en plan gratuito de Zoom (40 min). */
 export const ONE_ON_ONE_DURATION_MINUTES = 40;
-export const ONE_ON_ONE_PRICE_USD = 100;
+export const ONE_ON_ONE_PRICE_USD = 50;
 export const ONE_ON_ONE_PRICE_CENTS = ONE_ON_ONE_PRICE_USD * 100;
 export const ONE_ON_ONE_MIN_LEAD_HOURS = 24;
 export const ONE_ON_ONE_PAYMENT_DEADLINE_HOURS_BEFORE = 3;

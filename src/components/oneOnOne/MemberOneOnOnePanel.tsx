@@ -8,6 +8,7 @@ import {
   ONE_ON_ONE_TIMEZONE_LABEL,
   formatOneOnOneDateTime,
 } from '../../lib/oneOnOneMeetings.constants';
+import OneOnOneSlotPicker from './OneOnOneSlotPicker';
 
 type Slot = { startAt: string; label: string };
 type RequestRow = {
@@ -133,22 +134,40 @@ export default function MemberOneOnOnePanel({
   return (
     <div className="space-y-8 max-w-3xl">
       <section className="ventic-surface border ventic-border rounded-2xl p-6">
-        <h2 className="text-lg font-bold ventic-text">Solicitar reunión 1-a-1</h2>
+        <h2 className="text-lg font-bold ventic-text">Solicitar reunión 1-1</h2>
         <p className="text-sm ventic-muted mt-2 leading-relaxed">
           Sesión de hasta <strong>{ONE_ON_ONE_DURATION_MINUTES} minutos</strong> (límite típico Zoom gratuito).
           Horarios de <strong>lunes a viernes</strong>, 12:00–20:00 ({ONE_ON_ONE_TIMEZONE_LABEL}). Precio fijo:{' '}
           <strong>USD {ONE_ON_ONE_PRICE_USD}</strong>. Sin pago hasta que aprobemos tu horario.
         </p>
 
+        <div
+          className="mt-4 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3.5"
+          role="note"
+        >
+          <p className="text-sm font-semibold ventic-text">Importante — prepara tus dudas antes de la sesión</p>
+          <p className="text-sm ventic-muted mt-1.5 leading-relaxed">
+            Solo disponemos de <strong className="ventic-text">{ONE_ON_ONE_DURATION_MINUTES} minutos</strong> por
+            reunión. Para aprovechar el tiempo al máximo,{' '}
+            <strong className="ventic-text">ven con tus preguntas claras y priorizadas</strong> (qué quieres resolver,
+            en qué orden y con qué contexto). En el formulario, descríbelas con detalle; si no llegamos a todo en una
+            sesión, podrás solicitar otra más adelante.
+          </p>
+        </div>
+
         {loading ? (
           <p className="text-sm ventic-muted mt-4">Cargando calendario…</p>
         ) : (
           <form onSubmit={submit} className="mt-5 space-y-4">
-            <SlotCalendar slots={slots} selected={selectedSlot} onSelect={setSelectedSlot} />
+            <OneOnOneSlotPicker slots={slots} selected={selectedSlot} onSelect={setSelectedSlot} />
             <div>
               <label className="block text-sm font-medium ventic-text mb-1" htmlFor="ooo-note">
-                ¿Qué buscas en la sesión?
+                Tus dudas para la sesión (sé concreto)
               </label>
+              <p className="text-xs ventic-muted mb-2">
+                Lista las preguntas o temas en orden de prioridad. Cuanto más claro vengas, más podremos avanzar en{' '}
+                {ONE_ON_ONE_DURATION_MINUTES} minutos.
+              </p>
               <textarea
                 id="ooo-note"
                 value={note}
@@ -157,7 +176,7 @@ export default function MemberOneOnOnePanel({
                 minLength={10}
                 rows={4}
                 className="w-full rounded-lg border ventic-border px-3 py-2 text-sm ventic-text ventic-surface"
-                placeholder="Dudas, entrenamiento, revisión de operativa…"
+                placeholder="Ej.: 1) Cómo estructurar mi portafolio actual… 2) Duda sobre comisiones en IBKR… 3) Revisar mi plan de salidas…"
               />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -234,41 +253,3 @@ export default function MemberOneOnOnePanel({
   );
 }
 
-function SlotCalendar({
-  slots,
-  selected,
-  onSelect,
-}: {
-  slots: Slot[];
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
-  if (slots.length === 0) {
-    return <p className="text-sm ventic-muted">No hay horarios disponibles en las próximas semanas.</p>;
-  }
-
-  return (
-    <div>
-      <p className="text-sm font-medium ventic-text mb-2">Elige un horario (mín. 24 h de anticipación)</p>
-      <div className="max-h-56 overflow-y-auto grid gap-2 sm:grid-cols-2">
-        {slots.map((slot) => {
-          const active = selected === slot.startAt;
-          return (
-            <button
-              key={slot.startAt}
-              type="button"
-              onClick={() => onSelect(slot.startAt)}
-              className={`text-left rounded-lg border px-3 py-2 text-xs sm:text-sm transition-colors ${
-                active
-                  ? 'border-[var(--ventic-accent)] bg-ventic-accent-soft font-semibold'
-                  : 'ventic-border hover:bg-ventic-accent-soft/50'
-              }`}
-            >
-              {slot.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

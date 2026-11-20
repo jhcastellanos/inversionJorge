@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
           meeting_start_at TIMESTAMPTZ NOT NULL,
           duration_minutes INT NOT NULL DEFAULT 40,
           note TEXT NOT NULL,
-          price_cents INT NOT NULL DEFAULT 10000,
+          price_cents INT NOT NULL DEFAULT 5000,
           alternative_slots JSONB,
           admin_message TEXT,
           stripe_checkout_session_id VARCHAR(255),
