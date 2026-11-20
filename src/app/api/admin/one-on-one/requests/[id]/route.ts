@@ -49,13 +49,17 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     });
 
     if (user && updated) {
-      void sendOneOnOneApprovedToMember(
-        user.email,
-        user.full_name,
-        start.toISOString(),
-        deadline.toISOString(),
-        id
-      ).catch(console.error);
+      try {
+        await sendOneOnOneApprovedToMember(
+          user.email,
+          user.full_name,
+          start.toISOString(),
+          deadline.toISOString(),
+          id
+        );
+      } catch (emailErr) {
+        console.error('[one-on-one] email aprobación no enviado:', emailErr);
+      }
     }
 
     return NextResponse.json({ success: true, request: updated });
@@ -89,13 +93,17 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     });
 
     if (user && updated) {
-      void sendOneOnOneAlternativesToMember(
-        user.email,
-        user.full_name,
-        slots,
-        adminMessage,
-        id
-      ).catch(console.error);
+      try {
+        await sendOneOnOneAlternativesToMember(
+          user.email,
+          user.full_name,
+          slots,
+          adminMessage,
+          id
+        );
+      } catch (emailErr) {
+        console.error('[one-on-one] email alternativas no enviado:', emailErr);
+      }
     }
 
     return NextResponse.json({ success: true, request: updated });

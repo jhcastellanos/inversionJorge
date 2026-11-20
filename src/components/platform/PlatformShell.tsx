@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { usePlatformPreferences } from './PlatformPreferencesProvider';
 import DiscordJoinButton from './DiscordJoinButton';
+import MemberLogoutButton from './MemberLogoutButton';
 import PlatformPreferencesBar from './PlatformPreferencesBar';
 
 function ShieldIcon({ className }: { className?: string }) {
@@ -94,7 +95,6 @@ export default function PlatformShell({
   showOneOnOneNav?: boolean;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
   const academyActive = pathname === '/app/academy-manager';
@@ -110,12 +110,6 @@ export default function PlatformShell({
     ...(showOneOnOneNav ? [{ href: '/reunion-1a1', label: t('nav.oneOnOne') }] : []),
   ];
 
-  const logout = async () => {
-    await fetch('/api/member/logout', { method: 'POST' });
-    router.push('/');
-    router.refresh();
-  };
-
   const navLinkClass = (href: string) => {
     const active = pathname === href;
     return `block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -124,9 +118,6 @@ export default function PlatformShell({
         : 'ventic-muted hover:bg-ventic-accent-soft hover:ventic-text'
     }`;
   };
-
-  const logoutButtonClass =
-    'shrink-0 rounded-lg border ventic-border px-3 py-1.5 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft transition-colors';
 
   return (
     <div className="min-h-screen ventic-bg flex ventic-text">
@@ -188,9 +179,7 @@ export default function PlatformShell({
         </nav>
         <div className="p-4 border-t ventic-border shrink-0 ventic-surface space-y-2">
           <DiscordJoinButton variant="primary" className="w-full justify-center" />
-          <button type="button" onClick={logout} className={`w-full ${logoutButtonClass}`}>
-            {t('nav.logout')}
-          </button>
+          <MemberLogoutButton className="w-full" />
         </div>
       </aside>
 
@@ -200,18 +189,14 @@ export default function PlatformShell({
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <PlatformPreferencesBar userName={userName} />
             <DiscordJoinButton variant="primary" />
-            <button type="button" onClick={logout} className={logoutButtonClass}>
-              {t('nav.logout')}
-            </button>
+            <MemberLogoutButton />
           </div>
         </header>
 
         <header className="md:hidden ventic-surface border-b ventic-border px-4 py-3 sticky top-0 z-20">
           <div className="flex flex-wrap justify-between items-center gap-2">
             <span className="font-semibold ventic-text">{t('shell.brand')}</span>
-            <button type="button" onClick={logout} className={logoutButtonClass}>
-              {t('nav.logout')}
-            </button>
+            <MemberLogoutButton />
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <PlatformPreferencesBar />

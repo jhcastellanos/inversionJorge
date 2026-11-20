@@ -6,10 +6,7 @@ import {
   ensureOneOnOneSchema,
 } from '../../../../../lib/oneOnOneMeetings';
 import { isAllowedBookableSlot, parseSlotIso } from '../../../../../lib/oneOnOneSlots';
-import {
-  sendOneOnOneNewRequestToOwner,
-  sendOneOnOneRequestReceivedToMember,
-} from '../../../../../lib/oneOnOneMeetingEmails';
+import { deliverOneOnOneNewRequestEmails } from '../../../../../lib/oneOnOneMeetingEmails';
 import { assertMemberCanRequestOneOnOne } from '../../../../../lib/oneOnOneAccess';
 import { oneOnOneRequestBlocksNewBooking } from '../../../../../lib/oneOnOneTypes';
 
@@ -81,8 +78,11 @@ export async function POST(req: NextRequest) {
   });
 
   const iso = start.toISOString();
-  void sendOneOnOneRequestReceivedToMember(user.email, user.full_name, iso, note).catch(console.error);
-  void sendOneOnOneNewRequestToOwner(user.full_name, user.email, iso, note, created.id).catch(console.error);
+  try {
+    await deliverOneOnOneNewRequestEmails(user.email, user.full_name, iso, note, created.id);
+  } catch (emailErr) {
+    console.error('[one-on-one] emails no enviados tras crear solicitud:', emailErr);
+  }
 
   return NextResponse.json({ success: true, request: created });
 }

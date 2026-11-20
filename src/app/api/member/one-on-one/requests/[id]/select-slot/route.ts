@@ -63,13 +63,17 @@ export async function POST(req: NextRequest, context: Ctx) {
 
   const user = await PlatformUser.findById(session.userId);
   if (user && updated) {
-    void sendOneOnOneApprovedToMember(
-      user.email,
-      user.full_name,
-      start.toISOString(),
-      deadline.toISOString(),
-      id
-    ).catch(console.error);
+    try {
+      await sendOneOnOneApprovedToMember(
+        user.email,
+        user.full_name,
+        start.toISOString(),
+        deadline.toISOString(),
+        id
+      );
+    } catch (emailErr) {
+      console.error('[one-on-one] email pago tras alternativa no enviado:', emailErr);
+    }
   }
 
   return NextResponse.json({ success: true, request: updated });

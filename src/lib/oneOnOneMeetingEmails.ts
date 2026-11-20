@@ -1,22 +1,11 @@
-import { Resend } from 'resend';
 import { getFirstNameFromAlias } from './referralEmail';
+import { getOwnerNotifyEmails, sendResendHtmlEmail } from './resendSend';
 import { getSiteBaseUrl } from './siteUrl';
 import {
   ONE_ON_ONE_DURATION_MINUTES,
   ONE_ON_ONE_PRICE_USD,
   ONE_ON_ONE_TIMEZONE,
 } from './oneOnOneMeetings.constants';
-
-function getFromAddress(): string {
-  return (
-    process.env.EMAIL_FROM ||
-    'Inversión Real con Jorge y Guille <inversionrealconjorge@gmail.com>'
-  );
-}
-
-function ownerEmail(): string {
-  return process.env.OWNER_EMAIL || 'inversionrealconjorge@gmail.com';
-}
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -34,19 +23,42 @@ function formatMeetingWhen(iso: string): string {
   }
 }
 
-async function send(to: string, subject: string, html: string) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY no configurada; omitiendo email 1-a-1');
-    return;
+function oneOnOneEmailShell(bodyHtml: string): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 24px;">
+${bodyHtml}
+<p style="margin-top: 28px;">Un abrazo,<br><strong>Jorge y Guille</strong><br>Inversión Real con Jorge y Guille</p>
+</body>
+</html>`;
+}
+
+async function send(to: string | string[], subject: string, bodyHtml: string) {
+  await sendResendHtmlEmail({ to, subject, html: oneOnOneEmailShell(bodyHtml) });
+}
+
+/** Tras crear una solicitud: correo al miembro y aviso al admin (await en API). */
+export async function deliverOneOnOneNewRequestEmails(
+  memberEmail: string,
+  memberName: string,
+  meetingStartIso: string,
+  note: string,
+  requestId: number
+): Promise<void> {
+  const results = await Promise.allSettled([
+    sendOneOnOneRequestReceivedToMember(memberEmail, memberName, meetingStartIso, note),
+    sendOneOnOneNewRequestToOwner(memberName, memberEmail, meetingStartIso, note, requestId),
+  ]);
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      console.error('[one-on-one] fallo al enviar email de nueva solicitud:', r.reason);
+    }
   }
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const response = await resend.emails.send({
-    from: getFromAddress(),
-    to: to.trim().toLowerCase(),
-    subject,
-    html,
-  });
-  if (response.error) throw new Error(JSON.stringify(response.error));
+  const failed = results.filter((r) => r.status === 'rejected').length;
+  if (failed === results.length) {
+    throw new Error('No se pudo enviar ningún correo de la solicitud 1-1');
+  }
 }
 
 export async function sendOneOnOneRequestReceivedToMember(
@@ -84,8 +96,8 @@ export async function sendOneOnOneNewRequestToOwner(
   const when = escapeHtml(formatMeetingWhen(meetingStartIso));
   const adminUrl = escapeHtml(`${getSiteBaseUrl()}/admin/reuniones-1a1`);
   await send(
-    ownerEmail(),
-    `Nueva solicitud reunión 1-a-1 #${requestId}`,
+    getOwnerNotifyEmails(),
+    `Nueva solicitud reunión 1-1 #${requestId}`,
     `<p>Nueva solicitud de reunión 1-a-1.</p>
     <p><strong>Miembro:</strong> ${escapeHtml(memberName)} · ${escapeHtml(memberEmail)}</p>
     <p><strong>Horario:</strong> ${when}</p>

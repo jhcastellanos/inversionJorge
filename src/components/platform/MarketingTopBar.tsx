@@ -7,11 +7,14 @@ import PlatformPreferencesBar from './PlatformPreferencesBar';
 type Props = {
   ctaHref?: string;
   ctaLabel?: string;
+  /** Sesión iniciada: menú / cerrar sesión (páginas fuera de /app) */
+  sessionBar?: React.ReactNode;
 };
 
 export default function MarketingTopBar({
   ctaHref = '/planes',
   ctaLabel = 'Ver planes',
+  sessionBar,
 }: Props) {
   return (
     <nav className="ventic-surface border-b ventic-border sticky top-0 z-30">
@@ -23,12 +26,15 @@ export default function MarketingTopBar({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <PlatformPreferencesBar />
           <DiscordJoinButton variant="primary" />
-          <Link
-            href={ctaHref}
-            className="px-3 sm:px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"
-          >
-            {ctaLabel}
-          </Link>
+          {sessionBar}
+          {!sessionBar && (
+            <Link
+              href={ctaHref}
+              className="px-3 sm:px-4 py-2 rounded-lg bg-[var(--ventic-accent)] text-white text-sm font-semibold hover:bg-[var(--ventic-accent-hover)]"
+            >
+              {ctaLabel}
+            </Link>
+          )}
         </div>
       </div>
     </nav>
