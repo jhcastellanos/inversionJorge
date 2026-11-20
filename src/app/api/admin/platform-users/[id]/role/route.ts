@@ -36,7 +36,7 @@ export async function POST(
     role = parsed;
   }
 
-  const updated = await PlatformUser.updatePlatformRole(userId, role);
+  const updated = await PlatformUser.setPlatformRoleFromAdmin(userId, role);
   if (!updated) {
     return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
   }

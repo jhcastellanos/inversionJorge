@@ -87,27 +87,22 @@ function LessonStage({
 
   if (lesson.lesson_type === 'video') {
     return (
-      <div className="bg-black">
+      <div
+        className="bg-black select-none"
+        onContextMenu={(e) => e.preventDefault()}
+      >
         <video
           ref={videoRef}
           key={lesson.id}
           controls
+          controlsList="nodownload noremoteplayback"
+          disablePictureInPicture
           playsInline
           preload="metadata"
           className="w-full aspect-video max-h-[min(72vh,640px)]"
           src={lesson.file_url}
           onPlay={onEngaged}
         />
-        <div className="px-4 py-2 border-t border-white/10 flex justify-end">
-          <a
-            href={lesson.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/60 hover:text-[var(--ventic-accent)]"
-          >
-            {watchLabel} ↗
-          </a>
-        </div>
       </div>
     );
   }

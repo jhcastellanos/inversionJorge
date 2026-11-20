@@ -9,6 +9,7 @@ export type PlatformUserRow = {
   stripe_customer_id: string | null;
   discord_user_id: string | null;
   platform_role: string | null;
+  platform_role_manual?: boolean;
   alumno_access_until: Date | null;
   onboarding_completed: boolean;
   created_at: Date;
@@ -98,12 +99,38 @@ export const PlatformUser = {
     }
   },
 
-  async updatePlatformRole(id: number, role: string | null) {
+  /** Solo sincronización automática (Stripe/cron). Respeta `platform_role_manual`. */
+  async updatePlatformRoleFromSync(id: number, role: string): Promise<PlatformUserRow | null> {
+    const { ensurePlatformUserRoleManualSchema } = await import('./platformUserRoleManualSchema');
+    await ensurePlatformUserRoleManualSchema();
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `UPDATE platform_users SET platform_role = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        `UPDATE platform_users
+         SET platform_role = $1, updated_at = NOW()
+         WHERE id = $2 AND platform_role_manual = false
+         RETURNING *`,
         [role, id]
+      );
+      return result.rows[0] ?? null;
+    } finally {
+      client.release();
+    }
+  },
+
+  /** Asignación desde panel admin: no la sobrescribe el bot ni el cron. */
+  async setPlatformRoleFromAdmin(id: number, role: string | null): Promise<PlatformUserRow | null> {
+    const { ensurePlatformUserRoleManualSchema } = await import('./platformUserRoleManualSchema');
+    await ensurePlatformUserRoleManualSchema();
+    const client = await pool.connect();
+    try {
+      const manual = role !== null;
+      const result = await client.query(
+        `UPDATE platform_users
+         SET platform_role = $1, platform_role_manual = $2, updated_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [role, manual, id]
       );
       return result.rows[0] ?? null;
     } finally {

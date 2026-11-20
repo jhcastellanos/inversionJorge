@@ -15,6 +15,7 @@ type User = {
   stripe_customer_id: string | null;
   discord_user_id: string | null;
   platform_role: string | null;
+  platform_role_manual?: boolean;
   onboarding_completed: boolean;
 };
 
@@ -195,6 +196,11 @@ export default function PlatformUsersAdminPanel() {
                     </td>
                     <td className="px-4 py-3">
                       <RoleBadge role={u.platform_role} />
+                      {u.platform_role_manual ? (
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                          Rol manual (no lo cambia el cron)
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">
                       <LinkBadge linked={hasDiscord} label="Discord" />

@@ -8,6 +8,7 @@ import { userHasActiveAlumnoAccess } from './memberAlumnoAccess';
 import { ensurePlatformUserAlumnoSchema } from './platformUserAlumnoSchema';
 import { PlatformUser, type PlatformUserRow } from './platformUsers';
 import { ensurePlatformUserDiscordSchema } from './platformUserDiscordSchema';
+import { ensurePlatformUserRoleManualSchema } from './platformUserRoleManualSchema';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
@@ -71,8 +72,21 @@ export async function syncMemberEntitlementsForUser(
 ): Promise<EntitlementSyncResult | null> {
   await ensurePlatformUserDiscordSchema();
   await ensurePlatformUserAlumnoSchema();
+  await ensurePlatformUserRoleManualSchema();
   const user = await PlatformUser.findById(userId);
   if (!user) return null;
+
+  if (user.platform_role_manual) {
+    return {
+      userId: user.id,
+      email: user.email,
+      subscriptionActive: false,
+      previousRole: user.platform_role,
+      newRole: user.platform_role,
+      changed: false,
+      skipped: 'Rol fijado manualmente por admin',
+    };
+  }
 
   const role = parsePlatformRole(user.platform_role);
   if (!roleManagedByStripeMembership(role)) {
@@ -118,7 +132,7 @@ export async function syncMemberEntitlementsForUser(
   let currentUser = user;
   let changed = false;
   if (user.platform_role !== targetRole) {
-    const updated = await PlatformUser.updatePlatformRole(user.id, targetRole);
+    const updated = await PlatformUser.updatePlatformRoleFromSync(user.id, targetRole);
     if (updated) {
       currentUser = updated;
       changed = true;

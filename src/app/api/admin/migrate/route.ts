@@ -138,6 +138,12 @@ export async function POST(req: NextRequest) {
 
       await client.query(`
         ALTER TABLE platform_users
+          ADD COLUMN IF NOT EXISTS platform_role_manual BOOLEAN NOT NULL DEFAULT false
+      `);
+      console.log('✅ platform_users.platform_role_manual column ready');
+
+      await client.query(`
+        ALTER TABLE platform_users
           ADD COLUMN IF NOT EXISTS alumno_access_until TIMESTAMPTZ
       `);
       await client.query(`

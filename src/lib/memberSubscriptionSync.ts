@@ -6,6 +6,7 @@ import { parsePlatformRole, type PlatformRole, isPlatformStaffRole } from './pla
 import { resolveAutomatedMembershipRole } from './resolveMemberPlatformRole';
 import { userHasActiveAlumnoAccess } from './memberAlumnoAccess';
 import { ensurePlatformUserAlumnoSchema } from './platformUserAlumnoSchema';
+import { ensurePlatformUserRoleManualSchema } from './platformUserRoleManualSchema';
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
@@ -81,6 +82,11 @@ export async function syncPlatformRoleWithSubscription(
   subscriptionActive: boolean
 ): Promise<PlatformUserRow> {
   await ensurePlatformUserAlumnoSchema();
+  await ensurePlatformUserRoleManualSchema();
+  if (user.platform_role_manual) {
+    return user;
+  }
+
   const role = parsePlatformRole(user.platform_role);
   if (!role || isPlatformStaffRole(role)) {
     return user;
@@ -91,8 +97,8 @@ export async function syncPlatformRoleWithSubscription(
 
   if (user.stripe_customer_id || alumnoAccessActive) {
     if (user.platform_role !== targetRole) {
-      const updated = await PlatformUser.updatePlatformRole(user.id, targetRole);
-      return updated ?? { ...user, platform_role: targetRole };
+      const updated = await PlatformUser.updatePlatformRoleFromSync(user.id, targetRole);
+      return updated ?? user;
     }
     return user;
   }
@@ -103,8 +109,8 @@ export async function syncPlatformRoleWithSubscription(
     !alumnoAccessActive &&
     user.platform_role !== targetRole
   ) {
-    const updated = await PlatformUser.updatePlatformRole(user.id, targetRole);
-    return updated ?? { ...user, platform_role: targetRole };
+    const updated = await PlatformUser.updatePlatformRoleFromSync(user.id, targetRole);
+    return updated ?? user;
   }
 
   return user;
