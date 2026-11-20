@@ -30,6 +30,7 @@ export type OneOnOneRequestRow = {
   price_cents: number;
   alternative_slots: string[] | null;
   admin_message: string | null;
+  client_message: string | null;
   stripe_checkout_session_id: string | null;
   stripe_payment_intent_id: string | null;
   payment_deadline_at: Date | null;
@@ -86,6 +87,10 @@ export async function ensureOneOnOneSchema(): Promise<void> {
         `);
         await client.query(`
           CREATE INDEX IF NOT EXISTS idx_one_on_one_start ON member_one_on_one_requests(meeting_start_at)
+        `);
+        await client.query(`
+          ALTER TABLE member_one_on_one_requests
+          ADD COLUMN IF NOT EXISTS client_message TEXT
         `);
       } finally {
         client.release();
@@ -236,6 +241,7 @@ export const OneOnOneRequest = {
       meeting_start_at: Date;
       alternative_slots: string[] | null;
       admin_message: string | null;
+      client_message: string | null;
       payment_deadline_at: Date | null;
       stripe_checkout_session_id: string | null;
       stripe_payment_intent_id: string | null;
@@ -264,6 +270,10 @@ export const OneOnOneRequest = {
       if (patch.admin_message !== undefined) {
         fields.push(`admin_message = $${i++}`);
         values.push(patch.admin_message);
+      }
+      if (patch.client_message !== undefined) {
+        fields.push(`client_message = $${i++}`);
+        values.push(patch.client_message);
       }
       if (patch.payment_deadline_at !== undefined) {
         fields.push(`payment_deadline_at = $${i++}`);

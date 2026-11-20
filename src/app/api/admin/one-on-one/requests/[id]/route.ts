@@ -8,6 +8,7 @@ import { isAllowedBookableSlot, parseSlotIso } from '../../../../../../lib/oneOn
 import {
   sendOneOnOneAlternativesToMember,
   sendOneOnOneApprovedToMember,
+  sendOneOnOneDeclinedToMember,
 } from '../../../../../../lib/oneOnOneMeetingEmails';
 import { PlatformUser } from '../../../../../../lib/platformUsers';
 
@@ -66,8 +67,8 @@ export async function PATCH(req: NextRequest, context: Ctx) {
   }
 
   if (action === 'propose_alternatives') {
-    if (request.status !== 'pending_admin') {
-      return NextResponse.json({ error: 'Solo desde solicitud pendiente' }, { status: 400 });
+    if (!['pending_admin', 'awaiting_client_slot'].includes(request.status)) {
+      return NextResponse.json({ error: 'No se pueden proponer horarios en este estado' }, { status: 400 });
     }
 
     const raw = Array.isArray(body.alternative_slots) ? body.alternative_slots : [];
@@ -90,6 +91,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
       status: 'awaiting_client_slot',
       alternative_slots: slots,
       admin_message: adminMessage,
+      client_message: null,
     });
 
     if (user && updated) {
@@ -110,11 +112,23 @@ export async function PATCH(req: NextRequest, context: Ctx) {
   }
 
   if (action === 'decline') {
+    if (['paid', 'cancelled', 'declined', 'expired'].includes(request.status)) {
+      return NextResponse.json({ error: 'La solicitud ya está cerrada' }, { status: 400 });
+    }
     const adminMessage = typeof body.admin_message === 'string' ? body.admin_message.trim() : null;
     const updated = await OneOnOneRequest.updateStatus(id, {
       status: 'declined',
       admin_message: adminMessage,
+      alternative_slots: null,
+      payment_deadline_at: null,
     });
+    if (user) {
+      try {
+        await sendOneOnOneDeclinedToMember(user.email, user.full_name, adminMessage);
+      } catch (emailErr) {
+        console.error('[one-on-one] email rechazo no enviado:', emailErr);
+      }
+    }
     return NextResponse.json({ success: true, request: updated });
   }
 

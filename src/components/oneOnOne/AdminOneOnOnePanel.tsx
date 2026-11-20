@@ -13,6 +13,8 @@ type AdminRequest = {
   user_email: string;
   user_full_name: string;
   alternative_slots: string[] | null;
+  admin_message: string | null;
+  client_message: string | null;
 };
 
 export default function AdminOneOnOnePanel() {
@@ -144,16 +146,39 @@ export default function AdminOneOnOnePanel() {
               {selected.note}
             </p>
 
-            {selected.status === 'pending_admin' && (
+            {selected.client_message && selected.status === 'pending_admin' && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                <p className="font-semibold">Contrapropuesta del miembro</p>
+                <p className="mt-1">
+                  Nuevo horario pedido:{' '}
+                  {formatOneOnOneDateTime(selected.meeting_start_at, {
+                    dateStyle: 'full',
+                    timeStyle: 'short',
+                  })}
+                </p>
+                <p className="mt-2 whitespace-pre-wrap">{selected.client_message}</p>
+              </div>
+            )}
+
+            {selected.status === 'awaiting_client_slot' && (
+              <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                Esperando que el miembro acepte un horario o envíe otra propuesta desde su cuenta (
+                /reunion-1a1).
+              </p>
+            )}
+
+            {['pending_admin', 'awaiting_client_slot'].includes(selected.status) && (
               <div className="space-y-4 border-t pt-4">
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => void patch({ action: 'approve' })}
-                  className="rounded-lg bg-green-700 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50"
-                >
-                  Aprobar horario solicitado
-                </button>
+                {selected.status === 'pending_admin' && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void patch({ action: 'approve' })}
+                    className="rounded-lg bg-green-700 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                  >
+                    Aprobar horario solicitado
+                  </button>
+                )}
 
                 <div>
                   <p className="text-sm font-medium text-gray-900 mb-2">Proponer otros horarios</p>
@@ -201,6 +226,18 @@ export default function AdminOneOnOnePanel() {
                   Rechazar solicitud
                 </button>
               </div>
+            )}
+
+            {!['pending_admin', 'awaiting_client_slot', 'awaiting_payment'].includes(selected.status) && (
+              <p className="text-sm text-gray-500 border-t pt-4">
+                Estado: {oneOnOneStatusLabel(selected.status)}
+              </p>
+            )}
+
+            {selected.status === 'awaiting_payment' && (
+              <p className="text-sm text-gray-600 border-t pt-4">
+                Horario acordado. El miembro completa el pago desde su cuenta.
+              </p>
             )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}

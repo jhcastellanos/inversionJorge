@@ -152,6 +152,52 @@ export async function sendOneOnOneAlternativesToMember(
   );
 }
 
+export async function sendOneOnOneCounterToOwner(
+  memberName: string,
+  memberEmail: string,
+  meetingStartIso: string,
+  clientMessage: string | null,
+  requestId: number,
+  originalNote: string
+) {
+  const when = escapeHtml(formatMeetingWhen(meetingStartIso));
+  const adminUrl = escapeHtml(`${getSiteBaseUrl()}/admin/reuniones-1a1`);
+  const msg = clientMessage
+    ? `<p><strong>Mensaje del miembro:</strong> ${escapeHtml(clientMessage)}</p>`
+    : '';
+  await send(
+    getOwnerNotifyEmails(),
+    `Contrapropuesta reunión 1-1 #${requestId}`,
+    `<p><strong>${escapeHtml(memberName)}</strong> (${escapeHtml(memberEmail)}) propone otro horario:</p>
+    <p><strong>Nuevo horario solicitado:</strong> ${when}</p>
+    ${msg}
+    <p><strong>Tema original:</strong></p>
+    <p style="background:#f1f5f9;padding:12px;border-radius:8px;">${escapeHtml(originalNote)}</p>
+    <p><a href="${adminUrl}">Revisar en el panel</a></p>`
+  );
+}
+
+export async function sendOneOnOneDeclinedToMember(
+  toEmail: string,
+  fullName: string,
+  adminMessage: string | null
+) {
+  const name = escapeHtml(getFirstNameFromAlias(fullName));
+  const url = escapeHtml(`${getSiteBaseUrl()}/reunion-1a1`);
+  const msg = adminMessage
+    ? `<p><strong>Mensaje del equipo:</strong> ${escapeHtml(adminMessage)}</p>`
+    : '';
+  await send(
+    toEmail,
+    'Tu solicitud de reunión 1-1 fue rechazada',
+    `<p>Hola <strong>${name}</strong>,</p>
+    <p>No podemos atender esta solicitud en los términos actuales.</p>
+    ${msg}
+    <p>Cuando quieras, puedes enviar una nueva solicitud desde la plataforma.</p>
+    <p><a href="${url}">Ir a reuniones 1-1</a></p>`
+  );
+}
+
 export async function sendOneOnOnePaidConfirmation(toEmail: string, fullName: string, meetingStartIso: string) {
   const name = escapeHtml(getFirstNameFromAlias(fullName));
   await send(

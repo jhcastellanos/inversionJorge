@@ -42,6 +42,10 @@ export const en: Messages = {
     staffAlertsTitle: 'Needs your review',
     staffSupportPending: '{count} new support ticket(s)',
     staffOneOnOnePending: '{count} pending 1-1 meeting request(s)',
+    oneOnOneActionTitle: 'Action required — 1-1 meeting',
+    oneOnOneActionBody:
+      'You have {count} pending item(s): proposed time from the team or payment to confirm.',
+    oneOnOneActionLink: 'Go to my 1-1 request',
   },
   classes: {
     subtitle: 'Academy for active members ({role}). Modules and lessons published by the team.',

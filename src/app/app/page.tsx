@@ -1,7 +1,9 @@
 import { requireMemberSession } from '../../lib/getCurrentMember';
 import PlatformHomeHub from '../../components/platform/PlatformHomeHub';
 import StaffHomeAlerts from '../../components/platform/StaffHomeAlerts';
+import MemberOneOnOneHomeAlert from '../../components/platform/MemberOneOnOneHomeAlert';
 import { getStaffAlertCountsIfNeeded } from '../../lib/staffAlertCounts';
+import { countMemberOneOnOneActions } from '../../lib/oneOnOneMemberAlerts';
 import { isPlatformStaffRole } from '../../lib/platformRoles';
 import { PlatformCalendarEvent } from '../../lib/platformContent';
 import {
@@ -46,9 +48,13 @@ export default async function AppHomePage() {
     ? await getStaffAlertCountsIfNeeded(access.role)
     : undefined;
 
+  const memberOneOnOneActions =
+    access.role !== 'admin' ? await countMemberOneOnOneActions(user.id) : 0;
+
   return (
     <>
       {staffAlertCounts && <StaffHomeAlerts counts={staffAlertCounts} />}
+      {memberOneOnOneActions > 0 && <MemberOneOnOneHomeAlert count={memberOneOnOneActions} />}
       <PlatformHomeHub
         user={{ full_name: user.full_name, email: user.email }}
         contactSupportForRoleUpgrade={access.contactSupportForRoleUpgrade}

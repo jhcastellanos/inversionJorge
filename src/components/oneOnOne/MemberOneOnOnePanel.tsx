@@ -22,6 +22,7 @@ type RequestRow = {
   note: string;
   alternative_slots: string[] | null;
   admin_message: string | null;
+  client_message: string | null;
   payment_deadline_at: string | null;
 };
 
@@ -40,6 +41,8 @@ export default function MemberOneOnOnePanel({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [counterSlot, setCounterSlot] = useState('');
+  const [counterMessage, setCounterMessage] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,7 +57,8 @@ export default function MemberOneOnOnePanel({
       const hasOpen = nextRequests.some((r) =>
         oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)
       );
-      if (hasOpen) {
+      const needsCounterSlots = nextRequests.some((r) => r.status === 'awaiting_client_slot');
+      if (hasOpen && !needsCounterSlots) {
         setSlots([]);
         setSelectedSlot('');
         setNote('');
@@ -130,9 +134,8 @@ export default function MemberOneOnOnePanel({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudo reservar');
-      setSuccess('Horario confirmado. Ahora puedes completar el pago.');
+      setSuccess('Horario confirmado. Completa el pago cuando estés listo (abajo en esta página).');
       await load();
-      if (data.request?.id) await startPay(data.request.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error');
     } finally {
@@ -140,14 +143,58 @@ export default function MemberOneOnOnePanel({
     }
   };
 
-  const pickRequest = initialPickId
-    ? requests.find((r) => r.id === initialPickId)
-    : requests.find((r) => r.status === 'awaiting_client_slot');
+  const cancelRequest = async (requestId: number) => {
+    if (!window.confirm('¿Cancelar esta solicitud de reunión 1-1?')) return;
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch(`/api/member/one-on-one/requests/${requestId}/cancel`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo cancelar');
+      setSuccess('Solicitud cancelada. Puedes pedir una nueva reunión cuando quieras.');
+      setCounterSlot('');
+      setCounterMessage('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setSending(false);
+    }
+  };
 
-  const blockingRequest = useMemo(
-    () => requests.find((r) => oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at)),
-    [requests]
-  );
+  const submitCounter = async (requestId: number) => {
+    if (!counterSlot) return;
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch(`/api/member/one-on-one/requests/${requestId}/counter-propose`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meeting_start_at: counterSlot,
+          client_message: counterMessage.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo enviar');
+      setCounterSlot('');
+      setCounterMessage('');
+      setSuccess('Enviamos tu contrapropuesta al equipo. Te avisaremos aquí cuando respondan.');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const blockingRequest = useMemo(() => {
+    const byId = initialPickId ? requests.find((r) => r.id === initialPickId) : null;
+    const open = requests.find((r) => oneOnOneRequestBlocksNewBooking(r.status, r.meeting_start_at));
+    return byId && open && byId.id === open.id ? byId : open ?? byId;
+  }, [requests, initialPickId]);
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -179,32 +226,104 @@ export default function MemberOneOnOnePanel({
         {loading ? (
           <p className="text-sm ventic-muted mt-4">Cargando…</p>
         ) : blockingRequest ? (
-          <div className="mt-5 rounded-xl border ventic-border bg-black/15 px-4 py-4 space-y-2">
-            <p className="text-sm font-medium ventic-text">Tienes una solicitud en curso</p>
-            <p className="text-sm ventic-muted leading-relaxed">
-              Estado: <strong className="ventic-text">{oneOnOneStatusLabel(blockingRequest.status)}</strong>.
-              Horario solicitado:{' '}
+          <div className="mt-5 rounded-xl border border-[var(--ventic-accent)]/35 bg-ventic-accent-soft/30 px-4 py-4 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-bold ventic-text">Tu solicitud #{blockingRequest.id}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ventic-accent)] mt-1">
+                  {oneOnOneStatusLabel(blockingRequest.status)}
+                </p>
+              </div>
+              {['pending_admin', 'awaiting_client_slot', 'awaiting_payment'].includes(
+                blockingRequest.status
+              ) && (
+                <button
+                  type="button"
+                  disabled={sending}
+                  onClick={() => void cancelRequest(blockingRequest.id)}
+                  className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                >
+                  Cancelar solicitud
+                </button>
+              )}
+            </div>
+
+            <p className="text-sm ventic-muted">
+              Horario en discusión:{' '}
               <strong className="ventic-text">
                 {formatOneOnOneDateTime(blockingRequest.meeting_start_at, {
                   dateStyle: 'full',
                   timeStyle: 'short',
                 })}
               </strong>
-              .
             </p>
-            <p className="text-sm ventic-muted leading-relaxed">
-              El calendario volverá a mostrarse cuando esta solicitud se cierre (rechazada o vencida) o cuando haya
-              pasado la sesión confirmada. Mientras tanto, revisa el detalle en{' '}
-              <strong className="ventic-text">Mis solicitudes</strong> más abajo.
-            </p>
+            <p className="text-sm ventic-text whitespace-pre-wrap">{blockingRequest.note}</p>
+
+            {blockingRequest.status === 'pending_admin' && (
+              <p className="text-sm ventic-muted leading-relaxed">
+                El equipo está revisando tu solicitud. Si proponen otros horarios, te avisaremos aquí en esta página.
+              </p>
+            )}
+
+            {blockingRequest.status === 'awaiting_client_slot' && (
+              <div className="space-y-4 border-t ventic-border pt-4">
+                {blockingRequest.admin_message && (
+                  <p className="text-sm ventic-text">
+                    <strong>Mensaje del equipo:</strong> {blockingRequest.admin_message}
+                  </p>
+                )}
+                <p className="text-sm font-medium ventic-text">Horarios que el equipo te propone (acepta uno):</p>
+                <ul className="space-y-2">
+                  {(blockingRequest.alternative_slots ?? []).map((slot) => (
+                    <li key={slot}>
+                      <button
+                        type="button"
+                        disabled={sending}
+                        onClick={() => void pickAlternative(blockingRequest.id, slot)}
+                        className="w-full text-left rounded-lg border-2 border-[var(--ventic-accent)]/40 bg-black/10 px-4 py-3 text-sm font-medium hover:bg-ventic-accent-soft"
+                      >
+                        Aceptar:{' '}
+                        {formatOneOnOneDateTime(slot, { dateStyle: 'full', timeStyle: 'short' })}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="rounded-xl border ventic-border bg-black/10 p-3 space-y-3">
+                  <p className="text-sm font-medium ventic-text">Ninguno te sirve — propón otro horario</p>
+                  <OneOnOneSlotPicker slots={slots} selected={counterSlot} onSelect={setCounterSlot} />
+                  <textarea
+                    value={counterMessage}
+                    onChange={(e) => setCounterMessage(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-lg border ventic-border px-3 py-2 text-sm ventic-text ventic-surface"
+                    placeholder="Comentario opcional para el equipo"
+                  />
+                  <button
+                    type="button"
+                    disabled={sending || !counterSlot}
+                    onClick={() => void submitCounter(blockingRequest.id)}
+                    className="rounded-lg border ventic-border px-4 py-2 text-sm font-semibold ventic-text hover:bg-ventic-accent-soft disabled:opacity-50"
+                  >
+                    Enviar contrapropuesta al equipo
+                  </button>
+                </div>
+              </div>
+            )}
+
             {blockingRequest.status === 'awaiting_payment' && (
-              <button
-                type="button"
-                onClick={() => void startPay(blockingRequest.id)}
-                className="mt-2 rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
-              >
-                Pagar USD {ONE_ON_ONE_PRICE_USD} y confirmar
-              </button>
+              <div className="space-y-2">
+                <p className="text-sm ventic-muted">
+                  Horario acordado. Completa el pago para confirmar la reunión.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void startPay(blockingRequest.id)}
+                  className="rounded-lg bg-[var(--ventic-accent)] text-white px-4 py-2 text-sm font-semibold"
+                >
+                  Pagar USD {ONE_ON_ONE_PRICE_USD} y confirmar
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -240,29 +359,6 @@ export default function MemberOneOnOnePanel({
         )}
       </section>
 
-      {pickRequest && (
-        <section className="ventic-surface border border-amber-300/50 rounded-2xl p-6 bg-amber-50/30">
-          <h3 className="font-bold ventic-text">Horarios alternativos — solicitud #{pickRequest.id}</h3>
-          {pickRequest.admin_message && (
-            <p className="text-sm ventic-muted mt-2">{pickRequest.admin_message}</p>
-          )}
-          <ul className="mt-4 space-y-2">
-            {(pickRequest.alternative_slots ?? []).map((slot) => (
-              <li key={slot}>
-                <button
-                  type="button"
-                  disabled={sending}
-                  onClick={() => void pickAlternative(pickRequest.id, slot)}
-                  className="w-full text-left rounded-lg border ventic-border px-4 py-3 text-sm hover:bg-ventic-accent-soft"
-                >
-                  {formatOneOnOneDateTime(slot, { dateStyle: 'full', timeStyle: 'short' })}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       <section>
         <h2 className="text-lg font-bold ventic-text mb-3">Mis solicitudes</h2>
         {requests.length === 0 ? (
@@ -283,6 +379,11 @@ export default function MemberOneOnOnePanel({
                   </span>
                 </div>
                 <p className="text-sm ventic-text mt-2 whitespace-pre-wrap">{r.note}</p>
+                {r.admin_message && (r.status === 'declined' || r.status === 'awaiting_client_slot') && (
+                  <p className="text-sm ventic-muted mt-2">
+                    <strong>Equipo:</strong> {r.admin_message}
+                  </p>
+                )}
                 {r.status === 'awaiting_payment' && (
                   <button
                     type="button"

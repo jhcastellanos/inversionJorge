@@ -25,11 +25,15 @@ export function oneOnOneRequestBlocksNewBooking(
   return true;
 }
 
+export function oneOnOneMemberNeedsAction(status: OneOnOneStatus): boolean {
+  return status === 'awaiting_client_slot' || status === 'awaiting_payment';
+}
+
 export function oneOnOneStatusLabel(status: OneOnOneStatus): string {
   const labels: Record<OneOnOneStatus, string> = {
     pending_admin: 'Pendiente de revisión',
     awaiting_payment: 'Aprobada — completa el pago',
-    awaiting_client_slot: 'Elige un horario alternativo',
+    awaiting_client_slot: 'El equipo propuso horarios — tu respuesta',
     paid: 'Confirmada y pagada',
     declined: 'No disponible',
     expired: 'Plazo de pago vencido',

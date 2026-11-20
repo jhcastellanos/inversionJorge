@@ -40,6 +40,10 @@ export const es = {
     staffAlertsTitle: 'Pendientes de revisión',
     staffSupportPending: '{count} consulta(s) nueva(s) en Dudas e inquietudes',
     staffOneOnOnePending: '{count} solicitud(es) de reunión 1-1',
+    oneOnOneActionTitle: 'Acción requerida — reunión 1-1',
+    oneOnOneActionBody:
+      'Tienes {count} gestión(es) pendiente(s): horario propuesto por el equipo o pago por confirmar.',
+    oneOnOneActionLink: 'Ir a mi solicitud 1-1',
   },
   classes: {
     subtitle: 'Academia para miembros activos ({role}). Módulos y lecciones publicados por el equipo.',

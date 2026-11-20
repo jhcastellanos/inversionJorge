@@ -4,6 +4,7 @@ import { syncOnboardingIfHasAccess } from '../../lib/memberOnboarding';
 import PlatformShell from '../../components/platform/PlatformShell';
 import { isPlatformStaffRole } from '../../lib/platformRoles';
 import { getStaffAlertCountsIfNeeded } from '../../lib/staffAlertCounts';
+import { countMemberOneOnOneActions } from '../../lib/oneOnOneMemberAlerts';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,8 @@ export default async function MemberAppLayout({ children }: { children: React.Re
   await syncOnboardingIfHasAccess(user, access);
 
   const staffAlertCounts = await getStaffAlertCountsIfNeeded(access.role);
+  const memberOneOnOneActionCount =
+    access.role !== 'admin' ? await countMemberOneOnOneActions(user.id) : undefined;
 
   return (
     <PlatformShell
@@ -25,6 +28,7 @@ export default async function MemberAppLayout({ children }: { children: React.Re
       showSupportAlertsNav={isPlatformStaffRole(access.role)}
       showOneOnOneNav={access.role !== 'admin'}
       staffAlertCounts={staffAlertCounts}
+      memberOneOnOneActionCount={memberOneOnOneActionCount}
     >
       {children}
     </PlatformShell>

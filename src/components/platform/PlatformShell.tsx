@@ -109,6 +109,7 @@ export default function PlatformShell({
   showSupportAlertsNav,
   showOneOnOneNav = true,
   staffAlertCounts,
+  memberOneOnOneActionCount,
 }: {
   children: React.ReactNode;
   userName: string;
@@ -117,6 +118,8 @@ export default function PlatformShell({
   /** false para rol Admin (gestiona 1-a-1 en /admin) */
   showOneOnOneNav?: boolean;
   staffAlertCounts?: StaffAlertCounts;
+  /** Badge en «Reunión 1-1» para el miembro (pago o respuesta pendiente) */
+  memberOneOnOneActionCount?: number;
 }) {
   const pathname = usePathname();
   const { t } = usePlatformPreferences();
@@ -125,14 +128,16 @@ export default function PlatformShell({
   const supportAlertsActive = pathname === '/admin/support-tickets';
   const oneOnOneAdminActive = pathname === '/admin/reuniones-1a1';
 
-  const navItems = [
+  const navItems: { href: string; label: string; badge?: number }[] = [
     { href: '/app', label: t('nav.home') },
     { href: '/app/clases', label: t('nav.classes') },
     { href: '/app/calendario', label: t('nav.calendar') },
     { href: '/app/membresia', label: t('nav.membership') },
     { href: '/app/planes', label: t('nav.plans') },
     { href: '/app/dudas', label: t('nav.support') },
-    ...(showOneOnOneNav ? [{ href: '/reunion-1a1', label: t('nav.oneOnOne') }] : []),
+    ...(showOneOnOneNav
+      ? [{ href: '/reunion-1a1', label: t('nav.oneOnOne'), badge: memberOneOnOneActionCount }]
+      : []),
   ];
 
   const navLinkClass = (href: string) => {
@@ -163,8 +168,17 @@ export default function PlatformShell({
         </div>
         <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={navLinkClass(item.href)}>
-              {item.label}
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${navLinkClass(item.href)} flex items-center justify-between gap-2`}
+            >
+              <span>{item.label}</span>
+              {(item.badge ?? 0) > 0 && (
+                <span className="min-w-[1.25rem] rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white text-center">
+                  {item.badge! > 99 ? '99+' : item.badge}
+                </span>
+              )}
             </Link>
           ))}
 
