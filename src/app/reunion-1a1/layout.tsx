@@ -36,7 +36,7 @@ export default async function ReunionOneOnOneLayout({ children }: { children: Re
   const { user, access } = await requireMemberSession({ skipDiscordRequirement: true });
 
   if (!canMemberRequestOneOnOne(user.platform_role)) {
-    redirect('/admin/reuniones-1a1');
+    redirect('/app/gestionar-reuniones-1a1');
   }
 
   if (access.hasAccess) {

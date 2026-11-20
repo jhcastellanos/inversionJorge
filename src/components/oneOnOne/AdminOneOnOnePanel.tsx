@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { oneOnOneStatusLabel, type OneOnOneStatus } from '../../lib/oneOnOneTypes';
 import { formatOneOnOneDateTime } from '../../lib/oneOnOneMeetings.constants';
+
 type BookableSlot = { startAt: string; label: string; weekdayLabel: string };
 
 type AdminRequest = {
@@ -16,6 +17,15 @@ type AdminRequest = {
   admin_message: string | null;
   client_message: string | null;
 };
+
+const listCard = 'ventic-surface border ventic-border rounded-xl overflow-hidden';
+const detailCard = 'ventic-surface border ventic-border rounded-xl p-6 min-h-[24rem]';
+const btnPrimary =
+  'rounded-xl bg-[var(--ventic-accent)] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[var(--ventic-accent-hover)] disabled:opacity-50 w-full sm:w-auto';
+const btnAmber =
+  'rounded-xl bg-amber-600 text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 w-full sm:w-auto';
+const btnDanger =
+  'rounded-xl border border-red-500/50 text-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500/10 disabled:opacity-50';
 
 export default function AdminOneOnOnePanel() {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
@@ -84,19 +94,19 @@ export default function AdminOneOnOnePanel() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Solicitudes 1-1</h3>
+      <div className={listCard}>
+        <div className="px-4 py-3 border-b ventic-border flex items-center justify-between">
+          <h3 className="font-semibold ventic-text">Solicitudes 1-1</h3>
           {pendingCount > 0 && (
-            <span className="text-xs font-bold bg-red-500 text-white rounded-full px-2 py-0.5">
+            <span className="text-xs font-bold bg-red-600 text-white rounded-full px-2 py-0.5">
               {pendingCount} nuevas
             </span>
           )}
         </div>
         {loading ? (
-          <p className="p-4 text-sm text-gray-500">Cargando…</p>
+          <p className="p-4 text-sm ventic-muted">Cargando…</p>
         ) : (
-          <ul className="max-h-[32rem] overflow-y-auto divide-y">
+          <ul className="max-h-[32rem] overflow-y-auto divide-y ventic-border">
             {requests.map((r) => (
               <li key={r.id}>
                 <button
@@ -105,15 +115,17 @@ export default function AdminOneOnOnePanel() {
                     setSelectedId(r.id);
                     setAltSlots([]);
                   }}
-                  className={`w-full text-left px-4 py-3 hover:bg-blue-50 ${
-                    selectedId === r.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                  className={`w-full text-left px-4 py-3 hover:bg-ventic-accent-soft transition-colors ${
+                    selectedId === r.id
+                      ? 'bg-ventic-accent-soft border-l-4 border-[var(--ventic-accent)]'
+                      : ''
                   }`}
                 >
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium ventic-text">
                     {r.user_full_name} · #{r.id}
                   </p>
-                  <p className="text-xs text-gray-500">{oneOnOneStatusLabel(r.status)}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs ventic-muted">{oneOnOneStatusLabel(r.status)}</p>
+                  <p className="text-xs ventic-muted mt-1 opacity-80">
                     {formatOneOnOneDateTime(r.meeting_start_at, {
                       dateStyle: 'short',
                       timeStyle: 'short',
@@ -126,65 +138,60 @@ export default function AdminOneOnOnePanel() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 min-h-[24rem]">
+      <div className={detailCard}>
         {!selected ? (
-          <p className="text-sm text-gray-500">Selecciona una solicitud.</p>
+          <p className="text-sm ventic-muted">Selecciona una solicitud.</p>
         ) : (
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold ventic-text">
               Solicitud #{selected.id} — {selected.user_full_name}
             </h3>
-            <p className="text-sm text-gray-600">{selected.user_email}</p>
-            <p className="text-sm">
+            <p className="text-sm ventic-muted">{selected.user_email}</p>
+            <p className="text-sm ventic-text">
               <strong>Horario pedido:</strong>{' '}
               {formatOneOnOneDateTime(selected.meeting_start_at, {
                 dateStyle: 'full',
                 timeStyle: 'short',
               })}
             </p>
-            <p className="text-sm text-gray-800 whitespace-pre-wrap bg-gray-50 border rounded-lg p-4">
+            <p className="text-sm ventic-text whitespace-pre-wrap ventic-surface border ventic-border rounded-lg p-4 bg-black/10">
               {selected.note}
             </p>
 
             {selected.client_message && selected.status === 'pending_admin' && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+              <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-4 text-sm ventic-text">
                 <p className="font-semibold">Contrapropuesta del miembro</p>
-                <p className="mt-1">
-                  Nuevo horario pedido:{' '}
-                  {formatOneOnOneDateTime(selected.meeting_start_at, {
-                    dateStyle: 'full',
-                    timeStyle: 'short',
-                  })}
-                </p>
                 <p className="mt-2 whitespace-pre-wrap">{selected.client_message}</p>
               </div>
             )}
 
             {selected.status === 'awaiting_client_slot' && (
-              <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-lg p-3">
-                Esperando que el miembro acepte un horario o envíe otra propuesta desde su cuenta (
-                /reunion-1a1).
+              <p className="text-sm ventic-text rounded-xl border ventic-border bg-ventic-accent-soft/40 p-3">
+                Esperando respuesta del miembro en <strong>/reunion-1a1</strong>.
               </p>
             )}
 
             {['pending_admin', 'awaiting_client_slot'].includes(selected.status) && (
-              <div className="space-y-4 border-t pt-4">
+              <div className="space-y-4 border-t ventic-border pt-4">
                 {selected.status === 'pending_admin' && (
                   <button
                     type="button"
                     disabled={saving}
                     onClick={() => void patch({ action: 'approve' })}
-                    className="rounded-lg bg-green-700 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                    className={btnPrimary}
                   >
                     Aprobar horario solicitado
                   </button>
                 )}
 
                 <div>
-                  <p className="text-sm font-medium text-gray-900 mb-2">Proponer otros horarios</p>
-                  <div className="max-h-48 overflow-y-auto grid gap-1 sm:grid-cols-2 border rounded-lg p-2">
+                  <p className="text-sm font-medium ventic-text mb-2">Proponer otros horarios</p>
+                  <div className="max-h-48 overflow-y-auto grid gap-1 sm:grid-cols-2 border ventic-border rounded-lg p-2">
                     {allSlots.map((slot) => (
-                      <label key={slot.startAt} className="flex items-start gap-2 text-xs cursor-pointer">
+                      <label
+                        key={slot.startAt}
+                        className="flex items-start gap-2 text-xs cursor-pointer ventic-text"
+                      >
                         <input
                           type="checkbox"
                           checked={altSlots.includes(slot.startAt)}
@@ -199,7 +206,7 @@ export default function AdminOneOnOnePanel() {
                     onChange={(e) => setAdminMessage(e.target.value)}
                     rows={2}
                     placeholder="Mensaje opcional al miembro"
-                    className="mt-2 w-full border rounded-lg px-3 py-2 text-sm"
+                    className="mt-2 w-full border ventic-border rounded-lg px-3 py-2 text-sm ventic-text ventic-surface"
                   />
                   <button
                     type="button"
@@ -211,7 +218,7 @@ export default function AdminOneOnOnePanel() {
                         admin_message: adminMessage,
                       })
                     }
-                    className="mt-2 rounded-lg bg-amber-600 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                    className={`mt-3 ${btnAmber}`}
                   >
                     Enviar horarios alternativos
                   </button>
@@ -221,7 +228,7 @@ export default function AdminOneOnOnePanel() {
                   type="button"
                   disabled={saving}
                   onClick={() => void patch({ action: 'decline', admin_message: adminMessage })}
-                  className="text-sm text-red-700 underline"
+                  className={btnDanger}
                 >
                   Rechazar solicitud
                 </button>
@@ -229,13 +236,13 @@ export default function AdminOneOnOnePanel() {
             )}
 
             {!['pending_admin', 'awaiting_client_slot', 'awaiting_payment'].includes(selected.status) && (
-              <p className="text-sm text-gray-500 border-t pt-4">
+              <p className="text-sm ventic-muted border-t ventic-border pt-4">
                 Estado: {oneOnOneStatusLabel(selected.status)}
               </p>
             )}
 
             {selected.status === 'awaiting_payment' && (
-              <p className="text-sm text-gray-600 border-t pt-4">
+              <p className="text-sm ventic-muted border-t ventic-border pt-4">
                 Horario acordado. El miembro completa el pago desde su cuenta.
               </p>
             )}

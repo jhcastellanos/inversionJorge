@@ -125,8 +125,8 @@ export default function PlatformShell({
   const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
   const academyActive = pathname === '/app/academy-manager';
-  const supportAlertsActive = pathname === '/admin/support-tickets';
-  const oneOnOneAdminActive = pathname === '/admin/reuniones-1a1';
+  const supportAlertsActive = pathname === '/app/gestionar-consultas';
+  const oneOnOneAdminActive = pathname === '/app/gestionar-reuniones-1a1';
 
   const navItems: { href: string; label: string; badge?: number }[] = [
     { href: '/app', label: t('nav.home') },
@@ -191,14 +191,14 @@ export default function PlatformShell({
                 {showSupportAlertsNav && (
                   <>
                     <AdminNavLink
-                      href="/admin/support-tickets"
+                      href="/app/gestionar-consultas"
                       active={supportAlertsActive}
                       label={t('nav.supportAlerts')}
                       icon={<ChatAlertIcon className="w-4 h-4" />}
                       badge={staffAlertCounts?.openSupportTickets}
                     />
                     <AdminNavLink
-                      href="/admin/reuniones-1a1"
+                      href="/app/gestionar-reuniones-1a1"
                       active={oneOnOneAdminActive}
                       label={t('nav.oneOnOneAdmin')}
                       icon={<OneOnOneAdminIcon className="w-4 h-4" />}
@@ -255,7 +255,7 @@ export default function PlatformShell({
                 {showSupportAlertsNav && (
                   <>
                     <Link
-                      href="/admin/support-tickets"
+                      href="/app/gestionar-consultas"
                       className={
                         supportAlertsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'
                       }
@@ -265,7 +265,7 @@ export default function PlatformShell({
                         ` (${staffAlertCounts!.openSupportTickets})`}
                     </Link>
                     <Link
-                      href="/admin/reuniones-1a1"
+                      href="/app/gestionar-reuniones-1a1"
                       className={
                         oneOnOneAdminActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'
                       }

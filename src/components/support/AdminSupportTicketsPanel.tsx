@@ -22,6 +22,11 @@ function ChatBubbleIcon({ className }: { className?: string }) {
   );
 }
 
+const listCard = 'ventic-surface border ventic-border rounded-xl overflow-hidden';
+const detailCard = 'ventic-surface border ventic-border rounded-xl p-6 min-h-[20rem]';
+const btnPrimary =
+  'rounded-xl bg-[var(--ventic-accent)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--ventic-accent-hover)] disabled:opacity-50';
+
 export default function AdminSupportTicketsPanel() {
   const [tickets, setTickets] = useState<SupportTicketWithUser[]>([]);
   const [openCount, setOpenCount] = useState(0);
@@ -105,22 +110,22 @@ export default function AdminSupportTicketsPanel() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,360px)_1fr] gap-6">
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <ChatBubbleIcon className="w-5 h-5 text-blue-700" />
-          <h3 className="font-semibold text-gray-900">Alertas de consultas</h3>
+      <div className={listCard}>
+        <div className="flex items-center gap-2 px-4 py-3 border-b ventic-border">
+          <ChatBubbleIcon className="w-5 h-5 text-[var(--ventic-accent)]" />
+          <h3 className="font-semibold ventic-text">Consultas</h3>
           {openCount > 0 && (
-            <span className="ml-auto text-xs font-bold bg-red-500 text-white rounded-full px-2 py-0.5">
+            <span className="ml-auto text-xs font-bold bg-red-600 text-white rounded-full px-2 py-0.5">
               {openCount} nuevas
             </span>
           )}
         </div>
         {loading ? (
-          <p className="p-4 text-sm text-gray-500">Cargando…</p>
+          <p className="p-4 text-sm ventic-muted">Cargando…</p>
         ) : tickets.length === 0 ? (
-          <p className="p-4 text-sm text-gray-500">Sin consultas por ahora.</p>
+          <p className="p-4 text-sm ventic-muted">Sin consultas por ahora.</p>
         ) : (
-          <ul className="max-h-[32rem] overflow-y-auto divide-y divide-gray-100">
+          <ul className="max-h-[32rem] overflow-y-auto divide-y ventic-border">
             {tickets.map((t) => {
               const active = selectedId === t.id;
               const label = t.is_anonymous ? 'Anónimo' : t.user_full_name;
@@ -129,18 +134,18 @@ export default function AdminSupportTicketsPanel() {
                   <button
                     type="button"
                     onClick={() => void loadDetail(t.id)}
-                    className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${
-                      active ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                    className={`w-full text-left px-4 py-3 hover:bg-ventic-accent-soft transition-colors ${
+                      active ? 'bg-ventic-accent-soft border-l-4 border-[var(--ventic-accent)]' : ''
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <ChatBubbleIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="font-medium text-gray-900 text-sm truncate">
+                      <ChatBubbleIcon className="w-4 h-4 ventic-muted shrink-0" />
+                      <span className="font-medium ventic-text text-sm truncate">
                         {t.title?.trim() || `Consulta #${t.id}`}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 truncate">{label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs ventic-muted mt-1 truncate">{label}</p>
+                    <p className="text-xs ventic-muted mt-0.5 opacity-80">
                       {memberTicketStatusLabel(t.status)} ·{' '}
                       {new Date(t.created_at).toLocaleString('es-MX', {
                         dateStyle: 'short',
@@ -155,25 +160,25 @@ export default function AdminSupportTicketsPanel() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 min-h-[20rem]">
+      <div className={detailCard}>
         {!detail || selectedId == null ? (
-          <p className="text-sm text-gray-500">Selecciona una consulta para leerla y responder.</p>
+          <p className="text-sm ventic-muted">Selecciona una consulta para leerla y responder.</p>
         ) : (
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold ventic-text">
                 {detail.title?.trim() || `Consulta #${selectedId}`}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">{detail.userLabel}</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm ventic-muted mt-1">{detail.userLabel}</p>
+              <p className="text-xs ventic-muted mt-1">
                 Estado: {memberTicketStatusLabel(detail.status as SupportTicketStatus)}
               </p>
             </div>
-            <p className="text-sm text-gray-800 whitespace-pre-wrap border border-gray-100 rounded-lg p-4 bg-gray-50">
+            <p className="text-sm ventic-text whitespace-pre-wrap border ventic-border rounded-lg p-4 bg-black/10">
               {detail.body}
             </p>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1" htmlFor="admin-response">
+              <label className="block text-sm font-medium ventic-text mb-1" htmlFor="admin-response">
                 Tu respuesta (visible en la cuenta del usuario)
               </label>
               <textarea
@@ -181,7 +186,7 @@ export default function AdminSupportTicketsPanel() {
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 rows={6}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border ventic-border rounded-lg px-3 py-2 text-sm ventic-text ventic-surface"
               />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -189,7 +194,7 @@ export default function AdminSupportTicketsPanel() {
               type="button"
               disabled={saving || response.trim().length < 2}
               onClick={() => void sendResponse()}
-              className="rounded-lg bg-blue-700 text-white px-5 py-2 text-sm font-semibold disabled:opacity-50"
+              className={btnPrimary}
             >
               {saving ? 'Guardando…' : 'Enviar respuesta'}
             </button>

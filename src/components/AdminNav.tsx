@@ -40,11 +40,11 @@ export default function AdminNav({ active, showPlatformContent = true }: AdminNa
               <Link href="/admin/platform-users" className={linkClass(active === 'platform-users')}>
                 Usuarios plataforma
               </Link>
-              <Link href="/admin/support-tickets" className={linkClass(active === 'support-tickets')}>
-                💬 Dudas
+              <Link href="/app/gestionar-consultas" className={linkClass(active === 'support-tickets')}>
+                💬 Dudas (plataforma)
               </Link>
-              <Link href="/admin/reuniones-1a1" className={linkClass(active === 'one-on-one')}>
-                1-1
+              <Link href="/app/gestionar-reuniones-1a1" className={linkClass(active === 'one-on-one')}>
+                1-1 (plataforma)
               </Link>
               {showPlatformContent && (
                 <Link href="/admin/platform-content" className={linkClass(active === 'platform-content')}>

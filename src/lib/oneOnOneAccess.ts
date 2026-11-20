@@ -16,7 +16,7 @@ export async function assertMemberCanRequestOneOnOne(userId: number): Promise<Ne
   if (!canMemberRequestOneOnOne(user.platform_role)) {
     return NextResponse.json(
       {
-        error: 'Las cuentas Admin no pueden solicitar reuniones 1-a-1. Usa el panel de administración.',
+        error: 'Las cuentas Admin gestionan reuniones 1-1 desde la plataforma (/app/gestionar-reuniones-1a1).',
         code: 'ADMIN_CANNOT_REQUEST_ONE_ON_ONE',
       },
       { status: 403 }

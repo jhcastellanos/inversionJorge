@@ -19,7 +19,7 @@ export default function StaffHomeAlerts({ counts }: { counts: StaffAlertCounts }
         {counts.openSupportTickets > 0 && (
           <li>
             <Link
-              href="/admin/support-tickets"
+              href="/app/gestionar-consultas"
               className="font-semibold text-[var(--ventic-accent)] hover:underline"
             >
               {t('home.staffSupportPending').replace('{count}', String(counts.openSupportTickets))}
@@ -29,7 +29,7 @@ export default function StaffHomeAlerts({ counts }: { counts: StaffAlertCounts }
         {counts.pendingOneOnOne > 0 && (
           <li>
             <Link
-              href="/admin/reuniones-1a1"
+              href="/app/gestionar-reuniones-1a1"
               className="font-semibold text-[var(--ventic-accent)] hover:underline"
             >
               {t('home.staffOneOnOnePending').replace('{count}', String(counts.pendingOneOnOne))}

@@ -94,7 +94,7 @@ export async function sendOneOnOneNewRequestToOwner(
   requestId: number
 ) {
   const when = escapeHtml(formatMeetingWhen(meetingStartIso));
-  const adminUrl = escapeHtml(`${getSiteBaseUrl()}/admin/reuniones-1a1`);
+  const adminUrl = escapeHtml(`${getSiteBaseUrl()}/app/gestionar-reuniones-1a1`);
   await send(
     getOwnerNotifyEmails(),
     `Nueva solicitud reunión 1-1 #${requestId}`,
@@ -161,7 +161,7 @@ export async function sendOneOnOneCounterToOwner(
   originalNote: string
 ) {
   const when = escapeHtml(formatMeetingWhen(meetingStartIso));
-  const adminUrl = escapeHtml(`${getSiteBaseUrl()}/admin/reuniones-1a1`);
+  const adminUrl = escapeHtml(`${getSiteBaseUrl()}/app/gestionar-reuniones-1a1`);
   const msg = clientMessage
     ? `<p><strong>Mensaje del miembro:</strong> ${escapeHtml(clientMessage)}</p>`
     : '';
