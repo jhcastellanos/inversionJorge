@@ -198,6 +198,19 @@ export const OneOnOneRequest = {
     }
   },
 
+  async countPendingAdmin(): Promise<number> {
+    await ensureOneOnOneSchema();
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT COUNT(*)::int AS c FROM member_one_on_one_requests WHERE status = 'pending_admin'`
+      );
+      return result.rows[0]?.c ?? 0;
+    } finally {
+      client.release();
+    }
+  },
+
   async isSlotTaken(meetingStartAt: Date, excludeId?: number): Promise<boolean> {
     await ensureOneOnOneSchema();
     const client = await pool.connect();

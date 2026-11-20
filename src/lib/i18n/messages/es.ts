@@ -11,6 +11,7 @@ export const es = {
     plans: 'Ver planes',
     support: 'Dudas e inquietudes',
     oneOnOne: 'Reunión 1-1',
+    oneOnOneAdmin: 'Reuniones 1-1',
     supportAlerts: 'Alertas de consultas',
     admin: 'Admin',
     academyManager: 'Gestor de academia',
@@ -36,6 +37,9 @@ export const es = {
     join: 'Unirse',
     details: 'Detalles',
     calendar: 'Calendario',
+    staffAlertsTitle: 'Pendientes de revisión',
+    staffSupportPending: '{count} consulta(s) nueva(s) en Dudas e inquietudes',
+    staffOneOnOnePending: '{count} solicitud(es) de reunión 1-1',
   },
   classes: {
     subtitle: 'Academia para miembros activos ({role}). Módulos y lecciones publicados por el equipo.',

@@ -6,6 +6,7 @@ import { usePlatformPreferences } from './PlatformPreferencesProvider';
 import DiscordJoinButton from './DiscordJoinButton';
 import MemberLogoutButton from './MemberLogoutButton';
 import PlatformPreferencesBar from './PlatformPreferencesBar';
+import type { StaffAlertCounts } from '../../lib/staffAlertCounts';
 
 function ShieldIcon({ className }: { className?: string }) {
   return (
@@ -39,11 +40,13 @@ function AdminNavLink({
   active,
   icon,
   label,
+  badge,
 }: {
   href: string;
   active: boolean;
   icon: React.ReactNode;
   label: string;
+  badge?: number;
 }) {
   return (
     <Link
@@ -56,8 +59,27 @@ function AdminNavLink({
     >
       {active && <span className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-[var(--ventic-accent)]" />}
       <span className={`shrink-0 pl-1 ${active ? 'text-[var(--ventic-accent-muted)]' : ''}`}>{icon}</span>
-      <span>{label}</span>
+      <span className="flex-1 min-w-0">{label}</span>
+      {badge != null && badge > 0 && (
+        <span className="shrink-0 min-w-[1.25rem] rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white text-center">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
+  );
+}
+
+function OneOnOneAdminIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path d="M9 14h2v2H9v-2Zm4 0h2v2h-2v-2Z" fill="currentColor" />
+    </svg>
   );
 }
 
@@ -86,6 +108,7 @@ export default function PlatformShell({
   showAdminNav,
   showSupportAlertsNav,
   showOneOnOneNav = true,
+  staffAlertCounts,
 }: {
   children: React.ReactNode;
   userName: string;
@@ -93,12 +116,14 @@ export default function PlatformShell({
   showSupportAlertsNav?: boolean;
   /** false para rol Admin (gestiona 1-a-1 en /admin) */
   showOneOnOneNav?: boolean;
+  staffAlertCounts?: StaffAlertCounts;
 }) {
   const pathname = usePathname();
   const { t } = usePlatformPreferences();
   const adminEventsActive = pathname === '/app/gestionar-eventos';
   const academyActive = pathname === '/app/academy-manager';
   const supportAlertsActive = pathname === '/admin/support-tickets';
+  const oneOnOneAdminActive = pathname === '/admin/reuniones-1a1';
 
   const navItems = [
     { href: '/app', label: t('nav.home') },
@@ -150,12 +175,22 @@ export default function PlatformShell({
               </p>
               <div className="space-y-1.5">
                 {showSupportAlertsNav && (
-                  <AdminNavLink
-                    href="/admin/support-tickets"
-                    active={supportAlertsActive}
-                    label={t('nav.supportAlerts')}
-                    icon={<ChatAlertIcon className="w-4 h-4" />}
-                  />
+                  <>
+                    <AdminNavLink
+                      href="/admin/support-tickets"
+                      active={supportAlertsActive}
+                      label={t('nav.supportAlerts')}
+                      icon={<ChatAlertIcon className="w-4 h-4" />}
+                      badge={staffAlertCounts?.openSupportTickets}
+                    />
+                    <AdminNavLink
+                      href="/admin/reuniones-1a1"
+                      active={oneOnOneAdminActive}
+                      label={t('nav.oneOnOneAdmin')}
+                      icon={<OneOnOneAdminIcon className="w-4 h-4" />}
+                      badge={staffAlertCounts?.pendingOneOnOne}
+                    />
+                  </>
                 )}
                 {showAdminNav && (
                   <>
@@ -204,12 +239,28 @@ export default function PlatformShell({
             {(showAdminNav || showSupportAlertsNav) && (
               <>
                 {showSupportAlertsNav && (
-                  <Link
-                    href="/admin/support-tickets"
-                    className={supportAlertsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'}
-                  >
-                    {t('nav.supportAlerts')}
-                  </Link>
+                  <>
+                    <Link
+                      href="/admin/support-tickets"
+                      className={
+                        supportAlertsActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'
+                      }
+                    >
+                      {t('nav.supportAlerts')}
+                      {(staffAlertCounts?.openSupportTickets ?? 0) > 0 &&
+                        ` (${staffAlertCounts!.openSupportTickets})`}
+                    </Link>
+                    <Link
+                      href="/admin/reuniones-1a1"
+                      className={
+                        oneOnOneAdminActive ? 'text-ventic-accent text-sm font-semibold' : 'ventic-muted text-sm'
+                      }
+                    >
+                      {t('nav.oneOnOneAdmin')}
+                      {(staffAlertCounts?.pendingOneOnOne ?? 0) > 0 &&
+                        ` (${staffAlertCounts!.pendingOneOnOne})`}
+                    </Link>
+                  </>
                 )}
                 {showAdminNav && (
                   <>

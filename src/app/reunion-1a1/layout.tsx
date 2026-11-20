@@ -7,6 +7,7 @@ import PlatformShell from '../../components/platform/PlatformShell';
 import { canMemberRequestOneOnOne } from '../../lib/oneOnOneAccess';
 import { ONE_ON_ONE_DURATION_MINUTES } from '../../lib/oneOnOneMeetings.constants';
 import { isPlatformStaffRole } from '../../lib/platformRoles';
+import { getStaffAlertCountsIfNeeded } from '../../lib/staffAlertCounts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,12 +39,14 @@ export default async function ReunionOneOnOneLayout({ children }: { children: Re
   }
 
   if (access.hasAccess) {
+    const staffAlertCounts = await getStaffAlertCountsIfNeeded(access.role);
     return (
       <PlatformShell
         userName={user.full_name.split(' ')[0]}
         showAdminNav={access.role === 'admin'}
         showSupportAlertsNav={isPlatformStaffRole(access.role)}
         showOneOnOneNav
+        staffAlertCounts={staffAlertCounts}
       >
         <div className="max-w-3xl">
           <ReunionPageHeader />

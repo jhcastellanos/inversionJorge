@@ -1,5 +1,8 @@
 import { requireMemberSession } from '../../lib/getCurrentMember';
 import PlatformHomeHub from '../../components/platform/PlatformHomeHub';
+import StaffHomeAlerts from '../../components/platform/StaffHomeAlerts';
+import { getStaffAlertCountsIfNeeded } from '../../lib/staffAlertCounts';
+import { isPlatformStaffRole } from '../../lib/platformRoles';
 import { PlatformCalendarEvent } from '../../lib/platformContent';
 import {
   filterEventsByMemberAccess,
@@ -39,12 +42,19 @@ export default async function AppHomePage() {
 
   const { live, upcoming } = splitLiveAndUpcoming(publishedVisible, now);
 
+  const staffAlertCounts = isPlatformStaffRole(access.role)
+    ? await getStaffAlertCountsIfNeeded(access.role)
+    : undefined;
+
   return (
-    <PlatformHomeHub
-      user={{ full_name: user.full_name, email: user.email }}
-      contactSupportForRoleUpgrade={access.contactSupportForRoleUpgrade}
-      live={live.map(serializeEvent)}
-      upcoming={upcoming.map(serializeEvent)}
-    />
+    <>
+      {staffAlertCounts && <StaffHomeAlerts counts={staffAlertCounts} />}
+      <PlatformHomeHub
+        user={{ full_name: user.full_name, email: user.email }}
+        contactSupportForRoleUpgrade={access.contactSupportForRoleUpgrade}
+        live={live.map(serializeEvent)}
+        upcoming={upcoming.map(serializeEvent)}
+      />
+    </>
   );
 }

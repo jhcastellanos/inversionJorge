@@ -13,6 +13,7 @@ export const en: Messages = {
     plans: 'View plans',
     support: 'Questions & support',
     oneOnOne: '1-1 meeting',
+    oneOnOneAdmin: '1-1 meetings',
     supportAlerts: 'Support alerts',
     admin: 'Admin',
     academyManager: 'Academy Manager',
@@ -38,6 +39,9 @@ export const en: Messages = {
     join: 'Join',
     details: 'Details',
     calendar: 'Calendar',
+    staffAlertsTitle: 'Needs your review',
+    staffSupportPending: '{count} new support ticket(s)',
+    staffOneOnOnePending: '{count} pending 1-1 meeting request(s)',
   },
   classes: {
     subtitle: 'Academy for active members ({role}). Modules and lessons published by the team.',

@@ -5,6 +5,7 @@ import MarketingTopBar from '../../components/platform/MarketingTopBar';
 import MemberPublicSessionBar from '../../components/platform/MemberPublicSessionBar';
 import PlatformShell from '../../components/platform/PlatformShell';
 import { isPlatformStaffRole } from '../../lib/platformRoles';
+import { getStaffAlertCountsIfNeeded } from '../../lib/staffAlertCounts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,12 +35,14 @@ export default async function DudasLayout({ children }: { children: React.ReactN
   const showOneOnOne = canMemberRequestOneOnOne(user.platform_role);
 
   if (access.hasAccess) {
+    const staffAlertCounts = await getStaffAlertCountsIfNeeded(access.role);
     return (
       <PlatformShell
         userName={user.full_name.split(' ')[0]}
         showAdminNav={access.role === 'admin'}
         showSupportAlertsNav={isPlatformStaffRole(access.role)}
         showOneOnOneNav={showOneOnOne}
+        staffAlertCounts={staffAlertCounts}
       >
         <div className="max-w-3xl">
           <DudasPageHeader showOneOnOne={showOneOnOne} />
